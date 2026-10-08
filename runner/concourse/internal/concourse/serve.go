@@ -1,0 +1,61 @@
+package concourse
+
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+
+	"github.com/sideways-works/pipelinegen/plugin"
+)
+
+// Version is the plugin's version, set by the release build.
+var Version = "dev"
+
+// Serve answers the runner calls.
+func Serve(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	return plugin.Serve(args, stdin, stdout, stderr, map[string]plugin.Handler{
+		plugin.CallDescribe: func([]byte) (any, error) { return describe(), nil },
+		plugin.CallPipeline: pipeline,
+	})
+}
+
+func pipeline(in []byte) (any, error) {
+	var req plugin.PipelineRequest
+	if err := json.Unmarshal(in, &req); err != nil {
+		return nil, fmt.Errorf("request: %w", err)
+	}
+
+	if err := olderKeys(req.Spec.CI, requestTags(in)); err != nil {
+		return nil, err
+	}
+
+	p, err := GenerateWith(req.Spec, req.Root, req.Config)
+	if err != nil {
+		return nil, err
+	}
+
+	text, err := Text(p)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := os.WriteFile(filepath.Join(req.Work, "pipeline.yml"), text, 0o600); err != nil {
+		return nil, fmt.Errorf("write pipeline: %w", err)
+	}
+
+	return plugin.PipelineAnswer{Files: []string{"pipeline.yml"}, Notices: Notices(req.Spec, req.Config)}, nil
+}
+
+func describe() plugin.Description {
+	return plugin.Description{
+		Protocol: plugin.Protocol, Kind: plugin.KindRunner, Name: "concourse-runner", Version: Version,
+		Capabilities:  []string{plugin.CallPipeline, "repeat-at-run-time", "job-caches", "rerun", "locks", plugin.CapConnectorChanges, plugin.CapSSHKeys, capContinuous, plugin.CapSerialJobs, plugin.CapLockPerBatch, plugin.CapSteps, capPlacement},
+		ResourceTypes: []string{mockType},
+		// Concourse keeps a task's cache per job, step and worker.
+		CacheScopes: map[string]string{
+			"plan-cache": plugin.ScopeJob, "write-cache": plugin.ScopeJob, "cache": plugin.ScopeJob,
+		},
+	}
+}
