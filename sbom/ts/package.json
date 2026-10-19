@@ -1,0 +1,66 @@
+{
+  "name": "@sideways-works/ts-sbom",
+  "version": "0.1.2",
+  "private": true,
+  "type": "module",
+  "description": "Lists the functions, components, constants, types and stylesheets of a TypeScript, JavaScript and CSS tree, each with a digest that ignores comments and formatting.",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./dist/lib.mjs"
+    },
+    "./detect": {
+      "types": "./src/detect.ts",
+      "default": "./dist/detect.mjs"
+    }
+  },
+  "scripts": {
+    "test": "node --test --test-reporter=dot 'test/**/*.test.ts'",
+    "lint": "biome check . && tsc --noEmit -p .",
+    "build": "node build.ts"
+  },
+  "dependencies": {
+    "typescript": "6.0.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@types/node": "24.19.1",
+    "esbuild": "0.28.2"
+  },
+  "files": [
+    "src",
+    "dist/lib.mjs",
+    "dist/detect.mjs",
+    "build.ts"
+  ],
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "26.10.0",
+      "onFail": "error"
+    }
+  },
+  "allowScripts": {
+    "esbuild": false
+  },
+  "pipelinegen": {
+    "notice": [
+      {
+        "entryPoints": [
+          "src/cli.ts"
+        ],
+        "format": "cjs"
+      },
+      {
+        "entryPoints": [
+          "src/main.ts"
+        ],
+        "format": "esm"
+      }
+    ]
+  }
+}
