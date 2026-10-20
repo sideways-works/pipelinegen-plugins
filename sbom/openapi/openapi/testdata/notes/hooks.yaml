@@ -1,0 +1,13 @@
+openapi: 3.1.0
+info: { title: Hooks, version: "1" }
+paths: {}
+webhooks:
+  noteCreated:
+    post:
+      operationId: noteCreated
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "api.yaml#/components/schemas/Note" }
+      responses:
+        "200": { description: Taken. }

@@ -1,0 +1,158 @@
+openapi: 3.0.3
+info:
+  title: Notes
+  version: 1.0.0
+  description: A small notes service.
+servers:
+  - url: https://notes.example/api
+    description: The only server.
+security:
+  - session: []
+paths:
+  /notes:
+    get:
+      operationId: listNotes
+      summary: Lists notes.
+      x-access: user
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: The notes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Note" }
+              example: [{ id: n1, text: hi }]
+    post:
+      operationId: createNote
+      description: Creates a note.
+      x-access: user
+      requestBody:
+        description: The new note.
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NoteInput" }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Note" }
+  /notes/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: The note's id.
+        schema: { type: string }
+    get:
+      operationId: getNote
+      x-access: user
+      responses:
+        "200":
+          description: One note.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Note" }
+    delete:
+      operationId: delete-note
+      x-access: user
+      responses:
+        "204": { description: Gone. }
+  /notes/{id}/comments:
+    get:
+      operationId: listComments
+      security: []
+      x-access: public
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: The comments.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Comment" }
+  /tags:
+    get:
+      operationId: listTags
+      security: []
+      responses:
+        "200":
+          description: Tags.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "common.yaml#/Tag" }
+  /shapes:
+    get:
+      operationId: listShapes
+      security: []
+      responses:
+        "200":
+          description: Shapes.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Shape" }
+components:
+  securitySchemes:
+    session:
+      type: apiKey
+      in: cookie
+      name: sid
+      description: The session cookie.
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      description: How many at most.
+      schema: { type: integer, maximum: 100 }
+  schemas:
+    Note:
+      type: object
+      description: A note.
+      required: [id, text]
+      properties:
+        id: { type: string, example: n1 }
+        text: { type: string, title: Text }
+        description: { type: string }
+        tags:
+          type: array
+          items: { $ref: "common.yaml#/Tag" }
+    NoteInput:
+      type: object
+      required: [text]
+      properties:
+        text: { type: string, maxLength: 500 }
+    Comment:
+      type: object
+      properties:
+        text: { type: string }
+        replies:
+          type: array
+          items: { $ref: "#/components/schemas/Comment" }
+    Shape:
+      oneOf:
+        - $ref: "#/components/schemas/Circle"
+        - $ref: "#/components/schemas/Square"
+      discriminator:
+        propertyName: kind
+        mapping:
+          circle: Circle
+          square: "#/components/schemas/Square"
+    Circle:
+      type: object
+      properties:
+        kind: { type: string }
+        radius: { type: number }
+    Square:
+      type: object
+      properties:
+        kind: { type: string }
+        side: { type: number }
+    Unused:
+      type: string
