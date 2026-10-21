@@ -1,0 +1,518 @@
+package concourse
+
+import (
+	"errors"
+	"fmt"
+	"maps"
+	"path"
+	"regexp"
+	"slices"
+	"strings"
+	"testing"
+
+	"github.com/sideways-works/pipelinegen/plugin"
+)
+
+type flagUse struct {
+	def           string
+	reads, writes bool
+	boolean       bool
+	// file: the path may lie in the build's own directory.
+	file bool
+}
+
+// toolCommand is a pipelinegen command as the tool's code defines it: every
+// flag it takes, and what it reads beyond its flags.
+type toolCommand struct {
+	flags map[string]flagUse
+	// named commands take a name before their flags (lock acquire <name>).
+	named bool
+	// rootIsTrigger: the command reads the config from --trigger whatever
+	// --root says.
+	rootIsTrigger bool
+	// runFromEnv: PIPELINEGEN_CHANGE and PIPELINEGEN_COMMIT, else
+	// PIPELINEGEN_RUN_FILE, else the checkout PIPELINEGEN_TRIGGER names.
+	runFromEnv bool
+	// also are directories it reads without a flag naming them.
+	also []string
+	// recording are directories it reads in a recording run.
+	recording []string
+	tokenless bool
+	// linksConcourse: only writing the pipeline needs Concourse's address.
+	linksConcourse bool
+}
+
+func reads(def string) flagUse  { return flagUse{def: def, reads: true} }
+func writes(def string) flagUse { return flagUse{def: def, writes: true} }
+
+var other = flagUse{}
+
+func common(root string, more map[string]flagUse) map[string]flagUse {
+	out := map[string]flagUse{"root": reads(root), "config": reads("")}
+	maps.Copy(out, more)
+
+	return out
+}
+
+// toolCommands mirror the flag sets of the tool's internal/cli.
+var toolCommands = map[string]toolCommand{
+	"git-auth": {named: true, tokenless: true, flags: map[string]flagUse{"host": other}},
+	"pipeline": {tokenless: true, linksConcourse: true, flags: common(".", map[string]flagUse{
+		"out": {writes: true, file: true}, "plugins": reads("tools/plugins"), "runner": reads(""), "gate": writes(""),
+	})},
+	"plan": {rootIsTrigger: true, also: []string{"tools/plugins"}, flags: common(".", map[string]flagUse{
+		"run": other, "suite": other, "trigger": reads("trigger"),
+		"cache": {reads: true, writes: true}, "bazel-diff": reads(""),
+		"out": {writes: true}, "from": reads(""), "gate": writes(""), "begin": {boolean: true},
+	})},
+	"unplanned": {flags: common(".", map[string]flagUse{
+		"run": other, "out": writes("sweep"), "cache": {reads: true, writes: true},
+	})},
+	"tree": {rootIsTrigger: true, flags: common(".", map[string]flagUse{
+		"run": other, "suite": other, "trigger": reads("trigger"),
+		"out": writes("source"), "gate": writes("gate"),
+	})},
+	"batches": {flags: common(".", map[string]flagUse{
+		"run": other, "suite": other, "trigger": reads("trigger"), "out": writes("batches"),
+	})},
+	"report start":  {runFromEnv: true, flags: common(".", nil)},
+	"report suite":  {runFromEnv: true, flags: common(".", map[string]flagUse{"batches": reads("")})},
+	"report finish": {runFromEnv: true, flags: common(".", nil)},
+	"report slice": {runFromEnv: true, flags: common(".", map[string]flagUse{
+		"state": other, "result": reads(""), "coverage": reads(""),
+	})},
+	"report whole": {runFromEnv: true, flags: common(".", map[string]flagUse{
+		"name": other, "result": reads(""),
+	})},
+	"report batch-end": {
+		runFromEnv: true,
+		flags: common(".", map[string]flagUse{
+			"batch": other, "batches": reads("batches"), "result": reads("result"),
+			"coverage": reads(""), "tools": reads("tools"), "started": reads(""),
+		}),
+		// The journal's ends name the tree and coverage by their defaults.
+		also:      []string{"source"},
+		recording: []string{"coverage"},
+	},
+	"report collect": {runFromEnv: true, flags: common(".", map[string]flagUse{
+		"suite": other, "out": writes("slices"),
+	})},
+	"slice start":     {named: true, runFromEnv: true, flags: sliceFlags()},
+	"slice end":       {named: true, runFromEnv: true, flags: sliceFlags()},
+	"slice setup-end": {runFromEnv: true, flags: common("source", map[string]flagUse{"coverage": writes("coverage"), "result": writes("result"), "tools": reads("tools")})},
+	"slice flush":     {runFromEnv: true, flags: common("source", map[string]flagUse{"result": reads("result"), "tools": reads("tools")})},
+	"slice list":      {tokenless: true, flags: map[string]flagUse{"batches": reads("batches")}},
+	"lock acquire":    {named: true, runFromEnv: true, flags: common(".", map[string]flagUse{"wait": other, "started": writes("")})},
+	"lock release":    {named: true, runFromEnv: true, flags: common(".", nil)},
+}
+
+func sliceFlags() map[string]flagUse {
+	return common("source", map[string]flagUse{
+		"batches": reads("batches"), "result": {reads: true, writes: true},
+		"coverage": writes("coverage"), "tools": reads("tools"),
+	})
+}
+
+var errCall = errors.New("pipelinegen call")
+
+var withSubcommands = map[string]bool{"report": true, "slice": true, "lock": true, "lists": true}
+
+type call struct {
+	command string
+	flags   map[string]string
+	name    string
+}
+
+// parseCall reads flags the way Go's flag package does: one or two dashes,
+// a value after a space or an equals sign.
+func parseCall(args []string) (call, error) {
+	if len(args) == 0 {
+		return call{}, errCall
+	}
+
+	c := call{command: args[0], flags: map[string]string{}}
+	args = args[1:]
+
+	if withSubcommands[c.command] {
+		if len(args) == 0 {
+			return c, fmt.Errorf("%w: %s without a subcommand", errCall, c.command)
+		}
+
+		c.command += " " + args[0]
+		args = args[1:]
+	}
+
+	tc, ok := toolCommands[c.command]
+	if !ok {
+		return c, fmt.Errorf("%w: pipelinegen has no command %q", errCall, c.command)
+	}
+
+	if tc.named {
+		if len(args) == 0 || strings.HasPrefix(args[0], "-") {
+			return c, fmt.Errorf("%w: %s without its name", errCall, c.command)
+		}
+
+		c.name, args = args[0], args[1:]
+	}
+
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		if !strings.HasPrefix(a, "-") {
+			return c, fmt.Errorf("%w: %s: %q after the flags", errCall, c.command, a)
+		}
+
+		name, value, hasValue := strings.Cut(strings.TrimLeft(a, "-"), "=")
+		if _, ok := tc.flags[name]; !ok {
+			return c, fmt.Errorf("%w: %s has no flag -%s", errCall, c.command, name)
+		}
+
+		if !hasValue && tc.flags[name].boolean {
+			value = "true"
+		} else if !hasValue {
+			if i+1 >= len(args) {
+				return c, fmt.Errorf("%w: %s: -%s without a value", errCall, c.command, name)
+			}
+
+			i++
+			value = args[i]
+		}
+
+		c.flags[name] = value
+	}
+
+	return c, nil
+}
+
+func top(p string) string {
+	p = path.Clean(p)
+	if i := strings.Index(p, "/"); i >= 0 {
+		return p[:i]
+	}
+
+	return p
+}
+
+func (c call) needs(params M, recording bool) (read, written []string, err error) { //nolint:nonamedreturns // two lists and an error
+	tc := toolCommands[c.command]
+
+	value := func(name string) string {
+		if v, ok := c.flags[name]; ok {
+			return v
+		}
+
+		return tc.flags[name].def
+	}
+
+	for name, use := range tc.flags {
+		v := value(name)
+		if name == "config" && v == "" {
+			continue // <root>/pipelinegen.yaml, read with the root
+		}
+
+		if name == "root" && tc.rootIsTrigger {
+			v = value("trigger")
+		}
+
+		if v == "" {
+			continue
+		}
+
+		if use.reads {
+			read = append(read, top(v))
+		}
+
+		// A file in the build's own directory lives only in the step.
+		if use.writes && (!use.file || strings.Contains(path.Clean(v), "/")) {
+			written = append(written, top(v))
+		}
+	}
+
+	read = append(read, "tools") // the executable itself
+	for _, d := range tc.also {
+		read = append(read, top(d))
+	}
+
+	if recording {
+		for _, d := range tc.recording {
+			read = append(read, top(d))
+		}
+	}
+
+	env := func(k string) string { s, _ := params[k].(string); return s } //nolint:errcheck // absent is empty
+
+	if b := env("PIPELINEGEN_BAZELISK"); b != "" {
+		read = append(read, top(b))
+	}
+
+	if tc.runFromEnv && (env("PIPELINEGEN_CHANGE") == "" || env("PIPELINEGEN_COMMIT") == "") {
+		switch {
+		case env("PIPELINEGEN_RUN_FILE") != "":
+			read = append(read, top(env("PIPELINEGEN_RUN_FILE")))
+		case env("PIPELINEGEN_TRIGGER") != "":
+			read = append(read, top(env("PIPELINEGEN_TRIGGER")))
+		default:
+			return nil, nil, fmt.Errorf("%w: %s has no way to learn its run", errCall, c.command)
+		}
+	}
+
+	return read, written, nil
+}
+
+func pipelinegenCalls(t *testing.T, cfg M) [][]string {
+	t.Helper()
+
+	run := asMap(cfg["run"])
+
+	args := make([]string, 0)
+
+	for _, a := range asSlice(run["args"]) {
+		s, ok := a.(string)
+		if !ok {
+			t.Fatalf("an argument that is no string: %v", a)
+		}
+
+		args = append(args, s)
+	}
+
+	if run["path"] == "tools/pipelinegen" {
+		return [][]string{args}
+	}
+
+	if run["path"] != "sh" || len(args) != 2 {
+		return nil
+	}
+
+	var out [][]string
+
+	for line := range strings.SplitSeq(args[1], "\n") {
+		// A comment may name the tool in prose.
+		if c := strings.Index(line, "#"); c >= 0 {
+			line = line[:c]
+		}
+
+		for _, m := range inScript.FindAllStringSubmatch(line, -1) {
+			words := strings.Fields(m[1])
+			for i, w := range words {
+				words[i] = strings.Trim(w, `"'`)
+			}
+
+			out = append(out, words)
+		}
+	}
+
+	return out
+}
+
+// inScript also matches inside a command substitution.
+var inScript = regexp.MustCompile(`(?:^|[\s;&|("])tools/pipelinegen((?:[ \t]+[^\s;&|)]+)+)`)
+
+func asSlice(v any) []any {
+	switch x := v.(type) {
+	case []any:
+		return x
+	case []M:
+		out := make([]any, 0, len(x))
+		for _, m := range x {
+			out = append(out, m)
+		}
+
+		return out
+	case []string:
+		out := make([]any, 0, len(x))
+		for _, s := range x {
+			out = append(out, s)
+		}
+
+		return out
+	}
+
+	return nil
+}
+
+func mounts(cfg M, keys ...string) []string {
+	var out []string
+
+	for _, k := range keys {
+		for _, it := range asSlice(cfg[k]) {
+			if m, ok := it.(M); ok {
+				if k == "caches" {
+					out = append(out, top(fmt.Sprint(m["path"])))
+				} else {
+					out = append(out, fmt.Sprint(m["name"]))
+				}
+			}
+		}
+	}
+
+	return out
+}
+
+func steppedSpecs(t *testing.T) map[string]plugin.Spec {
+	t.Helper()
+
+	plain, _ := fixture(t)
+
+	locked, _ := fixture(t)
+	locked.Suites[suiteIndex(t, locked, "e2e")].Lock = &plugin.SpecLock{Name: "browsers", Minutes: 90}
+	locked.Suites[suiteIndex(t, locked, "backend")].Lock = &plugin.SpecLock{Name: "db", Minutes: 20}
+
+	self, _ := fixture(t)
+	self.CI["self_set"] = true
+
+	return map[string]plugin.Spec{"plain": plain, "locked": locked, "self_set": self}
+}
+
+func TestEveryPipelinegenStepMountsWhatItReads(t *testing.T) {
+	seen := map[string]bool{}
+
+	for variant, spec := range steppedSpecs(t) {
+		p, err := Generate(spec, t.TempDir())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		recording := map[string]bool{}
+
+		for _, r := range spec.Runs {
+			for _, rs := range r.Suites {
+				recording[SuiteJob(r.Name, rs.Suite)] = rs.Records
+			}
+		}
+
+		for _, j := range asSlice(p["jobs"]) {
+			job := asMap(j)
+			jobName := fmt.Sprint(job["name"])
+
+			walkTasks(job, func(task M) {
+				cfg := asMap(task["config"])
+
+				// Concourse names inputs and outputs, and caches by their path.
+				for key, field := range map[string]string{"inputs": "name", "outputs": "name", "caches": "path"} {
+					for _, it := range asSlice(cfg[key]) {
+						if s, ok := asMap(it)[field].(string); !ok || s == "" {
+							t.Errorf("%s: job %s, step %v: one of its %s has no %s: %v", variant, jobName, task["task"], key, field, it)
+						}
+					}
+				}
+
+				// A task that begins with the bootstrap has the tools it fetched; each
+				// later command sees what earlier ones wrote.
+				present := mounts(cfg, "inputs", "caches")
+				if args := asSlice(asMap(cfg["run"])["args"]); len(args) == 2 && strings.Contains(fmt.Sprint(args[1]), bootstrapScript) {
+					present = append(present, "tools")
+				}
+
+				for _, args := range pipelinegenCalls(t, cfg) {
+					where := fmt.Sprintf("%s: job %s, step %v: pipelinegen %s", variant, jobName, task["task"], strings.Join(args, " "))
+
+					c, err := parseCall(args)
+					if err != nil {
+						t.Errorf("%s: %v", where, err)
+
+						continue
+					}
+
+					seen[c.command] = true
+
+					if !toolCommands[c.command].tokenless && asMap(cfg["params"])["GITHUB_TOKEN"] == nil {
+						t.Errorf("%s: writes refs or statuses without the pipeline's token", where)
+					}
+
+					if url, ok := asMap(cfg["params"])["PIPELINEGEN_CONCOURSE_URL"]; toolCommands[c.command].linksConcourse && url != spec.CI["url"] {
+						t.Errorf("%s: writes the pipeline without Concourse's address", where)
+					} else if !toolCommands[c.command].linksConcourse && ok {
+						t.Errorf("%s: gets Concourse's address, which only writing the pipeline needs", where)
+					}
+
+					read, written, err := c.needs(asMap(cfg["params"]), recording[jobName])
+					if err != nil {
+						t.Errorf("%s: %v", where, err)
+
+						continue
+					}
+
+					mounted := present
+					for _, d := range read {
+						if d == "." {
+							t.Errorf("%s: reads the build's own directory as a checkout", where)
+						} else if !slices.Contains(mounted, d) {
+							t.Errorf("%s: reads %s, which the step doesn't mount (it has %v)", where, d, mounted)
+						}
+					}
+
+					kept := mounts(cfg, "outputs", "caches")
+
+					for _, w := range written {
+						present = append(present, w)
+
+						if !slices.Contains(kept, w) {
+							t.Errorf("%s: writes %s, which is no output or cache of the step (it has %v)", where, w, kept)
+						}
+					}
+				}
+			})
+		}
+	}
+
+	for _, want := range []string{
+		"plan", "tree", "batches", "report batch-end", "report whole", "report collect",
+		"report suite", "lock acquire", "lock release", "pipeline", "git-auth",
+	} {
+		if !seen[want] {
+			t.Errorf("no generated step runs pipelinegen %s", want)
+		}
+	}
+}
+
+func walkTasks(v any, f func(M)) {
+	switch x := v.(type) {
+	case M:
+		if _, ok := x["task"]; ok {
+			if _, ok := x["config"].(M); ok {
+				f(x)
+			}
+		}
+
+		for _, k := range slices.Sorted(maps.Keys(x)) {
+			walkTasks(x[k], f)
+		}
+	case []any:
+		for _, e := range x {
+			walkTasks(e, f)
+		}
+	case []M:
+		for _, e := range x {
+			walkTasks(e, f)
+		}
+	}
+}
+
+func TestParseCallRefusesWhatTheToolRefuses(t *testing.T) {
+	for _, bad := range [][]string{
+		{"lock", "acquire", "browsers", "--minutes", "90", "--root", "source"},
+		{"report", "batch-end", "--root"},
+		{"report", "nothing"},
+		{"lock", "release", "--root", "source"},
+		{"unknown"},
+	} {
+		if _, err := parseCall(bad); err == nil {
+			t.Errorf("pipelinegen %s parsed", strings.Join(bad, " "))
+		}
+	}
+
+	c, err := parseCall([]string{"report", "batch-end", "--batch", "((.:batch))", "--result=result", "-root", "source"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	read, _, err := c.needs(M{"PIPELINEGEN_TRIGGER": "trigger"}, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	slices.Sort(read)
+
+	if got := strings.Join(slices.Compact(read), ","); got != "batches,coverage,result,source,tools,trigger" {
+		t.Errorf("batch-end reads %s", got)
+	}
+}

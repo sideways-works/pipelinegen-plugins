@@ -1,0 +1,42 @@
+# This repository's own root jobs, next to the ones pipelinegen generates:
+# a version tag (v1.2.3) builds and publishes a release. The release task and
+# script come from main, so an old tag is built by today's checks.
+resources:
+  - name: version-tag
+    type: git
+    icon: tag
+    check_every: 5m
+    tags: [cloud-1]
+    source:
+      uri: https://github.com/sideways-works/pipelinegen.git
+      username: x-access-token
+      password: ((github_token))
+      tag_regex: '^v[0-9]+\.[0-9]+\.[0-9]+$'
+      fetch_tags: true
+  - name: release-tools
+    type: git
+    icon: tools
+    tags: [cloud-1]
+    source:
+      uri: https://github.com/sideways-works/pipelinegen.git
+      username: x-access-token
+      password: ((github_token))
+      branch: main
+      paths: [ci/release.sh, ci/release.yml]
+
+jobs:
+  - name: release
+    serial: true
+    plan:
+      - in_parallel:
+          - get: version-tag
+            trigger: true
+            tags: [cloud-1]
+          - get: release-tools
+            tags: [cloud-1]
+      - task: release
+        file: release-tools/ci/release.yml
+        input_mapping: {source: version-tag}
+        params: {GITHUB_TOKEN: ((github_token))}
+        tags: [cloud-1]
+        timeout: 15m
