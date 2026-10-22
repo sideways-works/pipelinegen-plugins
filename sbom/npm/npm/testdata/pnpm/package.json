@@ -1,0 +1,7 @@
+{
+  "name": "demo",
+  "private": true,
+  "engines": {"node": ">=22"},
+  "packageManager": "pnpm@9.15.0",
+  "devDependencies": {"vite": "^6.0.0"}
+}
