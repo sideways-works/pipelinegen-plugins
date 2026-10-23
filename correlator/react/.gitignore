@@ -1,0 +1,7 @@
+node_modules/
+dist/
+!/dist/
+/dist/*
+!/dist/playwright.mjs
+test-results/
+testdata/site-vite/dist-*/
