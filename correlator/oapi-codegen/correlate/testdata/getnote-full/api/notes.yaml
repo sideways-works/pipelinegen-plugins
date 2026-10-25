@@ -1,0 +1,56 @@
+openapi: 3.0.3
+info: { title: Notes, version: "1" }
+servers:
+  - url: https://notes.example/api
+paths:
+  /notes:
+    get:
+      operationId: listNotes
+      responses:
+        "200":
+          description: The notes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Note" }
+    post:
+      operationId: createNote
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Note" }
+      responses:
+        "201": { description: Created. }
+  /notes/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getNote
+      parameters:
+        - { name: full, in: query, schema: { type: boolean } }
+      responses:
+        "200":
+          description: One note.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Note" }
+  /notes/drafts:
+    get:
+      operationId: list-drafts
+      responses:
+        "200": { description: Drafts. }
+  /notes/{id}.txt:
+    get:
+      operationId: getNoteText
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: The text. }
+components:
+  schemas:
+    Note:
+      type: object
+      properties:
+        id: { type: string }
+        text: { type: string }

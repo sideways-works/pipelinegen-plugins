@@ -1,0 +1,19 @@
+# The accounts context.
+paths:
+  /accounts/me:
+    get:
+      operationId: getMe
+      responses:
+        "200":
+          description: The caller.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Account" }
+        "401":
+          $ref: "../shared/common.yaml#/components/responses/Unauthorized"
+components:
+  schemas:
+    Account:
+      type: object
+      properties:
+        name: { type: string }

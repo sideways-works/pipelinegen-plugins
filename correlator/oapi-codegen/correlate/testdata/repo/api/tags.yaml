@@ -1,0 +1,10 @@
+openapi: 3.0.3
+info: { title: Tags, version: "1" }
+servers:
+  - url: https://notes.example/api
+paths:
+  /tags:
+    get:
+      operationId: listTags
+      responses:
+        "200": { description: The tags. }

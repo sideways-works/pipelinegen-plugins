@@ -1,0 +1,8 @@
+github.com/sideways-works/pipelinegen-sbom-go v0.2.0 h1:MX0Ufco5e1UiR2ENNaIaOK52UgNltnu+3G5ibb3FuTc=
+github.com/sideways-works/pipelinegen-sbom-go v0.2.0/go.mod h1:s1RXNAtsTkI9MKKI7I/52AtYNDAgJheBfJALDyccJOE=
+github.com/sideways-works/pipelinegen-sbom-openapi v0.2.0 h1:UNLfIVVJdUhbKjJcIt547iNA+dMWarJJi65ANzpXM/4=
+github.com/sideways-works/pipelinegen-sbom-openapi v0.2.0/go.mod h1:kxW0YJkOUJThc9dhgLBfMjan3F600kM66NQGh3bDnMI=
+go.yaml.in/yaml/v3 v3.0.6 h1:zcDfvjXEqTQmpjniUBLc91xYJMB2c4QOFxEF/LCEckM=
+go.yaml.in/yaml/v3 v3.0.6/go.mod h1:HVTZu1O7/Vkt2N+BFy8Zza+lnLsABggaTM2ZpNIGuKg=
+golang.org/x/mod v0.41.0 h1:qJmnOUb4YB+FsEuM3HcWucdZASCPGhsX6uljO6pog0c=
+golang.org/x/mod v0.41.0/go.mod h1:Ek9pY8RKWXwsWvd3rQiHYtMqkjSUV+s1Rj7j4H5Ur6o=
