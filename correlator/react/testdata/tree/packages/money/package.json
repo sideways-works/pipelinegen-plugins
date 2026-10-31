@@ -1,0 +1,10 @@
+{
+  "name": "@fixture/money",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./rates": {
+      "import": "./src/rates.ts"
+    }
+  }
+}
