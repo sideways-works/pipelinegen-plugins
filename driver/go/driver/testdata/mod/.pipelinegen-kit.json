@@ -1,0 +1,9 @@
+{"driver": {
+  "record": true,
+  "slices": [
+    {"name": "calc/add_test.go", "sources": ["calc/add_test.go"], "tests": ["TestAdd", "TestAddSub"]},
+    {"name": "calc/mul_test.go", "sources": ["calc/mul_test.go"], "tests": ["TestMul"]},
+    {"name": "kid/kid_test.go", "sources": ["kid/kid_test.go"], "tests": ["TestChild"]},
+    {"name": "kid/other_test.go", "sources": ["kid/other_test.go"], "tests": ["TestOther"]}
+  ]
+}}
