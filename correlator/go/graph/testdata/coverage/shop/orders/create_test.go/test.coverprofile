@@ -1,0 +1,17 @@
+mode: set
+example.com/shop/money/money.go:29.31,29.66 1 1
+example.com/shop/money/money.go:32.35,32.70 1 0
+example.com/shop/money/money.go:36.2,37.1 2 1
+example.com/shop/money/money.go:38.2,39.1 2 1
+example.com/shop/money/money.go:42.14,42.14 0 1
+example.com/shop/money/money.go:51.2,52.23 2 0
+example.com/shop/money/money.go:53.3,54.1 1 0
+example.com/shop/money/money.go:56.2,56.10 1 0
+example.com/shop/money/money.go:61.2,62.1 1 0
+example.com/shop/orders/orders.go:14.2,15.1 2 1
+example.com/shop/orders/orders.go:16.2,17.1 2 1
+example.com/shop/orders/orders.go:21.2,22.1 1 0
+example.com/shop/orders/orders.go:26.2,26.25 1 0
+example.com/shop/orders/orders.go:27.3,28.1 1 0
+example.com/shop/orders/orders.go:30.2,31.1 2 0
+example.com/shop/orders/orders.go:32.2,32.10 2 0
