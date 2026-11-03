@@ -1,0 +1,11 @@
+{"driver": {
+  "record": true,
+  "config": {"functions": "test_"},
+  "setup": {"script": "echo GREETING=hello >>\"$PIPELINEGEN_EXPORT\"", "stop": "echo stopped"},
+  "prepare": {"script": "echo built >\"$PIPELINEGEN_PREPARED/built\""},
+  "slices": [
+    {"name": "calc/add_test.sh", "sources": ["calc/add_test.sh"]},
+    {"name": "calc/neg_test.sh", "sources": ["calc/neg_test.sh"]},
+    {"name": "text/upper_test.sh", "sources": ["text/upper_test.sh"]}
+  ]
+}}
