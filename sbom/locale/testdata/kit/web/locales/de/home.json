@@ -1,0 +1,8 @@
+{
+  "title": "Willkommen",
+  "cart": {
+    "items_one": "{{count}} Ticket",
+    "items_other": "{{count}} Tickets"
+  },
+  "steps": ["Datum wählen", "Bezahlen"]
+}
