@@ -1,0 +1,7 @@
+<testsuites>
+	<testsuite errors="0" failures="1" skipped="0" tests="1" time="0.000" name="fx/fail/fail_test.TestBad">
+		<testcase classname="fail_test" name="TestBad" time="0.000">
+			<failure message="Failed" type="">--- FAIL: TestBad (0.00s)&#xA;    fail_test.go:7: the answer is not 42&#xA;</failure>
+		</testcase>
+	</testsuite>
+</testsuites>
