@@ -1,0 +1,1 @@
+{"booking": {"subject": "Deine Buchung", "lines": ["Hallo {{name}}", "Bis bald"], "extra": {"refund": "Erstattet"}}}

@@ -1,0 +1,7 @@
+{"recorder":"locale-keys","version":1,"runtime":"go","pid":11}
+{"c":"mail/locales","load":true}
+{"c":"mail/locales","l":"de","lang":true}
+{"c":"mail/locales","l":"de","n":"","k":"booking.subject"}
+{"c":"mail/locales","l":"de","n":"","k":"booking.lines"}
+{"c":"mail/locales","l":"de","n":"","k":"booking.extra.late"}
+{"c":"mail/locales","l":"en","n":"","k":"booking.extra.late"}

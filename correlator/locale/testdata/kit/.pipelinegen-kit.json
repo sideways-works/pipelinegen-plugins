@@ -1,0 +1,9 @@
+{"name": "locale-correlator",
+ "observe": {"slice": "mail/booking_test.go",
+             "dirs": ["rec/_setup/locale-correlator", "rec/mail/booking_test.go/locale-correlator"]},
+ "record": [
+   {"slice": "mail/booking_test.go", "run": ["sh", "source/kit/part.sh"], "parts": 2, "stack": false},
+   {"slice": "mail/booking_test.go", "run": ["sh", "source/kit/request.sh"], "parts": 2, "stack": true,
+    "config": {"log": "coverage/locale-keys.log"},
+    "serve": ["sh", "source/kit/serve.sh"], "ready": "coverage/locale-keys.ready"}
+ ]}
