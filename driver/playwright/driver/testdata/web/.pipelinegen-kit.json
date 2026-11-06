@@ -1,0 +1,8 @@
+{"driver": {
+  "record": true,
+  "slices": [
+    {"name": "e2e/a.spec.mjs", "sources": ["e2e/a.spec.mjs"]},
+    {"name": "e2e/b.spec.mjs", "sources": ["e2e/b.spec.mjs"]},
+    {"name": "e2e/c.spec.mjs", "sources": ["e2e/c.spec.mjs"]}
+  ]
+}}
