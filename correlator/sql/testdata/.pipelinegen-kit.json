@@ -1,0 +1,1 @@
+{"name": "sql", "observe": {"slice": "notes", "dirs": ["coverage/_setup/sql", "coverage/notes/sql"]}, "record": {"slice": "notes", "parts": 2, "run": ["sh", "source/kit-record.sh"], "config": {"log": "source/pglog"}}}
