@@ -1,0 +1,7 @@
+load("//:defs.bzl", "script_library", "script_test")
+
+script_library(name = "calc", srcs = ["calc.sh"])
+
+script_test(name = "add_test", src = "add_test.sh", deps = [":calc"])
+
+script_test(name = "neg_test", src = "neg_test.sh", deps = [":calc"])

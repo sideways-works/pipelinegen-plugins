@@ -1,0 +1,5 @@
+load("//:defs.bzl", "script_library", "script_test")
+
+script_library(name = "text", srcs = ["text.sh"])
+
+script_test(name = "upper_test", src = "upper_test.sh", deps = [":text"])

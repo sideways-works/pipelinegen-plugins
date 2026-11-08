@@ -1,0 +1,4 @@
+# The bazel driver's kit fixture: a workspace of shell tests with no
+# dependency, run by the kit through the fake Bazel beside it and by a real
+# Bazel in the driver's own test that has one.
+module(name = "bazel_driver_fixture")
