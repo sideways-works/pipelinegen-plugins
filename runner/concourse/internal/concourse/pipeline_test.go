@@ -566,9 +566,23 @@ func TestNoJobIsSerializedUnlessTheConfigAsks(t *testing.T) {
 		}
 	}
 
-	s := text(t, p)
-	if !strings.Contains(s, "max_in_flight: 4\n") {
-		t.Error("the batches lost their parallel")
+	// the batches step deals as many batches as run together, and all run
+	batches := 0
+
+	walkMaps(p, func(m M) {
+		for _, a := range asSlice(m["across"]) {
+			if asMap(a)["var"] == "batch" {
+				batches++
+
+				if asMap(a)["max_in_flight"] != "all" {
+					t.Errorf("batches run %v at once", asMap(a)["max_in_flight"])
+				}
+			}
+		}
+	})
+
+	if batches == 0 {
+		t.Error("no suite runs batches")
 	}
 }
 

@@ -47,7 +47,7 @@ jobs:
                 PIPELINEGEN_CONCOURSE_URL: https://ci.example
                 PIPELINEGEN_LIMIT: limits.steps=20
                 PIPELINEGEN_PIPELINE: fixture
-                PIPELINEGEN_PIPELINE_SHA256: 59336b26d4f04bd24cc370236efc8068929228e2a08e469fea0dc8f9948c09dd
+                PIPELINEGEN_PIPELINE_SHA256: 5ac2f852106dcc0fb4717f97dd3eeb86da456af422e6a151c443bddb42ef3b92
                 PIPELINEGEN_PIPELINE_STEP: "1"
                 PIPELINEGEN_PLUGINS: ""
                 PIPELINEGEN_PRIVATE: ""
@@ -1060,7 +1060,7 @@ jobs:
           do:
             - do:
                 - across:
-                    - max_in_flight: 2
+                    - max_in_flight: all
                       values: ((.:batches))
                       var: batch
                   do:
@@ -1595,7 +1595,7 @@ jobs:
                   task: prepare
                   timeout: 120m
                 - across:
-                    - max_in_flight: 4
+                    - max_in_flight: all
                       values: ((.:batches))
                       var: batch
                   do:
@@ -2511,7 +2511,7 @@ jobs:
           do:
             - do:
                 - across:
-                    - max_in_flight: 2
+                    - max_in_flight: all
                       values: ((.:batches))
                       var: batch
                   do:
@@ -3046,7 +3046,7 @@ jobs:
                   task: prepare
                   timeout: 120m
                 - across:
-                    - max_in_flight: 4
+                    - max_in_flight: all
                       values: ((.:batches))
                       var: batch
                   do:
@@ -5460,7 +5460,7 @@ jobs:
           do:
             - do:
                 - across:
-                    - max_in_flight: 2
+                    - max_in_flight: all
                       values: ((.:batches))
                       var: batch
                   do:
@@ -5995,7 +5995,7 @@ jobs:
                   task: prepare
                   timeout: 120m
                 - across:
-                    - max_in_flight: 4
+                    - max_in_flight: all
                       values: ((.:batches))
                       var: batch
                   do:

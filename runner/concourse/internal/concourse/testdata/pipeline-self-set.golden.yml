@@ -1030,7 +1030,7 @@ jobs:
           do:
             - do:
                 - across:
-                    - max_in_flight: 2
+                    - max_in_flight: all
                       values: ((.:batches))
                       var: batch
                   do:
@@ -1565,7 +1565,7 @@ jobs:
                   task: prepare
                   timeout: 120m
                 - across:
-                    - max_in_flight: 4
+                    - max_in_flight: all
                       values: ((.:batches))
                       var: batch
                   do:
@@ -2481,7 +2481,7 @@ jobs:
           do:
             - do:
                 - across:
-                    - max_in_flight: 2
+                    - max_in_flight: all
                       values: ((.:batches))
                       var: batch
                   do:
@@ -3016,7 +3016,7 @@ jobs:
                   task: prepare
                   timeout: 120m
                 - across:
-                    - max_in_flight: 4
+                    - max_in_flight: all
                       values: ((.:batches))
                       var: batch
                   do:
@@ -5430,7 +5430,7 @@ jobs:
           do:
             - do:
                 - across:
-                    - max_in_flight: 2
+                    - max_in_flight: all
                       values: ((.:batches))
                       var: batch
                   do:
@@ -5965,7 +5965,7 @@ jobs:
                   task: prepare
                   timeout: 120m
                 - across:
-                    - max_in_flight: 4
+                    - max_in_flight: all
                       values: ((.:batches))
                       var: batch
                   do:

@@ -959,8 +959,6 @@ func (g *gen) suiteJob(run, suite string) M {
 	s := g.suites[suite]
 	tags := g.suiteTags(run, suite)
 
-	parallel := max(s.Parallel, 1)
-
 	var work []any
 
 	// Fetched inside the gated work, so a build that runs nothing fetches
@@ -976,7 +974,9 @@ func (g *gen) suiteJob(run, suite string) M {
 	work = append(work, g.prepare(run, suite)...)
 	work = append(work,
 		M{
-			"across":    []any{M{"var": "batch", "values": "((.:batches))", "max_in_flight": parallel}},
+			// every batch at once: the batches step deals at most as many as
+			// should run together, and across alone runs one at a time
+			"across":    []any{M{"var": "batch", "values": "((.:batches))", "max_in_flight": "all"}},
 			"fail_fast": false,
 			"do":        []any{g.lockedPerBatch(run, suite, g.batchStep(run, suite), true)},
 		},
