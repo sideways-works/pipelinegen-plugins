@@ -1,0 +1,23 @@
+{"connector": {
+  "remote": "{server}/team/app.git",
+  "config": {"api": "{server}/api/v3"},
+  "responses": [
+    {"method": "GET", "path": "/api/v3/repos/team/app/pulls", "query": "state=open&base=main&per_page=100&page=1", "status": 200, "body_file": "pulls.json"},
+    {"method": "POST", "path": "/api/v3/repos/team/app/statuses/1111111111111111111111111111111111111111", "status": 201, "body": "{}"},
+    {"method": "GET", "path": "/api/v3/repos/team/app/commits/1111111111111111111111111111111111111111/status", "query": "per_page=100&page=1", "status": 200,
+     "body": "{\"statuses\": [{\"context\": \"pipelinegen/review\", \"state\": \"failure\", \"description\": \"1 of 3 suites failed\"}]}"},
+    {"method": "GET", "path": "/api/v3/repos/team/app/commits/1111111111111111111111111111111111111111", "status": 200, "body": "{\"commit\": {\"message\": \"Fix the cart\\n\\nwith a body\"}}"},
+    {"method": "GET", "path": "/api/v3/repos/team/app/issues/7/comments", "query": "per_page=100&page=1", "status": 200, "body": "[]"},
+    {"method": "POST", "path": "/api/v3/repos/team/app/issues/7/comments", "status": 201, "body": "{}"}
+  ],
+  "calls": {
+    "changes": {"base": "main"},
+    "status": {"commit": "1111111111111111111111111111111111111111", "context": "pipelinegen/review", "state": "pending", "text": "planning"},
+    "statuses": {"commit": "1111111111111111111111111111111111111111"},
+    "subject": {"commit": "1111111111111111111111111111111111111111"},
+    "comment": {"change": "pr-7", "marker": "<!-- pipelinegen -->", "body": "<!-- pipelinegen --> 3 suites"},
+    "links": {"commit": "1111111111111111111111111111111111111111", "change": "pr-7"}
+  },
+  "forks": ["pr-8"],
+  "same": ["pr-7"]
+}}

@@ -1,0 +1,8 @@
+[
+  {"number": 7, "draft": false, "labels": [{"name": "ready"}], "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-02T00:00:00Z",
+   "head": {"sha": "1111111111111111111111111111111111111111", "ref": "feature", "repo": {"id": 1, "full_name": "team/app"}},
+   "base": {"sha": "", "ref": "main", "repo": {"id": 1, "full_name": "team/app"}}},
+  {"number": 8, "draft": false, "labels": [], "created_at": "2026-01-01T00:00:00Z", "updated_at": "2026-01-03T00:00:00Z",
+   "head": {"sha": "2222222222222222222222222222222222222222", "ref": "feature", "repo": {"id": 9, "full_name": "someone/app"}},
+   "base": {"sha": "", "ref": "main", "repo": {"id": 1, "full_name": "team/app"}}}
+]
