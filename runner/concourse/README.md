@@ -8,7 +8,7 @@ pipeline. `pipelinegen pipeline` calls it.
 
 A runner records nothing about the code. The pipeline it writes calls
 pipelinegen's own commands (`plan`, `unplanned`, `tree`, `batches`,
-`slice start`, `slice end`, `report`, `lock`), which know no CI system, and the slices a
+`slice start`, `slice end`, `report`), which know no CI system, and the slices a
 run selects never appear in the pipeline: a suite job learns them at run
 time from the run's plan.
 
@@ -118,7 +118,7 @@ setup of its own, and neither does a suite a rule gives `tags: []`.
 | `pipeline` | the `pipeline` job | nothing |
 | `planning` | a run's planning job and a pull request run's sweep | a run |
 | `checks` | the checks of the generated resources and resource types | nothing |
-| `suite` | every step of a suite job but its bookkeeping: the gets, `start`, the prepare, the suite image, the batches, the whole-suite checks and their helpers, the lock's helpers, the `report-error` hooks; for a suite run by drivers (`steps`), its prepare task and the batch tasks that run its set-up and run steps too | a run, a suite |
+| `suite` | every step of a suite job but its bookkeeping: the gets, `start`, the prepare, the suite image, the batches, the whole-suite checks and their helpers, the `report-error` hooks; for a suite run by drivers (`steps`), its prepare task and the batch tasks that run its set-up and run steps too | a run, a suite |
 | `bookkeeping` | each batch's `batch-end` and the suite job's `end`; see [Workers](#workers) | a run, a suite |
 
 A suite's bookkeeping that no rule places runs with its suite. In the
@@ -193,15 +193,15 @@ repository's own parts from its include file.
   of the repository's gets it. `PIPELINEGEN_JOB_URL` is the job's link and
   goes to the suite jobs' tasks alone.
 - A suite job's `start` task writes the tree under test and the gates,
-  and when the plan selected anything of the suite it takes the suite's
-  lock and deals the selected slices into batches. The job runs one batch
+  and when the plan selected anything of the suite it deals the selected
+  slices into batches. The job runs one batch
   task per batch with `across` and `max_in_flight: all`, every batch at
   once (the suite's `parallel`, `batches` and `batch_minutes` say how many
   batches it deals), and each
   batch's `batch-end` runs in that batch's `ensure`, so every batch reports
   as it ends, whatever it did. Each whole-suite check runs only when the
-  plan selected it. The `end` task runs in the job's `ensure`: it frees the
-  lock and reports the suite.
+  plan selected it. The `end` task runs in the job's `ensure`: it reports
+  the suite.
 - A suite's `run_on.serial_group` is one Concourse serial group for every
   run, unless `concourse.serial_groups.<group>.per_run` is true: then
   each run has its own, `<group>-<run>`, and a run's builds never queue
@@ -402,10 +402,10 @@ pipeline it always gave.
 - **Installs.** Every task the runner writes that runs pipelinegen runs
   the spec's install script first, in the same shell: the suite's before
   `slice run` and `slice prepare`, the planner's before the rest (the
-  bootstrap, planning, the reports, the locks). The script finds the
-  image's package manager, installs only what is missing, and does nothing
-  when the image has it all. Each such task keeps a `pkgcache` cache that
-  the manager downloads into (`PIPELINEGEN_PACKAGE_CACHE`), so a worker
+  bootstrap, planning, the reports). The script finds the image's
+  package manager, installs only what is missing, and does nothing when
+  the image has it all. Each such task keeps a `pkgcache` cache that the
+  manager downloads into (`PIPELINEGEN_PACKAGE_CACHE`), so a worker
   downloads a package once. The `report-error` task goes on without the
   packages when they can't be installed, so a broken build is still
   reported. A task file is the repository's own script: nothing goes in
@@ -483,6 +483,14 @@ output would otherwise stream from the bookkeeping worker to every batch
 on the test workers. The `report-error` hooks of a build that broke stay
 on the suite's tags too.
 
+No step takes a lock: every batch of a build starts at once, and the
+worker that takes it runs it. Admitting a batch only while its node has
+free memory is coming next; until then nothing but the workers and their
+tags keeps two repositories' pipelines from overfilling a shared
+machine. A spec from an older pipelinegen may still hold a suite's
+`lock`: the runner writes the same pipeline as without it and says so in
+a notice.
+
 ### Continuous runs
 
 A run whose trigger is `{branch: main, continuous: true}` takes every
@@ -505,8 +513,7 @@ puts the run's `planned-<run>` hand-off; one that exited puts nothing.
 The suite jobs trigger on those hand-offs (`version: every`, passed the
 planning job) and take the branch's commit of the same planning build, so
 a superseded or unchanged commit shows one green planning build and no
-suite build. A suite's `lock` is taken as in any other run: per batch with
-`per: batch`, else around the whole build.
+suite build.
 
 The `pipeline` job runs its builds side by side too. pipelinegen gives a
 build whose config the default branch no longer has a closed gate, so it
@@ -522,9 +529,7 @@ The minutes come from the spec:
 
 - each of the suite's own tasks (the prepare, each batch, each
   whole-suite check) has the suite's `minutes` in the run, on its own, so
-  one batch that hangs ends while the others go on. A suite whose lock is
-  taken per build also has them around all its work after the start task
-  took the lock, which the lease covers;
+  one batch that hangs ends while the others go on;
 - the planning job's and the sweep's tasks and puts have `limits.plan`,
   and a continuous run's plan task the run's `wait_minutes` on top, for
   the wait for the round in progress: its decision has the task's whole
@@ -533,10 +538,7 @@ The minutes come from the spec:
   `PIPELINEGEN_LIMIT` again there);
 - pipelinegen's own steps have `limits.steps`: the start task, each
   batch's end, the checks' collect and report, the end task, the
-  pipeline job. The start task that takes a lock per build, and the lock
-  step of a lock per batch, have the lock's wait on top. That wait never
-  counts against the batch the lock guards: the lock step and the batch
-  have a limit each.
+  pipeline job.
 
 A step in an `ensure` or another hook carries its own `timeout`: Concourse
 runs a hook after a limit ended the step, outside that limit. A timeout
@@ -558,9 +560,7 @@ minutes), and a task that begins with a script exports
 `PIPELINEGEN_DEADLINE` at its start: pipelinegen ends two minutes before
 the limit and says which one it reached. The end task gets the start
 task's `batches`, where pipelinegen stamped when the suite's work began,
-and a lock taken per batch stamps into an output of its own (`begun`) that
-the batch's end reads, so a slice a stopped task left open says whether a
-limit stopped it.
+so a slice a stopped task left open says whether a limit stopped it.
 
 ## A batch task's inputs
 
@@ -591,7 +591,7 @@ params, `secrets.whole`, those three and `PIPELINEGEN_JOB_URL`.
 The pipeline needs one GitHub token, as a Concourse variable that the
 config's `github.token` names. It uses the token to clone the repository
 and fetch its commits; to read and write pipelinegen's hidden refs (plans,
-run state, lists, the plugin cache, locks); to post commit statuses and
+run state, lists, the plugin cache); to post commit statuses and
 the pull request comment; and to download pipelinegen's and the plugins'
 releases. The least it needs is a fine-grained token for that one
 repository with contents read and write (for the hidden refs), commit
@@ -672,8 +672,8 @@ never get it: pipelinegen runs them with a fixed, minimal environment.
 The requests and answers follow pipelinegen's
 [plugin protocol](https://github.com/sideways-works/pipelinegen/blob/main/docs/plugins.md).
 `describe` declares the kind `runner` and the capabilities `pipeline`,
-`repeat-at-run-time` (`across`), `job-caches`, `rerun`, `locks`,
-`connector_changes`, `ssh_keys`, `continuous`, `lock_per_batch`, `steps`,
+`repeat-at-run-time` (`across`), `job-caches`, `rerun`,
+`connector_changes`, `ssh_keys`, `continuous`, `steps`,
 `placement` (it reads the [placement](#placement) from its own config) and
 `packages` (see [packages and cached images](#packages-and-cached-images)).
 `pipeline` reads the spec and the repository's root (for the include
