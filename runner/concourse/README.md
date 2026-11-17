@@ -390,6 +390,55 @@ needs: `sh`, `git`, `curl`, `awk`, `sha256sum` and CA certificates. The
 prepare command still never sees the pipeline's token unless
 `planner.secrets` declares it.
 
+### Packages and cached images
+
+pipelinegen's spec may name packages: each suite's (`packages` and
+`suites.<name>.packages` of the config), the planner's
+(`concourse.planner.packages`), and a registry of cached images
+(`images`). The runner reads them from the request, so it builds against
+pipelinegen releases that predate them. A spec without them gives the
+pipeline it always gave.
+
+- **Installs.** Every task the runner writes that runs pipelinegen runs
+  the spec's install script first, in the same shell: the suite's before
+  `slice run` and `slice prepare`, the planner's before the rest (the
+  bootstrap, planning, the reports, the locks). The script finds the
+  image's package manager, installs only what is missing, and does nothing
+  when the image has it all. Each such task keeps a `pkgcache` cache that
+  the manager downloads into (`PIPELINEGEN_PACKAGE_CACHE`), so a worker
+  downloads a package once. The `report-error` task goes on without the
+  packages when they can't be installed, so a broken build is still
+  reported. A task file is the repository's own script: nothing goes in
+  front of it, and its suite gets its packages only from a cached image.
+- **Building a cached image.** For each image the spec names, a job
+  `image-<key>` runs when the config changes. A `look` task in
+  `concourse/registry-image-resource` asks the registry for
+  `<registry>:<key>`. When it is missing, a `build` task in
+  `concourse/oci-build-task` builds it on the base resource, fetched at
+  its pinned digest as an OCI tarball, with the install script run as
+  root, and a put pushes it. The build task is `privileged`, as
+  `oci-build-task` requires, though it needs no Docker daemon. The
+  registry-image resource can push but can't build, and no unprivileged
+  builder keeps the base's config. The job takes nothing from the
+  repository but the config's version: the recipe is the spec's, and the
+  base the pinned resource. It holds no lock and is in no serial group.
+  Two builds that race push the same packages on the same base. The
+  resources it pushes through (`cached-<key>`) are never checked.
+- **Running in it.** A suite's job fetches its cached image in an
+  `image-<key>` task at the start of its work, and its prepare, batch and
+  whole-suite tasks run in that artifact. It is a task, not a `get`, since
+  every `get` is an input of the job, and a build would wait for an image
+  the registry hasn't got. When the registry hasn't got the image or can't
+  be reached, the task fetches the base at its digest instead, says so,
+  and the installs do the work.
+- **Credentials.** `images.credentials` (`((name.username))`,
+  `((name.password))`) is in the image jobs and their resources, nowhere
+  else: no suite job, planning job or pull request's job holds it.
+  `images.pull_credentials`, when set, is in the fetch task, which runs no
+  code of the repository's. Neither reaches a task that does.
+- **The planner** is never swapped for a cached image: its steps hold the
+  tokens that write.
+
 ### Workers
 
 Each batch's `batch-end` and each suite job's `end` only report: they run
@@ -624,8 +673,9 @@ The requests and answers follow pipelinegen's
 [plugin protocol](https://github.com/sideways-works/pipelinegen/blob/main/docs/plugins.md).
 `describe` declares the kind `runner` and the capabilities `pipeline`,
 `repeat-at-run-time` (`across`), `job-caches`, `rerun`, `locks`,
-`connector_changes`, `ssh_keys`, `continuous`, `lock_per_batch` and
-`placement` (it reads the [placement](#placement) from its own config).
+`connector_changes`, `ssh_keys`, `continuous`, `lock_per_batch`, `steps`,
+`placement` (it reads the [placement](#placement) from its own config) and
+`packages` (see [packages and cached images](#packages-and-cached-images)).
 `pipeline` reads the spec and the repository's root (for the include
 file) and answers `{"files": ["pipeline.yml"]}` in the work directory. A
 call of another kind fails.
