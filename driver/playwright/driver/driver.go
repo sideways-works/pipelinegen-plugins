@@ -33,6 +33,9 @@ type Settings struct {
 	// (default true).
 	Install *bool    `json:"install"`
 	Flags   []string `json:"flags"`
+	// Files keeps a failed test's screenshot, error context and trace as
+	// the slice's failure files (default true).
+	Files *bool `json:"files"`
 }
 
 func Handlers(log io.Writer) plugin.DriverHandlers {
@@ -55,6 +58,7 @@ func describe() (plugin.Description, error) {
 		Settings: map[string]string{
 			"dir": plugin.SettingString, "config": plugin.SettingString, "project": plugin.SettingString,
 			"workers": plugin.SettingInt, "install": plugin.SettingBool, "flags": plugin.SettingList,
+			"files": plugin.SettingBool,
 		},
 	}, nil
 }
@@ -144,6 +148,11 @@ func run(ctx context.Context, req plugin.DriverRequest, emit func(plugin.DriverE
 		ev, ok := end(sl.Name, files[sl.Name], stopped)
 		if !ok {
 			continue
+		}
+
+		// copied before the next run, which clears Playwright's output
+		if !ev.Passed && sl.Files != "" && (j.set.Files == nil || *j.set.Files) {
+			ev.Files = keep(sl.Files, files[sl.Name], j.log)
 		}
 
 		if req.Record {

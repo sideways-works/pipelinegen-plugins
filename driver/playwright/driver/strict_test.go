@@ -18,7 +18,7 @@ func TestASettingTheDriverWouldIgnoreIsRefused(t *testing.T) {
 		want string
 	}{
 		{map[string]any{"wokers": 2}, "wokers: unknown key; the keys of playwright-driver's settings are " +
-			"dir, config, project, workers, install, flags"},
+			"dir, config, project, workers, install, flags, files"},
 		{map[string]any{"workers": "2"}, `workers: takes a whole number, not "2"`},
 		{map[string]any{"workers": 1.5}, "workers: takes a whole number, not 1.5"},
 		{map[string]any{"flags": "--retries=2"}, `flags: takes a list, not "--retries=2"`},
