@@ -1,11 +1,9 @@
 # The suite job's last task, in its ensure: it runs whatever the build did.
 # A build that broke before its tools or its trigger were there has nothing
 # to report (its on_error posted that), and ends here.
-# For a suite that took something per build it first frees it, when the
-# start task took it (a tree was written); then it reports the suite from
-# the trigger. A suite's end that could not be recorded (exit 4) fails the
-# job; any other failure here is said and passes, since the suite's own
-# statuses show it.
+# It reports the suite from the trigger. A suite's end that could not be
+# recorded (exit 4) fails the job; any other failure here is said and
+# passes, since the suite's own statuses show it.
 set -eu
 if ! test -x tools/pipelinegen || ! test -d trigger; then
   echo "no tools or no trigger: the build broke before it could report" >&2

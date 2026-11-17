@@ -594,11 +594,9 @@ jobs:
                       # The suite job's last task, in its ensure: it runs whatever the build did.
                       # A build that broke before its tools or its trigger were there has nothing
                       # to report (its on_error posted that), and ends here.
-                      # For a suite that took something per build it first frees it, when the
-                      # start task took it (a tree was written); then it reports the suite from
-                      # the trigger. A suite's end that could not be recorded (exit 4) fails the
-                      # job; any other failure here is said and passes, since the suite's own
-                      # statuses show it.
+                      # It reports the suite from the trigger. A suite's end that could not be
+                      # recorded (exit 4) fails the job; any other failure here is said and
+                      # passes, since the suite's own statuses show it.
                       set -eu
                       if ! test -x tools/pipelinegen || ! test -d trigger; then
                         echo "no tools or no trigger: the build broke before it could report" >&2
@@ -1002,8 +1000,7 @@ jobs:
                       )
                       # The suite job's first task, after the bootstrap: the tree under test and
                       # the gates, then, when the plan selected anything of the suite, the
-                      # batches (and before them what the suite takes per build, when it has
-                      # that). With the gate shut there are no batches. Nothing here starts
+                      # batches. With the gate shut there are no batches. Nothing here starts
                       # Bazel.
                       set -eu
 
@@ -1013,7 +1010,6 @@ jobs:
                         echo '[]' > batches/batches.json
                         exit 0
                       fi
-
 
                       exec tools/pipelinegen batches --run "$PIPELINEGEN_RUN" --suite "$PIPELINEGEN_SUITE" --trigger trigger --out batches --root source
                 path: sh
@@ -1106,11 +1102,9 @@ jobs:
                       # The suite job's last task, in its ensure: it runs whatever the build did.
                       # A build that broke before its tools or its trigger were there has nothing
                       # to report (its on_error posted that), and ends here.
-                      # For a suite that took something per build it first frees it, when the
-                      # start task took it (a tree was written); then it reports the suite from
-                      # the trigger. A suite's end that could not be recorded (exit 4) fails the
-                      # job; any other failure here is said and passes, since the suite's own
-                      # statuses show it.
+                      # It reports the suite from the trigger. A suite's end that could not be
+                      # recorded (exit 4) fails the job; any other failure here is said and
+                      # passes, since the suite's own statuses show it.
                       set -eu
                       if ! test -x tools/pipelinegen || ! test -d trigger; then
                         echo "no tools or no trigger: the build broke before it could report" >&2
@@ -1524,8 +1518,7 @@ jobs:
                       )
                       # The suite job's first task, after the bootstrap: the tree under test and
                       # the gates, then, when the plan selected anything of the suite, the
-                      # batches (and before them what the suite takes per build, when it has
-                      # that). With the gate shut there are no batches. Nothing here starts
+                      # batches. With the gate shut there are no batches. Nothing here starts
                       # Bazel.
                       set -eu
 
@@ -1535,7 +1528,6 @@ jobs:
                         echo '[]' > batches/batches.json
                         exit 0
                       fi
-
 
                       exec tools/pipelinegen batches --run "$PIPELINEGEN_RUN" --suite "$PIPELINEGEN_SUITE" --trigger trigger --out batches --root source
                 path: sh
@@ -2045,11 +2037,9 @@ jobs:
                       # The suite job's last task, in its ensure: it runs whatever the build did.
                       # A build that broke before its tools or its trigger were there has nothing
                       # to report (its on_error posted that), and ends here.
-                      # For a suite that took something per build it first frees it, when the
-                      # start task took it (a tree was written); then it reports the suite from
-                      # the trigger. A suite's end that could not be recorded (exit 4) fails the
-                      # job; any other failure here is said and passes, since the suite's own
-                      # statuses show it.
+                      # It reports the suite from the trigger. A suite's end that could not be
+                      # recorded (exit 4) fails the job; any other failure here is said and
+                      # passes, since the suite's own statuses show it.
                       set -eu
                       if ! test -x tools/pipelinegen || ! test -d trigger; then
                         echo "no tools or no trigger: the build broke before it could report" >&2
@@ -2453,8 +2443,7 @@ jobs:
                       )
                       # The suite job's first task, after the bootstrap: the tree under test and
                       # the gates, then, when the plan selected anything of the suite, the
-                      # batches (and before them what the suite takes per build, when it has
-                      # that). With the gate shut there are no batches. Nothing here starts
+                      # batches. With the gate shut there are no batches. Nothing here starts
                       # Bazel.
                       set -eu
 
@@ -2464,7 +2453,6 @@ jobs:
                         echo '[]' > batches/batches.json
                         exit 0
                       fi
-
 
                       exec tools/pipelinegen batches --run "$PIPELINEGEN_RUN" --suite "$PIPELINEGEN_SUITE" --trigger trigger --out batches --root source
                 path: sh
@@ -2557,11 +2545,9 @@ jobs:
                       # The suite job's last task, in its ensure: it runs whatever the build did.
                       # A build that broke before its tools or its trigger were there has nothing
                       # to report (its on_error posted that), and ends here.
-                      # For a suite that took something per build it first frees it, when the
-                      # start task took it (a tree was written); then it reports the suite from
-                      # the trigger. A suite's end that could not be recorded (exit 4) fails the
-                      # job; any other failure here is said and passes, since the suite's own
-                      # statuses show it.
+                      # It reports the suite from the trigger. A suite's end that could not be
+                      # recorded (exit 4) fails the job; any other failure here is said and
+                      # passes, since the suite's own statuses show it.
                       set -eu
                       if ! test -x tools/pipelinegen || ! test -d trigger; then
                         echo "no tools or no trigger: the build broke before it could report" >&2
@@ -2975,8 +2961,7 @@ jobs:
                       )
                       # The suite job's first task, after the bootstrap: the tree under test and
                       # the gates, then, when the plan selected anything of the suite, the
-                      # batches (and before them what the suite takes per build, when it has
-                      # that). With the gate shut there are no batches. Nothing here starts
+                      # batches. With the gate shut there are no batches. Nothing here starts
                       # Bazel.
                       set -eu
 
@@ -2986,7 +2971,6 @@ jobs:
                         echo '[]' > batches/batches.json
                         exit 0
                       fi
-
 
                       exec tools/pipelinegen batches --run "$PIPELINEGEN_RUN" --suite "$PIPELINEGEN_SUITE" --trigger trigger --out batches --root source
                 path: sh
@@ -4994,11 +4978,9 @@ jobs:
                       # The suite job's last task, in its ensure: it runs whatever the build did.
                       # A build that broke before its tools or its trigger were there has nothing
                       # to report (its on_error posted that), and ends here.
-                      # For a suite that took something per build it first frees it, when the
-                      # start task took it (a tree was written); then it reports the suite from
-                      # the trigger. A suite's end that could not be recorded (exit 4) fails the
-                      # job; any other failure here is said and passes, since the suite's own
-                      # statuses show it.
+                      # It reports the suite from the trigger. A suite's end that could not be
+                      # recorded (exit 4) fails the job; any other failure here is said and
+                      # passes, since the suite's own statuses show it.
                       set -eu
                       if ! test -x tools/pipelinegen || ! test -d trigger; then
                         echo "no tools or no trigger: the build broke before it could report" >&2
@@ -5402,8 +5384,7 @@ jobs:
                       )
                       # The suite job's first task, after the bootstrap: the tree under test and
                       # the gates, then, when the plan selected anything of the suite, the
-                      # batches (and before them what the suite takes per build, when it has
-                      # that). With the gate shut there are no batches. Nothing here starts
+                      # batches. With the gate shut there are no batches. Nothing here starts
                       # Bazel.
                       set -eu
 
@@ -5413,7 +5394,6 @@ jobs:
                         echo '[]' > batches/batches.json
                         exit 0
                       fi
-
 
                       exec tools/pipelinegen batches --run "$PIPELINEGEN_RUN" --suite "$PIPELINEGEN_SUITE" --trigger trigger --out batches --root source
                 path: sh
@@ -5506,11 +5486,9 @@ jobs:
                       # The suite job's last task, in its ensure: it runs whatever the build did.
                       # A build that broke before its tools or its trigger were there has nothing
                       # to report (its on_error posted that), and ends here.
-                      # For a suite that took something per build it first frees it, when the
-                      # start task took it (a tree was written); then it reports the suite from
-                      # the trigger. A suite's end that could not be recorded (exit 4) fails the
-                      # job; any other failure here is said and passes, since the suite's own
-                      # statuses show it.
+                      # It reports the suite from the trigger. A suite's end that could not be
+                      # recorded (exit 4) fails the job; any other failure here is said and
+                      # passes, since the suite's own statuses show it.
                       set -eu
                       if ! test -x tools/pipelinegen || ! test -d trigger; then
                         echo "no tools or no trigger: the build broke before it could report" >&2
@@ -5924,8 +5902,7 @@ jobs:
                       )
                       # The suite job's first task, after the bootstrap: the tree under test and
                       # the gates, then, when the plan selected anything of the suite, the
-                      # batches (and before them what the suite takes per build, when it has
-                      # that). With the gate shut there are no batches. Nothing here starts
+                      # batches. With the gate shut there are no batches. Nothing here starts
                       # Bazel.
                       set -eu
 
@@ -5935,7 +5912,6 @@ jobs:
                         echo '[]' > batches/batches.json
                         exit 0
                       fi
-
 
                       exec tools/pipelinegen batches --run "$PIPELINEGEN_RUN" --suite "$PIPELINEGEN_SUITE" --trigger trigger --out batches --root source
                 path: sh
