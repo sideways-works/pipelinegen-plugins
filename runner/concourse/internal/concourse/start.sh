@@ -12,6 +12,5 @@ if ! grep -q '"1"' gate/gate.json; then
   exit 0
 fi
 
-#ACQUIRE#
 
 exec tools/pipelinegen batches --run "$PIPELINEGEN_RUN" --suite "$PIPELINEGEN_SUITE" --trigger trigger --out batches --root source

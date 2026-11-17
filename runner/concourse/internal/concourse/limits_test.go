@@ -25,11 +25,11 @@ func limitSpecs(t *testing.T) map[string]rooted {
 
 	perBatch, _ := fixture(t)
 	for i := range perBatch.Suites {
-		perBatch.Suites[i].Lock = &plugin.SpecLock{Name: "stack", Slots: 2, Per: lockPerBatch}
+		perBatch.Suites[i].Lock = &plugin.SpecLock{Name: "stack", Slots: 2, Per: "batch"}
 	}
 
 	perBatch.Suites[suiteIndex(t, perBatch, "e2e")].WholeSuite = []plugin.SpecWholeSuite{{Name: "money", Task: "ci/money.yml"}}
-	out["per batch"] = rooted{perBatch, t.TempDir()}
+	out["an older tool's lock per batch"] = rooted{perBatch, t.TempDir()}
 
 	cont, _ := fixture(t)
 	cont.Suites[suiteIndex(t, cont, "e2e")].Lock = &plugin.SpecLock{Name: "browsers"}
@@ -108,60 +108,9 @@ func unbounded(v any, bounded bool) []string {
 	return out
 }
 
-func TestALocksWaitIsNoPartOfTheBatchsLimit(t *testing.T) {
-	spec, root := fixture(t)
-	spec.Suites[suiteIndex(t, spec, "e2e")].Lock = &plugin.SpecLock{Name: "browsers", Minutes: 50, Slots: 2, Per: lockPerBatch}
-	spec.Limits = plugin.SpecLimits{Plan: 45, Steps: 15, LockWait: 240}
-
-	pr := &spec.Runs[runIndex(t, spec, "pr")]
-	for i := range pr.Suites {
-		if pr.Suites[i].Suite == "e2e" {
-			pr.Suites[i].Minutes = 50
-		}
-	}
-
-	p, err := Generate(spec, root)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var guarded M
-
-	walkMaps(jobByName(t, p, "pr-e2e"), func(m M) {
-		if do := asSlice(m["do"]); len(do) == 2 && asMap(do[0])["task"] == "lock" && asMap(do[1])["task"] == "batch" {
-			guarded = m
-		}
-	})
-
-	if guarded == nil {
-		t.Fatal("no step takes the lock around a batch")
-	}
-
-	do := asSlice(guarded["do"])
-	lock, batch := asMap(do[0]), asMap(do[1])
-
-	switch {
-	case guarded["timeout"] != nil:
-		t.Errorf("one limit of %v holds both the wait for a slot and the batch", guarded["timeout"])
-	case lock["timeout"] != "255m":
-		t.Errorf("the lock step's limit is %v, want the steps' and the lock's wait, 255m", lock["timeout"])
-	case batch["timeout"] != "50m":
-		t.Errorf("the batch's limit is %v, want the run's minutes for the suite, 50m", batch["timeout"])
-	}
-
-	if args := fmt.Sprint(asMap(asMap(lock["config"])["run"])["args"]); !strings.Contains(args, "--started begun") {
-		t.Errorf("the lock step stamps nothing: %s", args)
-	}
-
-	end := asMap(batch["ensure"])
-	if args := fmt.Sprint(asMap(asMap(end["config"])["run"])["args"]); !strings.Contains(args, "--started begun") || end["timeout"] != "15m" {
-		t.Errorf("the batch's end: %s, limit %v", args, end["timeout"])
-	}
-}
-
 func TestEachStepHasItsLimit(t *testing.T) {
 	spec, root := fixture(t)
-	spec.Limits = plugin.SpecLimits{Plan: 45, Steps: 15, LockWait: 240}
+	spec.Limits = plugin.SpecLimits{Plan: 45, Steps: 15}
 	spec.Suites[suiteIndex(t, spec, "backend")].Lock = &plugin.SpecLock{Name: "db"}
 
 	for i := range spec.Runs {
@@ -192,13 +141,13 @@ func TestEachStepHasItsLimit(t *testing.T) {
 	e2e := jobByName(t, p, "pr-e2e")
 	walkMaps(e2e, func(m M) {
 		if _, ok := m["across"]; ok && m["timeout"] != nil {
-			t.Errorf("a suite without a lock bounds its whole work: %v", m["timeout"])
+			t.Errorf("a suite bounds its whole work: %v", m["timeout"])
 		}
 	})
 
 	for task, want := range map[string]string{
 		"pr-e2e/start": "15m", "pr-e2e/batch": "70m", "pr-e2e/batch-end": "15m", "pr-e2e/end": "15m",
-		"pr-backend/start": "255m", "pr-backend/batch": "70m",
+		"pr-backend/start": "15m", "pr-backend/batch": "70m",
 		"plan-full/plan": "345m", "plan-main/plan": "45m", "plan-pr/plan": "45m", "plan-pr/write": "45m",
 		"sweep-pr/sweep": "45m", "sweep-pr/plan": "45m", "sweep-pr/write": "45m",
 	} {

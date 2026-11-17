@@ -162,7 +162,7 @@ func TestShape(t *testing.T) {
 	}
 }
 
-func TestLockSerialGroupAndInclude(t *testing.T) {
+func TestSerialGroupAndInclude(t *testing.T) {
 	cfg, _ := fixture(t)
 
 	e2e := &cfg.Suites[suiteIndex(t, cfg, "e2e")]
@@ -173,14 +173,14 @@ func TestLockSerialGroupAndInclude(t *testing.T) {
 	pr := &cfg.Runs[runIndex(t, cfg, "pr")]
 	for i := range pr.Suites {
 		if pr.Suites[i].Suite == "e2e" {
-			pr.Suites[i].LockMinutes = 30
+			pr.Suites[i].Minutes = 30
 		}
 	}
 
 	for i := range cfg.Runs {
 		for j := range cfg.Runs[i].Suites {
-			if cfg.Runs[i].Suites[j].Suite == "e2e" && cfg.Runs[i].Suites[j].LockMinutes == 0 {
-				cfg.Runs[i].Suites[j].LockMinutes = 90
+			if cfg.Runs[i].Suites[j].Suite == "e2e" && cfg.Runs[i].Suites[j].Minutes == 0 {
+				cfg.Runs[i].Suites[j].Minutes = 90
 			}
 		}
 	}
@@ -199,9 +199,15 @@ func TestLockSerialGroupAndInclude(t *testing.T) {
 
 	s := text(t, p)
 
-	for _, want := range []string{"PIPELINEGEN_LOCK: browsers", "lock acquire \"$PIPELINEGEN_LOCK\"", "lock release \"$PIPELINEGEN_LOCK\"", "timeout: 30m", "timeout: 90m", "serial_groups:\n        - e2e", "max_in_flight: 1", "name: title", "name: old"} {
+	for _, want := range []string{"timeout: 30m", "timeout: 90m", "serial_groups:\n        - e2e", "max_in_flight: 1", "name: title", "name: old"} {
 		if !strings.Contains(s, want) {
 			t.Errorf("pipeline lacks %q", want)
+		}
+	}
+
+	for _, unwanted := range []string{"PIPELINEGEN_LOCK", "lock acquire", "lock release"} {
+		if strings.Contains(s, unwanted) {
+			t.Errorf("an older tool's lock still reaches the pipeline: %q", unwanted)
 		}
 	}
 

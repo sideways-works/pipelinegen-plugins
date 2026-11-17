@@ -25,7 +25,7 @@ type flagUse struct {
 // flag it takes, and what it reads beyond its flags.
 type toolCommand struct {
 	flags map[string]flagUse
-	// named commands take a name before their flags (lock acquire <name>).
+	// named commands take a name before their flags (slice start <name>).
 	named bool
 	// rootIsTrigger: the command reads the config from --trigger whatever
 	// --root says.
@@ -102,8 +102,6 @@ var toolCommands = map[string]toolCommand{
 	"slice setup-end": {runFromEnv: true, flags: common("source", map[string]flagUse{"coverage": writes("coverage"), "result": writes("result"), "tools": reads("tools")})},
 	"slice flush":     {runFromEnv: true, flags: common("source", map[string]flagUse{"result": reads("result"), "tools": reads("tools")})},
 	"slice list":      {tokenless: true, flags: map[string]flagUse{"batches": reads("batches")}},
-	"lock acquire":    {named: true, runFromEnv: true, flags: common(".", map[string]flagUse{"wait": other, "started": writes("")})},
-	"lock release":    {named: true, runFromEnv: true, flags: common(".", nil)},
 }
 
 func sliceFlags() map[string]flagUse {
@@ -115,7 +113,7 @@ func sliceFlags() map[string]flagUse {
 
 var errCall = errors.New("pipelinegen call")
 
-var withSubcommands = map[string]bool{"report": true, "slice": true, "lock": true, "lists": true}
+var withSubcommands = map[string]bool{"report": true, "slice": true, "lists": true}
 
 type call struct {
 	command string
@@ -359,7 +357,7 @@ func steppedSpecs(t *testing.T) map[string]plugin.Spec {
 	self, _ := fixture(t)
 	self.CI["self_set"] = true
 
-	return map[string]plugin.Spec{"plain": plain, "locked": locked, "self_set": self}
+	return map[string]plugin.Spec{"plain": plain, "an older tool's locks": locked, "self_set": self}
 }
 
 func TestEveryPipelinegenStepMountsWhatItReads(t *testing.T) {
@@ -456,7 +454,7 @@ func TestEveryPipelinegenStepMountsWhatItReads(t *testing.T) {
 
 	for _, want := range []string{
 		"plan", "tree", "batches", "report batch-end", "report whole", "report collect",
-		"report suite", "lock acquire", "lock release", "pipeline", "git-auth",
+		"report suite", "pipeline", "git-auth",
 	} {
 		if !seen[want] {
 			t.Errorf("no generated step runs pipelinegen %s", want)
@@ -466,10 +464,11 @@ func TestEveryPipelinegenStepMountsWhatItReads(t *testing.T) {
 
 func TestParseCallRefusesWhatTheToolRefuses(t *testing.T) {
 	for _, bad := range [][]string{
-		{"lock", "acquire", "browsers", "--minutes", "90", "--root", "source"},
+		{"slice", "start", "e2e.a", "--minutes", "90", "--root", "source"},
 		{"report", "batch-end", "--root"},
 		{"report", "nothing"},
-		{"lock", "release", "--root", "source"},
+		{"slice", "start", "--root", "source"},
+		{"lock", "acquire", "browsers"},
 		{"unknown"},
 	} {
 		if _, err := parseCall(bad); err == nil {

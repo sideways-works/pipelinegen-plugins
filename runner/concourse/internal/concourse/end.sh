@@ -12,7 +12,6 @@ if ! test -x tools/pipelinegen || ! test -d trigger; then
   exit 0
 fi
 rc=0
-#RELEASE#
 tools/pipelinegen report suite --root trigger --batches batches || rc=$?
 case "$rc" in
 0) ;;

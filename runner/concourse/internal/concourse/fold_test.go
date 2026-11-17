@@ -271,23 +271,17 @@ func calls(t *testing.T, work string) []string {
 
 func TestTheStartTask(t *testing.T) {
 	for _, c := range []struct {
-		open, lock bool
-		want       []string
+		open bool
+		want []string
 	}{
-		{false, true, []string{"tree --run"}},
-		{true, false, []string{"tree --run", "batches --run"}},
-		{true, true, []string{"tree --run", "lock acquire", "batches --run"}},
+		{false, []string{"tree --run"}},
+		{true, []string{"tree --run", "batches --run"}},
 	} {
 		work := t.TempDir()
 		fakeTool(t, work, c.open)
 
-		env := cleanEnv(t, "PIPELINEGEN_RUN=main", "PIPELINEGEN_SUITE=e2e")
-		if c.lock {
-			env = append(env, "PIPELINEGEN_LOCK=browsers")
-		}
-
-		cmd := exec.CommandContext(t.Context(), "sh", "-ec", startScriptFor(c.lock))
-		cmd.Dir, cmd.Env = work, env
+		cmd := exec.CommandContext(t.Context(), "sh", "-ec", startScript)
+		cmd.Dir, cmd.Env = work, cleanEnv(t, "PIPELINEGEN_RUN=main", "PIPELINEGEN_SUITE=e2e")
 
 		if out, err := cmd.CombinedOutput(); err != nil {
 			t.Fatalf("%+v: %v\n%s", c, err, out)
@@ -307,18 +301,15 @@ func TestTheStartTask(t *testing.T) {
 // Only a suite's end that could not be recorded (exit 4) fails it.
 func TestTheEndTask(t *testing.T) {
 	for _, c := range []struct {
-		tree, lock, noTools bool
-		failing             []string
-		code                int
-		want                []string
+		tree, noTools bool
+		failing       []string
+		code          int
+		want          []string
 	}{
-		{tree: true, lock: true, want: []string{"lock release", "report suite"}},
-		{tree: false, lock: true, want: []string{"report suite"}},
-		{tree: true, lock: false, want: []string{"report suite"}},
-		{tree: true, lock: true, failing: []string{"lock release"}, want: []string{"lock release", "report suite"}},
+		{tree: false, want: []string{"report suite"}},
+		{tree: true, want: []string{"report suite"}},
 		{tree: true, failing: []string{"report suite=1"}, want: []string{"report suite"}},
-		{tree: true, lock: true, failing: []string{"report suite=4"}, code: 4, want: []string{"lock release", "report suite"}},
-		{tree: true, lock: true, failing: []string{"lock release", "report suite=4"}, code: 4, want: []string{"lock release", "report suite"}},
+		{tree: true, failing: []string{"report suite=4"}, code: 4, want: []string{"report suite"}},
 		{noTools: true, want: nil},
 	} {
 		work := t.TempDir()
@@ -337,13 +328,8 @@ func TestTheEndTask(t *testing.T) {
 			}
 		}
 
-		env := cleanEnv(t)
-		if c.lock {
-			env = append(env, "PIPELINEGEN_LOCK=browsers")
-		}
-
-		cmd := exec.CommandContext(t.Context(), "sh", "-ec", endScriptFor(c.lock))
-		cmd.Dir, cmd.Env = work, env
+		cmd := exec.CommandContext(t.Context(), "sh", "-ec", endScript)
+		cmd.Dir, cmd.Env = work, cleanEnv(t)
 
 		out, err := cmd.CombinedOutput()
 		if code := cmd.ProcessState.ExitCode(); code != c.code {
@@ -390,7 +376,7 @@ func TestTheBootstrapNeverSeesThePlannersEnv(t *testing.T) {
 	}
 }
 
-func TestTheEndTakesTheTreeOnlyForALock(t *testing.T) {
+func TestTheEndTakesNoTreeEvenForAnOldLock(t *testing.T) {
 	for _, locked := range []bool{false, true} {
 		spec, root := fixture(t)
 		if locked {
@@ -405,12 +391,7 @@ func TestTheEndTakesTheTreeOnlyForALock(t *testing.T) {
 		end := asMap(jobByName(t, p, "main-backend")["ensure"])
 		got := fmt.Sprint(mounts(asMap(end["config"]), "inputs"))
 
-		want := "[tools trigger batches]"
-		if locked {
-			want = "[tools trigger batches source]"
-		}
-
-		if got != want {
+		if want := "[tools trigger batches]"; got != want {
 			t.Errorf("lock %v: the end task takes %s, want %s", locked, got, want)
 		}
 	}

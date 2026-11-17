@@ -184,12 +184,28 @@ func (p placer) notices(spec plugin.Spec) []string {
 
 // Notices are warnings about the pipeline short of refusing it.
 func Notices(spec plugin.Spec, config map[string]any) []string {
+	out := lockNotices(spec)
+
 	conf, err := readConfig(config)
 	if err != nil {
-		return nil
+		return out
 	}
 
-	return newPlacer(spec, conf).notices(spec)
+	return append(out, newPlacer(spec, conf).notices(spec)...)
+}
+
+// lockNotices name the suites an older pipelinegen's spec gives a lock,
+// which no step takes.
+func lockNotices(spec plugin.Spec) []string {
+	var out []string
+
+	for _, s := range spec.Suites {
+		if s.Lock != nil {
+			out = append(out, fmt.Sprintf("suite %s: the spec holds a lock, which this runner no longer takes: a suite's batches start when their node has room; update pipelinegen", s.Name))
+		}
+	}
+
+	return out
 }
 
 func (p placer) check(spec plugin.Spec) error {

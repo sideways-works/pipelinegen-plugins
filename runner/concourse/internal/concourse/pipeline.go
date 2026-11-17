@@ -78,32 +78,8 @@ const staleHash = "PIPELINEGEN_PIPELINE_SHA256"
 //go:embed start.sh
 var startScript string
 
-//go:embed acquire.sh
-var acquireScript string
-
-func startScriptFor(locked bool) string {
-	acquire := ""
-	if locked {
-		acquire = acquireScript
-	}
-
-	return strings.Replace(startScript, "#ACQUIRE#\n", acquire, 1)
-}
-
 //go:embed end.sh
 var endScript string
-
-//go:embed release.sh
-var releaseScript string
-
-func endScriptFor(locked bool) string {
-	release := ""
-	if locked {
-		release = releaseScript
-	}
-
-	return strings.Replace(endScript, "#RELEASE#\n", release, 1)
-}
 
 //go:embed fallback.sh
 var fallbackScript string
@@ -267,8 +243,6 @@ func (g *gen) token() string { return "((" + g.spec.GitHub.TokenVar + "))" }
 const triggerContinuous = plugin.TriggerContinuous
 
 const capContinuous = plugin.CapContinuous
-
-const lockPerBatch = "batch"
 
 // branchResource writes each byte Concourse refuses in a name, "_" too, as
 // _xx, so two branches never share a name.
@@ -1024,7 +998,7 @@ func (g *gen) suiteJob(run, suite string) (M, error) {
 			// should run together, and across alone runs one at a time
 			"across":    []any{M{"var": "batch", "values": "((.:batches))", "max_in_flight": "all"}},
 			"fail_fast": false,
-			"do":        []any{g.lockedPerBatch(run, suite, g.batchStep(run, suite), true)},
+			"do":        []any{g.batchStep(run, suite)},
 		},
 	)
 
@@ -1033,18 +1007,6 @@ func (g *gen) suiteJob(run, suite string) (M, error) {
 	}
 
 	body := M{"do": work}
-	lock := M{}
-
-	// Held per build, the lock bounds all the suite's work by its limit, which
-	// the lease covers; the start task may wait the lock's wait for it.
-	start := g.stepMinutes()
-
-	if l := s.Lock; l != nil && !g.perBatchLock(run, suite) {
-		lock["PIPELINEGEN_LOCK"] = l.Name
-
-		timeout(body, g.suiteMinutes(run, suite))
-		start += g.lockWait()
-	}
 
 	gets := g.gets(tags, append(g.trigger(run, tags, []string{planJob(run)}), g.bookkeepingGets(run, suite)...), g.stepMinutes())
 
@@ -1068,7 +1030,7 @@ func (g *gen) suiteJob(run, suite string) (M, error) {
 
 	plan = append(plan,
 		limited(g.toolTask("start", tags, names("trigger"), []string{"tools", "source", "gate", "batches"}, nil,
-			g.env(run, suite, lock), startScriptFor(len(lock) > 0)), stepsKey, start),
+			g.env(run, suite, nil), startScript), stepsKey, g.stepMinutes()),
 		M{"load_var": "gate", "file": "gate/gate.json"},
 		M{"load_var": "batches", "file": "batches/batches.json"},
 		// Without a plan for this suite the gate is empty and nothing runs.
@@ -1084,7 +1046,7 @@ func (g *gen) suiteJob(run, suite string) (M, error) {
 		"plan":     plan,
 		"on_error": fallback,
 		"on_abort": fallback,
-		"ensure":   g.endTask(run, suite, lock),
+		"ensure":   g.endTask(run, suite),
 	}
 
 	if g.byConnector(run) {
@@ -1103,49 +1065,6 @@ func (g *gen) suiteJob(run, suite string) (M, error) {
 	return job, nil
 }
 
-func (g *gen) perBatchLock(_, suite string) bool {
-	l := g.suites[suite].Lock
-
-	return l != nil && l.Per == lockPerBatch
-}
-
-// The wait for a slot has its own limit, so it never counts against the
-// step's. The lock step stamps when it took its slot, so the batch's end
-// knows whether the batch's limit stopped it.
-func (g *gen) lockedPerBatch(run, suite string, step M, batch bool) any {
-	if !g.perBatchLock(run, suite) {
-		return step
-	}
-
-	s := g.suites[suite]
-
-	env := M{}
-	if batch {
-		env["PIPELINEGEN_BATCH"] = "((.:batch))"
-	}
-
-	args := []string{"lock", "acquire", s.Lock.Name, "--root", "source"}
-
-	var outputs []string
-
-	if batch {
-		args = append(args, "--started", begunDir)
-		outputs = []string{begunDir}
-	}
-
-	acquire := limited(g.helper("lock", g.suiteTags(run, suite), names("source", "trigger"), outputs, g.env(run, suite, env), args...),
-		stepsKey, g.stepMinutes()+g.lockWait())
-	release := limited(g.helper("unlock", g.suiteTags(run, suite), names("source", "trigger"), nil, g.env(run, suite, env),
-		"lock", "release", s.Lock.Name, "--root", "source"), stepsKey, g.stepMinutes())
-
-	return M{
-		"do":     []any{acquire, step},
-		"ensure": M{"try": release},
-	}
-}
-
-const begunDir = "begun"
-
 const (
 	planKey  = "limits.plan"
 	stepsKey = "limits.steps"
@@ -1159,24 +1078,21 @@ func (g *gen) serialGroup(group, run string) string {
 	return group
 }
 
-func (g *gen) endTask(run, suite string, lock M) M {
-	env := g.env(run, suite, lock)
+func (g *gen) endTask(run, suite string) M {
+	env := g.env(run, suite, nil)
 	env["PIPELINEGEN_BAZELISK"] = "tools/bazelisk"
 	env["PIPELINEGEN_TRIGGER"] = "trigger"
 	g.forTool(env)
 
 	// Optional inputs instead of a try, which would let an end that could not
-	// be recorded pass. Only a locked suite streams the tree, for the release.
+	// be recorded pass.
 	inputs := []M{{"name": "tools", "optional": true}, {"name": "trigger", "optional": true}, {"name": "batches", "optional": true}}
-	if len(lock) > 0 {
-		inputs = append(inputs, M{"name": "source", "optional": true})
-	}
 
 	return g.onBookkeeping(limited(withTags(M{"task": "end", "image": "planner", "config": M{
 		"platform": "linux",
 		"inputs":   inputs,
 		"params":   env,
-		"run":      M{"path": "sh", "args": []any{"-ec", endScriptFor(len(lock) > 0)}},
+		"run":      M{"path": "sh", "args": []any{"-ec", endScript}},
 	}}, g.bookkeepingTags(run, suite)), stepsKey, g.stepMinutes()), run, suite)
 }
 
@@ -1327,11 +1243,6 @@ func (g *gen) withBatchEnd(run, suite string, task M) M {
 
 	args := []string{"report", "batch-end", "--batch", "((.:batch))", "--result", "result", "--root", "source"}
 
-	if g.perBatchLock(run, suite) {
-		inputs = append(inputs, M{"name": begunDir, "optional": true})
-		args = append(args, "--started", begunDir)
-	}
-
 	task["ensure"] = g.onBookkeeping(limited(g.helper("batch-end", g.bookkeepingTags(run, suite), inputs, nil,
 		g.env(run, suite, M{"PIPELINEGEN_BATCH": "((.:batch))"}), args...), stepsKey, g.stepMinutes()), run, suite)
 
@@ -1432,7 +1343,7 @@ func (g *gen) wholeSuiteSteps(run, suite string, i int, w plugin.SpecWholeSuite)
 
 	return []any{
 		M{"load_var": gate, "file": "gate/whole-" + w.Name + ".json"},
-		M{"across": []any{M{"var": gate + "_on", "values": "((.:" + gate + "))"}}, "do": []any{collect, g.lockedPerBatch(run, suite, task, false)}},
+		M{"across": []any{M{"var": gate + "_on", "values": "((.:" + gate + "))"}}, "do": []any{collect, task}},
 	}
 }
 
@@ -1451,7 +1362,6 @@ const (
 	defaultPlanMinutes  = 60
 	defaultStepMinutes  = 20
 	defaultSuiteMinutes = 120
-	defaultLockWait     = 240
 )
 
 func (g *gen) planMinutes() int {
@@ -1470,24 +1380,9 @@ func (g *gen) stepMinutes() int {
 	return defaultStepMinutes
 }
 
-func (g *gen) lockWait() int {
-	if m := g.spec.Limits.LockWait; m > 0 {
-		return m
-	}
-
-	return defaultLockWait
-}
-
 func (g *gen) suiteMinutes(run, suite string) int {
-	rs := g.runSuite(run, suite)
-
-	switch {
-	case rs.Minutes > 0:
-		return rs.Minutes
-	case rs.LockMinutes > 0:
-		return rs.LockMinutes
-	case g.suites[suite].Lock != nil && g.suites[suite].Lock.Minutes > 0:
-		return g.suites[suite].Lock.Minutes
+	if m := g.runSuite(run, suite).Minutes; m > 0 {
+		return m
 	}
 
 	return defaultSuiteMinutes

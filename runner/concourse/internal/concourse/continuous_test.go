@@ -14,9 +14,6 @@ import (
 func TestAContinuousRun(t *testing.T) {
 	cfg, root := fixture(t)
 
-	e2e := &cfg.Suites[suiteIndex(t, cfg, "e2e")]
-	e2e.Lock = &plugin.SpecLock{Name: "browsers", Minutes: 90}
-
 	full := cfg.Runs[runIndex(t, cfg, "nightly")]
 	full.Name = "full"
 	full.Trigger = plugin.SpecTrigger{Kind: triggerContinuous, Branch: "main"}
@@ -39,20 +36,16 @@ func TestAContinuousRun(t *testing.T) {
 
 	suite := text(t, M{"jobs": []any{jobByName(t, p, "full-e2e")}})
 
-	for _, want := range []string{"version: every", "passed:\n", "- plan-full", "timeout: 90m"} {
+	for _, want := range []string{"version: every", "passed:\n", "- plan-full"} {
 		if !strings.Contains(suite, want) {
 			t.Errorf("full-e2e lacks %q", want)
 		}
 	}
 
-	for _, unwanted := range []string{"max_in_flight: 1", "serial", "task: lock\n"} {
+	for _, unwanted := range []string{"max_in_flight: 1", "serial"} {
 		if strings.Contains(suite, unwanted) {
 			t.Errorf("full-e2e has %q", unwanted)
 		}
-	}
-
-	if !strings.Contains(suite, "PIPELINEGEN_LOCK: browsers") {
-		t.Error("a continuous run's suite doesn't take its lock as the config says")
 	}
 
 	if triggering(t, plan) != 1 {
@@ -87,36 +80,6 @@ func TestAContinuousRun(t *testing.T) {
 	}
 
 	if d := describe(); !slices.Contains(d.Capabilities, capContinuous) || slices.Contains(d.Capabilities, "serial_jobs") {
-		t.Fatalf("describe: %+v", d)
-	}
-}
-
-func TestALockPerBatchInEveryRun(t *testing.T) {
-	cfg, root := fixture(t)
-
-	e2e := &cfg.Suites[suiteIndex(t, cfg, "e2e")]
-	e2e.Lock = &plugin.SpecLock{Name: "browsers", Minutes: 60, Slots: 2, Per: lockPerBatch}
-
-	p, err := Generate(cfg, root)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	for _, run := range []string{"main", "nightly", "pr"} {
-		s := text(t, M{"jobs": []any{jobByName(t, p, run+"-e2e")}})
-
-		for _, want := range []string{"task: lock\n", "- acquire\n", "task: unlock\n", "- release\n", "PIPELINEGEN_BATCH: ((.:batch))", "timeout: 60m"} {
-			if !strings.Contains(s, want) {
-				t.Errorf("%s-e2e lacks %q", run, want)
-			}
-		}
-
-		if strings.Contains(s, "PIPELINEGEN_LOCK: browsers") {
-			t.Errorf("%s-e2e takes the lock for the whole build", run)
-		}
-	}
-
-	if d := describe(); !slices.Contains(d.Capabilities, plugin.CapLockPerBatch) {
 		t.Fatalf("describe: %+v", d)
 	}
 }
