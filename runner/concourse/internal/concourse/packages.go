@@ -246,13 +246,14 @@ func packagesRef(registry, key string) string { return registry + ":" + key }
 
 // lookScript asks the registry for the cached image and writes the recipe
 // that builds it: a gate of one entry when it is missing, none when it is
-// there. A registry that can't be asked fails the job, which a person sees.
-const lookScript = `printf '{"source": %s}' "$CACHED" | /opt/resource/check > found.json
-if grep -q '"digest"' found.json; then
+// there. A registry that can't say counts as missing: a repository nothing
+// was pushed to yet is refused rather than empty, and when the registry is
+// down the push fails the job, which a person sees.
+const lookScript = `if printf '{"source": %s}' "$CACHED" | /opt/resource/check > found.json && grep -q '"digest"' found.json; then
   echo "$IMAGE is in the registry: nothing to build"
   echo '[]' > gate/missing.json
 else
-  echo "$IMAGE isn't in the registry: building it"
+  echo "$IMAGE isn't in the registry, or the registry can't say: building it"
   echo '["build"]' > gate/missing.json
 fi
 printf '%s' "$INSTALL" > recipe/install.sh

@@ -51,7 +51,7 @@ jobs:
                 PIPELINEGEN_LIMIT: limits.steps=20
                 PIPELINEGEN_PACKAGE_CACHE: pkgcache
                 PIPELINEGEN_PIPELINE: fixture
-                PIPELINEGEN_PIPELINE_SHA256: a68444e82ed8d038feec1f3ad4f92dc16aa21625b46f5d43cefc78ac5efc73b6
+                PIPELINEGEN_PIPELINE_SHA256: 4cd43571ece830de8831ae3551acc1d279780f1f03fc77e11a7d6ede1f2d2814
                 PIPELINEGEN_PIPELINE_STEP: "1"
                 PIPELINEGEN_PLUGINS: ""
                 PIPELINEGEN_PRIVATE: ""
@@ -11044,12 +11044,11 @@ jobs:
                     - -ec
                     - |
                       export PIPELINEGEN_DEADLINE=$(( $(date +%s) + 1200 ))
-                      printf '{"source": %s}' "$CACHED" | /opt/resource/check > found.json
-                      if grep -q '"digest"' found.json; then
+                      if printf '{"source": %s}' "$CACHED" | /opt/resource/check > found.json && grep -q '"digest"' found.json; then
                         echo "$IMAGE is in the registry: nothing to build"
                         echo '[]' > gate/missing.json
                       else
-                        echo "$IMAGE isn't in the registry: building it"
+                        echo "$IMAGE isn't in the registry, or the registry can't say: building it"
                         echo '["build"]' > gate/missing.json
                       fi
                       printf '%s' "$INSTALL" > recipe/install.sh
@@ -11205,12 +11204,11 @@ jobs:
                     - -ec
                     - |
                       export PIPELINEGEN_DEADLINE=$(( $(date +%s) + 1200 ))
-                      printf '{"source": %s}' "$CACHED" | /opt/resource/check > found.json
-                      if grep -q '"digest"' found.json; then
+                      if printf '{"source": %s}' "$CACHED" | /opt/resource/check > found.json && grep -q '"digest"' found.json; then
                         echo "$IMAGE is in the registry: nothing to build"
                         echo '[]' > gate/missing.json
                       else
-                        echo "$IMAGE isn't in the registry: building it"
+                        echo "$IMAGE isn't in the registry, or the registry can't say: building it"
                         echo '["build"]' > gate/missing.json
                       fi
                       printf '%s' "$INSTALL" > recipe/install.sh
