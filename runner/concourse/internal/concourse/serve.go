@@ -51,7 +51,7 @@ func pipeline(in []byte) (any, error) {
 func describe() plugin.Description {
 	return plugin.Description{
 		Protocol: plugin.Protocol, Kind: plugin.KindRunner, Name: "concourse-runner", Version: Version,
-		Capabilities:  []string{plugin.CallPipeline, "repeat-at-run-time", "job-caches", "rerun", "locks", plugin.CapConnectorChanges, plugin.CapSSHKeys, capContinuous, plugin.CapSerialJobs, plugin.CapLockPerBatch, plugin.CapSteps, capPlacement},
+		Capabilities:  []string{plugin.CallPipeline, "repeat-at-run-time", "job-caches", "rerun", "locks", plugin.CapConnectorChanges, plugin.CapSSHKeys, capContinuous, plugin.CapLockPerBatch, plugin.CapSteps, capPlacement},
 		ResourceTypes: []string{mockType},
 		// Concourse keeps a task's cache per job, step and worker.
 		CacheScopes: map[string]string{

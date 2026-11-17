@@ -737,11 +737,6 @@ func (g *gen) planJob(run string) M {
 	gets := g.gets(tags, g.trigger(run, tags, nil), g.planMinutes())
 	env := g.plannerEnv()
 
-	// A serial planning job records nothing of its round for others to read.
-	if g.runs[run].SerialPlan {
-		env[plugin.EnvSerialPlan] = "1"
-	}
-
 	script, outputs := planScript, []string(nil)
 
 	continuous := g.runs[run].Trigger.Kind == triggerContinuous
@@ -767,12 +762,6 @@ func (g *gen) planJob(run string) M {
 			M{"load_var": "planned", "file": "handoff/gate.json"},
 			M{"across": []any{M{"var": "planned_round", "values": "((.:planned))"}}, "do": []any{timeout(put, g.planMinutes())}},
 		}
-	}
-
-	// Queued builds wait without a container; the one that decides exits
-	// when its commit isn't the branch's newest.
-	if g.runs[run].SerialPlan {
-		job["serial"] = true
 	}
 
 	return job

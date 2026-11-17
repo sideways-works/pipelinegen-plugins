@@ -27,19 +27,10 @@ func TestAContinuousRun(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if plan := jobByName(t, p, "plan-full"); plan["serial"] != nil || strings.Contains(text(t, M{"jobs": []any{plan}}), plugin.EnvSerialPlan) {
-		t.Errorf("the planning job is serial, or says so, though the spec doesn't ask: %v", plan["serial"])
-	}
-
-	cfg.Runs[len(cfg.Runs)-1].SerialPlan = true
-
-	if p, err = Generate(cfg, root); err != nil {
-		t.Fatal(err)
-	}
-
+	// its builds run side by side, each deciding from the run's records
 	plan := jobByName(t, p, "plan-full")
-	if plan["serial"] != true || !strings.Contains(text(t, M{"jobs": []any{plan}}), plugin.EnvSerialPlan+": \"1\"") {
-		t.Errorf("the planning job the spec asks to be serial isn't, or doesn't tell its plan step: %v", plan["serial"])
+	if s := text(t, M{"jobs": []any{plan}}); plan["serial"] != nil || plan["max_in_flight"] != nil || strings.Contains(s, "SERIAL") {
+		t.Errorf("the planning job is serial, or says so:\n%s", s)
 	}
 
 	if s := text(t, M{"jobs": []any{plan}}); !strings.Contains(s, "version: every") || !strings.Contains(s, "trigger: true") {
@@ -95,7 +86,7 @@ func TestAContinuousRun(t *testing.T) {
 		}
 	}
 
-	if d := describe(); !slices.Contains(d.Capabilities, capContinuous) || !slices.Contains(d.Capabilities, plugin.CapSerialJobs) {
+	if d := describe(); !slices.Contains(d.Capabilities, capContinuous) || slices.Contains(d.Capabilities, "serial_jobs") {
 		t.Fatalf("describe: %+v", d)
 	}
 }
