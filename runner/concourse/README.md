@@ -35,7 +35,7 @@ A repository declares two runs, `pr` and `nightly`, and two suites,
 A pull request that changes one Go function starts `plan-pr`. Say the plan
 selects 7 slices of `e2e` and none of `backend`. `pr-e2e` deals the 7
 slices into at most the suite's `parallel` batches and runs one batch task
-per batch; `pr-backend` runs no batch.
+per batch, all at once; `pr-backend` runs no batch.
 The pipeline's size doesn't grow with the number of slices.
 
 ## Setting it up
@@ -195,7 +195,9 @@ repository's own parts from its include file.
 - A suite job's `start` task writes the tree under test and the gates,
   and when the plan selected anything of the suite it takes the suite's
   lock and deals the selected slices into batches. The job runs one batch
-  task per batch with `across`, at most `parallel` at once, and each
+  task per batch with `across` and `max_in_flight: all`, every batch at
+  once (the suite's `parallel`, `batches` and `batch_minutes` say how many
+  batches it deals), and each
   batch's `batch-end` runs in that batch's `ensure`, so every batch reports
   as it ends, whatever it did. Each whole-suite check runs only when the
   plan selected it. The `end` task runs in the job's `ensure`: it frees the
@@ -211,8 +213,7 @@ repository's own parts from its include file.
   workers' own limits are the only bound. Two builds of one job each get
   a copy-on-write view of the job's task caches, and the last to finish
   keeps its own as the cache, which costs warmth, never a wrong result.
-  The one serial job is a continuous run's planning job, when the spec
-  asks for it, below.
+  A planning job is never serial, a continuous run's included, below.
 - A timer run's suite jobs take every commit its planning job passed, not
   the timer: a nightly that finds the branch where its last round left it
   plans nothing ("nothing changed since the nightly of ..."), passes no new
@@ -437,13 +438,9 @@ on the suite's tags too.
 
 A run whose trigger is `{branch: main, continuous: true}` takes every
 commit of the branch: its planning job's get has `version: every`. The
-runner declares `serial_jobs`, so pipelinegen's spec asks for that job to
-be serial, and builds wait in Concourse's queue one after another
-without a container: each decides alone, and it is the only serial job
-of the pipeline. Its plan task gets `PIPELINEGEN_SERIAL_PLAN=1`, so the
-plan step records nothing of its round; with a spec that doesn't ask, the
-job runs its builds side by side and each plan step records its round's
-start and planning for the others to read. The planning task first runs
+job is not serial: its builds run side by side, and each plan step
+records its round's start and planning in the run's records for the
+others to read. The planning task first runs
 `pipelinegen plan --decide --gate handoff`, before the repository's
 prepare command: it ends a commit that is no longer the branch's tip at
 once, waits while a round of the run is in progress (it reads the run's
@@ -627,9 +624,7 @@ The requests and answers follow pipelinegen's
 [plugin protocol](https://github.com/sideways-works/pipelinegen/blob/main/docs/plugins.md).
 `describe` declares the kind `runner` and the capabilities `pipeline`,
 `repeat-at-run-time` (`across`), `job-caches`, `rerun`, `locks`,
-`connector_changes`, `ssh_keys`, `continuous`, `serial_jobs` (a job's
-builds one at a time, in the order they were queued, asked of a
-planning job by the spec's `serial_plan`), `lock_per_batch` and
+`connector_changes`, `ssh_keys`, `continuous`, `lock_per_batch` and
 `placement` (it reads the [placement](#placement) from its own config).
 `pipeline` reads the spec and the repository's root (for the include
 file) and answers `{"files": ["pipeline.yml"]}` in the work directory. A
