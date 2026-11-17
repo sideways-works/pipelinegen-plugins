@@ -80,6 +80,12 @@ func TestJobsHoldFewTasks(t *testing.T) {
 		}
 
 		walkTasks(p, func(task M) {
+			// The end task fetches them only when the build broke before its
+			// start task had them, and nothing runs after it.
+			if task["task"] == "end" {
+				return
+			}
+
 			cfg := asMap(task["config"])
 			if args := asSlice(asMap(cfg["run"])["args"]); len(args) == 2 && strings.Contains(fmt.Sprint(args[1]), bootstrapScript) &&
 				!slices.Contains(mounts(cfg, "outputs"), "tools") {
@@ -328,7 +334,7 @@ func TestTheEndTask(t *testing.T) {
 			}
 		}
 
-		cmd := exec.CommandContext(t.Context(), "sh", "-ec", endScript)
+		cmd := exec.CommandContext(t.Context(), "sh", "-ec", endTaskScript())
 		cmd.Dir, cmd.Env = work, cleanEnv(t)
 
 		out, err := cmd.CombinedOutput()

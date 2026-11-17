@@ -81,6 +81,12 @@ var startScript string
 //go:embed end.sh
 var endScript string
 
+// endTaskScript fetches the tools as the start task does when the build broke
+// before that task had them, so the suite still ends.
+func endTaskScript() string {
+	return strings.Replace(endScript, "#BOOTSTRAP#\n", bootstrapScript, 1)
+}
+
 //go:embed fallback.sh
 var fallbackScript string
 
@@ -1037,8 +1043,9 @@ func (g *gen) suiteJob(run, suite string) (M, error) {
 		M{"across": []any{M{"var": "planned", "values": "((.:gate))"}}, "do": []any{body}},
 	)
 
-	// A build that broke before its tools or trigger were there can't report
-	// through pipelinegen; the ensure runs after these hooks.
+	// These hooks report a build that broke or was aborted, or post its
+	// statuses as errored when it had no tools yet. The ensure runs after
+	// them, on an abort too, and fetches missing tools to end the suite.
 	fallback := timeout(g.fallback(run, suite, tags), g.stepMinutes())
 
 	job := M{
@@ -1078,8 +1085,11 @@ func (g *gen) serialGroup(group, run string) string {
 	return group
 }
 
+// endTask holds the bootstrap's pins too: a build that broke before its
+// start task had the tools fetches them here.
 func (g *gen) endTask(run, suite string) M {
-	env := g.env(run, suite, nil)
+	env := g.bootstrapEnv()
+	maps.Copy(env, g.env(run, suite, nil))
 	env["PIPELINEGEN_BAZELISK"] = "tools/bazelisk"
 	env["PIPELINEGEN_TRIGGER"] = "trigger"
 	g.forTool(env)
@@ -1092,7 +1102,7 @@ func (g *gen) endTask(run, suite string) M {
 		"platform": "linux",
 		"inputs":   inputs,
 		"params":   env,
-		"run":      M{"path": "sh", "args": []any{"-ec", endScript}},
+		"run":      M{"path": "sh", "args": []any{"-ec", endTaskScript()}},
 	}}, g.bookkeepingTags(run, suite)), stepsKey, g.stepMinutes()), run, suite)
 }
 

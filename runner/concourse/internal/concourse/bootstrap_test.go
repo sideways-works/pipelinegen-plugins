@@ -51,10 +51,7 @@ func runBootstrap(t *testing.T, work, sum string, srv *httptest.Server) ([]byte,
 
 	cmd := exec.CommandContext(t.Context(), "sh", "-ec", bootstrapScript)
 	cmd.Dir = work
-	cmd.Env = cleanEnv(t, "GITHUB_TOKEN=x", "PIPELINEGEN_GITHUB_API="+srv.URL, "PIPELINEGEN_BAZELISK_BASE="+srv.URL+"/bazelisk",
-		"PIPELINEGEN_TOOL_REPOSITORY=o/pipelinegen", "PIPELINEGEN_TOOL_VERSION=v1", "PIPELINEGEN_TOOL_SHA256="+sum,
-		"PIPELINEGEN_TOOL_COMMIT=", "PIPELINEGEN_BAZELISK_VERSION=v1.27.0", "PIPELINEGEN_BAZELISK_SHA256="+sum,
-		"PIPELINEGEN_PLUGINS=go o/go-sbom v1 "+sum+" -\n", "PIPELINEGEN_PRIVATE=")
+	cmd.Env = pinsEnv(t, sum, srv)
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -62,6 +59,78 @@ func runBootstrap(t *testing.T, work, sum string, srv *httptest.Server) ([]byte,
 	}
 
 	return out, nil
+}
+
+// pinsEnv pins every tool to the release server's one file.
+func pinsEnv(t *testing.T, sum string, srv *httptest.Server) []string {
+	t.Helper()
+
+	return cleanEnv(t, "GITHUB_TOKEN=x", "PIPELINEGEN_GITHUB_API="+srv.URL, "PIPELINEGEN_BAZELISK_BASE="+srv.URL+"/bazelisk",
+		"PIPELINEGEN_TOOL_REPOSITORY=o/pipelinegen", "PIPELINEGEN_TOOL_VERSION=v1", "PIPELINEGEN_TOOL_SHA256="+sum,
+		"PIPELINEGEN_TOOL_COMMIT=", "PIPELINEGEN_BAZELISK_VERSION=v1.27.0", "PIPELINEGEN_BAZELISK_SHA256="+sum,
+		"PIPELINEGEN_PLUGINS=go o/go-sbom v1 "+sum+" -\n", "PIPELINEGEN_PRIVATE=")
+}
+
+// A build that broke before its start task had the tools, as one aborted
+// while that task waited for a worker, still ends its suite: the end task
+// fetches them as the start task does. Without its trigger there is no
+// commit to end, and tools that can't be fetched leave it to its statuses.
+func TestTheEndFetchesTheToolsTheBuildNeverHad(t *testing.T) {
+	if _, err := exec.LookPath("curl"); err != nil {
+		t.Skip("no curl")
+	}
+
+	for _, c := range []struct {
+		name              string
+		noTrigger, badSum bool
+		want              []string
+		fetched           bool
+	}{
+		{name: "fetched", want: []string{"report suite"}, fetched: true},
+		{name: "no trigger", noTrigger: true},
+		{name: "unfetchable", badSum: true},
+	} {
+		work := t.TempDir()
+		fakeTool(t, work, true)
+
+		tool, err := os.ReadFile(filepath.Join(work, "tools", "pipelinegen"))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, d := range []string{"tools", "source", "batches"} {
+			if err := os.RemoveAll(filepath.Join(work, d)); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		if c.noTrigger {
+			if err := os.RemoveAll(filepath.Join(work, "trigger")); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		sum := sha256.Sum256(tool)
+		if c.badSum {
+			sum = sha256.Sum256([]byte("another tool"))
+		}
+
+		cmd := exec.CommandContext(t.Context(), "sh", "-ec", endTaskScript())
+		cmd.Dir, cmd.Env = work, pinsEnv(t, hex.EncodeToString(sum[:]), releases(t, tool))
+
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Errorf("%s: %v\n%s", c.name, err, out)
+		}
+
+		if got := calls(t, work); !slices.Equal(got, c.want) {
+			t.Errorf("%s: calls %v\n%s", c.name, got, out)
+		}
+
+		if _, err := os.Stat(filepath.Join(work, "tools", "bazelisk")); (err == nil) != c.fetched {
+			t.Errorf("%s: tools fetched %v, want %v\n%s", c.name, err == nil, c.fetched, out)
+		}
+	}
 }
 
 var cached = []string{"cache/pipelinegen-release-v1/pipelinegen", "cache/go-sbom-release-v1/go-sbom", "cache/bazelisk-v1.27.0"}
