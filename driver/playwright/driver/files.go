@@ -109,7 +109,10 @@ func testDir(r *result, title string, used map[string]bool) string {
 
 var unsafeChars = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
 
-var errNoContent = errors.New("the attachment has neither a file nor a body")
+var (
+	errNoContent = errors.New("the attachment has neither a file nor a body")
+	errNotPlain  = errors.New("the attachment's path is no regular file")
+)
 
 func attachmentName(a attachment, names map[string]bool) string {
 	name := filepath.Base(a.Path)
@@ -149,12 +152,21 @@ func (a attachment) copyTo(dst string) error {
 		return nil
 	}
 
+	// a test may attach any path: a FIFO would block the driver for good
+	if fi, err := os.Stat(a.Path); err != nil || !fi.Mode().IsRegular() {
+		return errNotPlain
+	}
+
 	in, err := os.Open(a.Path)
 	if err != nil {
 		return fmt.Errorf("files: %w", err)
 	}
 
 	defer func() { _ = in.Close() }() //nolint:errcheck // only read
+
+	if fi, err := in.Stat(); err != nil || !fi.Mode().IsRegular() {
+		return errNotPlain
+	}
 
 	out, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600) //nolint:gosec // the slice's own files directory
 	if err != nil {

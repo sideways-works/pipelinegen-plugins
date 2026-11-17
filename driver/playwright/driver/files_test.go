@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"syscall"
 	"testing"
 
 	"github.com/sideways-works/pipelinegen/plugin"
@@ -17,6 +18,7 @@ func TestAFailedTestsAttachmentsAreKept(t *testing.T) {
 	shot := filepath.Join(results, "a-finds-chromium", "test-failed-1.png")
 	trace := filepath.Join(results, "a-finds-chromium", "trace.zip")
 	video := filepath.Join(results, "a-finds-chromium", "video.webm")
+	pipe := filepath.Join(results, "a-finds-chromium", "pipe")
 
 	for p, body := range map[string]string{shot: "\x89PNG\x00", trace: "PK\x03\x04", video: "webm"} {
 		if err := os.MkdirAll(filepath.Dir(p), 0o750); err != nil {
@@ -28,11 +30,16 @@ func TestAFailedTestsAttachmentsAreKept(t *testing.T) {
 		}
 	}
 
+	if err := syscall.Mkfifo(pipe, 0o600); err != nil {
+		t.Fatal(err)
+	}
+
 	ft := &fileTests{titles: []string{"finds", "passes"}, tests: []test{
 		{ProjectName: "chromium", Status: "unexpected", Results: []result{{Status: "failed", Attachments: []attachment{
 			{Name: "screenshot", ContentType: "image/png", Path: shot},
 			{Name: "video", ContentType: "video/webm", Path: video},
 			{Name: "trace", ContentType: "application/zip", Path: trace},
+			{Name: "screenshot", ContentType: "image/png", Path: pipe},
 			{Name: "error-context", ContentType: "text/markdown", Body: base64.StdEncoding.EncodeToString([]byte("# Page\n"))},
 		}}}},
 		{Status: "expected", Results: []result{{Status: "passed", Attachments: []attachment{{Name: "screenshot", Path: shot}}}}},
