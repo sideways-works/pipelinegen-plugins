@@ -41,6 +41,7 @@ Its settings, under `with`:
 | `workers` | Playwright's workers, passed through; the config's by default. |
 | `install` | Runs `npm ci` in `dir` when `node_modules` isn't what the lockfile says; on by default, `false` turns it off. |
 | `flags` | Options of `playwright test`, passed through. |
+| `files` | Keeps a failed test's screenshot, error context and trace as the slice's failure files; on by default, `false` turns it off. |
 
 The driver reads its settings before it runs anything and refuses the
 step when one is wrong, naming where: a key it doesn't take
@@ -87,6 +88,43 @@ the page at the failure:
   - heading "Notes" [level=1]
   - button "Add a note"
 ```
+
+## Failure files
+
+For each failed test the driver keeps what Playwright attached to its
+last try: its screenshots (`test-failed-1.png`), its `error-context.md`,
+the page as it was at the failure, and its `trace.zip`, each when
+Playwright made it. Playwright makes the error context for every failed
+test; screenshots and traces only when the config asks for them:
+
+```js
+export default {
+  use: { screenshot: "only-on-failure", trace: "retain-on-failure" },
+};
+```
+
+The driver takes the attachments from Playwright's JSON report, not from
+`test-results`, which a bundle's spec files share, and copies them right
+after each `playwright test`, before the next run clears the directory.
+Each failed test gets a directory of its own in the slice's failure
+files, named as Playwright named its output directory, and each file a
+label such as `screenshot of [chromium] checkout pays with a card`.
+pipelinegen keeps them with the slice's state, within `keep.files`
+(2 MB per slice by default: a trace larger than that is dropped, and
+the slice's state says so), and `pipelinegen report files` writes them
+out:
+
+```
+$ pipelinegen report files --run pr --change pr-12 --slice e2e/checkout.spec.ts --out failure-files
+```
+
+A failure file holds what the page showed and the test printed, secrets
+included when a test shows one: it goes only into the run's records in
+the repository's own store, which has the same readers as the code,
+never into the pull request's comment. With an older pipelinegen, whose
+requests name no directory for them, the driver keeps nothing.
+
+## Recording
 
 The driver records nothing itself. In a recording run it names, in
 `PIPELINEGEN_COVERAGE` and `PIPELINEGEN_TREE`, where the suite's coverage
