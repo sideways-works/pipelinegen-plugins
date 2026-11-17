@@ -31,7 +31,12 @@ func pipeline(in []byte) (any, error) {
 		return nil, err
 	}
 
-	p, err := GenerateWith(req.Spec, req.Root, req.Config)
+	pkgs, err := ReadPackages(in)
+	if err != nil {
+		return nil, err
+	}
+
+	p, err := GenerateAll(req.Spec, pkgs, req.Root, req.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -51,11 +56,11 @@ func pipeline(in []byte) (any, error) {
 func describe() plugin.Description {
 	return plugin.Description{
 		Protocol: plugin.Protocol, Kind: plugin.KindRunner, Name: "concourse-runner", Version: Version,
-		Capabilities:  []string{plugin.CallPipeline, "repeat-at-run-time", "job-caches", "rerun", "locks", plugin.CapConnectorChanges, plugin.CapSSHKeys, capContinuous, plugin.CapLockPerBatch, plugin.CapSteps, capPlacement},
+		Capabilities:  []string{plugin.CallPipeline, "repeat-at-run-time", "job-caches", "rerun", "locks", plugin.CapConnectorChanges, plugin.CapSSHKeys, capContinuous, plugin.CapLockPerBatch, plugin.CapSteps, capPlacement, capPackages},
 		ResourceTypes: []string{mockType},
 		// Concourse keeps a task's cache per job, step and worker.
 		CacheScopes: map[string]string{
-			"plan-cache": plugin.ScopeJob, "write-cache": plugin.ScopeJob, "cache": plugin.ScopeJob,
+			"plan-cache": plugin.ScopeJob, "write-cache": plugin.ScopeJob, "cache": plugin.ScopeJob, packageCache: plugin.ScopeJob,
 		},
 	}
 }

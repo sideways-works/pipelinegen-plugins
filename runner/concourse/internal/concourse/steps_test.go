@@ -464,29 +464,6 @@ func TestEveryPipelinegenStepMountsWhatItReads(t *testing.T) {
 	}
 }
 
-func walkTasks(v any, f func(M)) {
-	switch x := v.(type) {
-	case M:
-		if _, ok := x["task"]; ok {
-			if _, ok := x["config"].(M); ok {
-				f(x)
-			}
-		}
-
-		for _, k := range slices.Sorted(maps.Keys(x)) {
-			walkTasks(x[k], f)
-		}
-	case []any:
-		for _, e := range x {
-			walkTasks(e, f)
-		}
-	case []M:
-		for _, e := range x {
-			walkTasks(e, f)
-		}
-	}
-}
-
 func TestParseCallRefusesWhatTheToolRefuses(t *testing.T) {
 	for _, bad := range [][]string{
 		{"lock", "acquire", "browsers", "--minutes", "90", "--root", "source"},

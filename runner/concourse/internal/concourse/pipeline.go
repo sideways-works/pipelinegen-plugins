@@ -126,6 +126,9 @@ type gen struct {
 	// staleParams get the pipeline's hash once the pipeline is complete.
 	staleParams M
 	plannerFrom map[string]string
+	pkgs        Packages
+	// included are the include's registry-image sources, by name.
+	included map[string]M
 }
 
 // Generate writes the pipeline for a spec; root is the repository's
@@ -136,6 +139,11 @@ func Generate(spec plugin.Spec, root string) (M, error) {
 
 // GenerateWith is Generate with the plugin's own config block.
 func GenerateWith(spec plugin.Spec, root string, config map[string]any) (M, error) {
+	return GenerateAll(spec, Packages{}, root, config)
+}
+
+// GenerateAll is GenerateWith with the spec's packages and cached images.
+func GenerateAll(spec plugin.Spec, pkgs Packages, root string, config map[string]any) (M, error) {
 	ci, err := readSettings(spec.CI)
 	if err != nil {
 		return nil, err
@@ -155,7 +163,7 @@ func GenerateWith(spec plugin.Spec, root string, config map[string]any) (M, erro
 		return nil, err
 	}
 
-	g := &gen{spec: spec, ci: ci, place: place, runs: map[string]plugin.SpecRun{}, suites: map[string]plugin.SpecSuite{}}
+	g := &gen{spec: spec, ci: ci, place: place, runs: map[string]plugin.SpecRun{}, suites: map[string]plugin.SpecSuite{}, pkgs: pkgs}
 
 	for _, r := range spec.Runs {
 		g.runs[r.Name] = r
@@ -173,22 +181,25 @@ func GenerateWith(spec plugin.Spec, root string, config map[string]any) (M, erro
 		if err := g.sharePlannerImage(filepath.Join(root, g.ci.Include)); err != nil {
 			return nil, err
 		}
+
+		if err := g.readIncluded(filepath.Join(root, g.ci.Include)); err != nil {
+			return nil, err
+		}
 	}
 
 	checks := g.place.tags(forChecks, "", "")
 	types := []any{withTags(g.pullRequestsType(), checks)}
 
-	resources := g.resources()
+	resources := append(g.resources(), g.imageResources()...)
 	for _, r := range resources {
 		if m, ok := r.(M); ok {
 			withTags(m, checks)
 		}
 	}
 
-	p := M{
-		"resource_types": types,
-		"resources":      resources,
-		"jobs":           g.jobs(),
+	p, err := g.pipeline(types, resources)
+	if err != nil {
+		return nil, err
 	}
 
 	if g.ci.Include != "" {
@@ -202,6 +213,30 @@ func GenerateWith(spec plugin.Spec, root string, config map[string]any) (M, erro
 	if err := g.sealStale(p); err != nil {
 		return nil, err
 	}
+
+	return p, nil
+}
+
+// pipeline is the generated pipeline before the include joins it: every
+// task that runs pipelinegen installs its packages first.
+func (g *gen) pipeline(types, resources []any) (M, error) {
+	jobs, err := g.jobs()
+	if err != nil {
+		return nil, err
+	}
+
+	images, err := g.imageJobs()
+	if err != nil {
+		return nil, err
+	}
+
+	p := M{
+		"resource_types": types,
+		"resources":      resources,
+		"jobs":           append(jobs, images...),
+	}
+
+	g.withInstalls(p)
 
 	return p, nil
 }
@@ -461,7 +496,7 @@ func (g *gen) trigger(run string, tags []string, passed []string) []any {
 	}
 }
 
-func (g *gen) jobs() []any {
+func (g *gen) jobs() ([]any, error) {
 	jobs := []any{g.pipelineJob()}
 
 	for _, r := range g.spec.Runs {
@@ -475,11 +510,16 @@ func (g *gen) jobs() []any {
 		}
 
 		for _, rs := range r.Suites {
-			jobs = append(jobs, g.suiteJob(r.Name, rs.Suite))
+			job, err := g.suiteJob(r.Name, rs.Suite)
+			if err != nil {
+				return nil, err
+			}
+
+			jobs = append(jobs, job)
 		}
 	}
 
-	return jobs
+	return jobs, nil
 }
 
 func (g *gen) gets(tags []string, inputs []any, minutes int) M {
@@ -955,19 +995,25 @@ func (g *gen) plannerEnv() M {
 	return env
 }
 
-func (g *gen) suiteJob(run, suite string) M {
-	s := g.suites[suite]
+func (g *gen) suiteJob(run, suite string) (M, error) {
 	tags := g.suiteTags(run, suite)
 
-	var work []any
+	// A cached image is fetched by a task, never a get: a get is the job's
+	// input, and a job would wait for an image the registry hasn't got.
+	work, err := g.suiteImages(run, suite)
+	if err != nil {
+		return nil, err
+	}
+
+	s := g.suites[suite]
 
 	// Fetched inside the gated work, so a build that runs nothing fetches
 	// nothing.
-	if s.Image != "" && s.Image != plannerImage {
+	if s.Image != "" && s.Image != plannerImage && g.cachedKey(suite, s.Image) == "" {
 		work = append(work, timeout(withTags(M{"get": s.Image}, tags), g.stepMinutes()))
 	}
 
-	if st := s.Steps; st != nil && st.Prepare && st.PrepareImage != "" && st.PrepareImage != s.Image {
+	if st := s.Steps; st != nil && st.Prepare && st.PrepareImage != "" && st.PrepareImage != s.Image && g.cachedKey(suite, st.PrepareImage) == "" {
 		work = append(work, timeout(withTags(M{"get": st.PrepareImage}, tags), g.stepMinutes()))
 	}
 
@@ -1054,7 +1100,7 @@ func (g *gen) suiteJob(run, suite string) M {
 		job["max_in_flight"] = s.MaxInFlight
 	}
 
-	return job
+	return job, nil
 }
 
 func (g *gen) perBatchLock(_, suite string) bool {
@@ -1243,7 +1289,7 @@ func (g *gen) prepare(run, suite string) []any {
 		"task":   "prepare",
 		"file":   "source/" + s.Prepare,
 		"params": params,
-	}, g.suiteTags(run, suite)), s.Privileged), s.Image), g.suiteMinutes(run, suite))}
+	}, g.suiteTags(run, suite)), s.Privileged), g.taskImage(suite, s.Image)), g.suiteMinutes(run, suite))}
 }
 
 func (g *gen) batchStep(run, suite string) M {
@@ -1265,7 +1311,7 @@ func (g *gen) batchStep(run, suite string) M {
 		"task":   "batch",
 		"file":   "source/" + s.RunSlice,
 		"params": params,
-	}, g.suiteTags(run, suite)), s.Privileged), s.Image), g.suiteMinutes(run, suite))
+	}, g.suiteTags(run, suite)), s.Privileged), g.taskImage(suite, s.Image)), g.suiteMinutes(run, suite))
 
 	return g.withBatchEnd(run, suite, task)
 }
@@ -1321,7 +1367,7 @@ func (g *gen) prepareSteps(run, suite string) []any {
 		"run":      M{"path": "tools/pipelinegen", "args": []string{"slice", "prepare", "--root", "source"}},
 	}
 
-	return []any{timeout(withImage(privileged(withTags(M{"task": "prepare", "config": cfg}, g.suiteTags(run, suite)), s.Privileged), image), g.suiteMinutes(run, suite))}
+	return []any{timeout(withImage(privileged(withTags(M{"task": "prepare", "config": cfg}, g.suiteTags(run, suite)), s.Privileged), g.taskImage(suite, image)), g.suiteMinutes(run, suite))}
 }
 
 // drivenBatch runs the tests, so it gets no token; it gets the trusted keys
@@ -1355,7 +1401,7 @@ func (g *gen) drivenBatch(run, suite string) M {
 		"run":      M{"path": "tools/pipelinegen", "args": args},
 	}
 
-	task := timeout(withImage(privileged(withTags(M{"task": "batch", "config": cfg}, g.suiteTags(run, suite)), s.Privileged), s.Image), g.suiteMinutes(run, suite))
+	task := timeout(withImage(privileged(withTags(M{"task": "batch", "config": cfg}, g.suiteTags(run, suite)), s.Privileged), g.taskImage(suite, s.Image)), g.suiteMinutes(run, suite))
 
 	return g.withBatchEnd(run, suite, task)
 }
@@ -1376,7 +1422,7 @@ func (g *gen) wholeSuiteSteps(run, suite string, i int, w plugin.SpecWholeSuite)
 		"file":           "source/" + w.Task,
 		"params":         params,
 		"output_mapping": M{"result": "result-" + name},
-	}, g.suiteTags(run, suite)), w.Privileged || s.Privileged), s.Image), g.suiteMinutes(run, suite))
+	}, g.suiteTags(run, suite)), w.Privileged || s.Privileged), g.taskImage(suite, s.Image)), g.suiteMinutes(run, suite))
 
 	task["ensure"] = limited(g.helper(name+"-ends", g.suiteTags(run, suite), append(names("source", "trigger"), M{"name": "result-" + name, "optional": true}), nil,
 		g.env(run, suite, nil), "report", "whole", "--name", w.Name, "--result", "result-"+name, "--root", "source"), stepsKey, g.stepMinutes())
