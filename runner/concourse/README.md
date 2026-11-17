@@ -544,17 +544,24 @@ A step in an `ensure` or another hook carries its own `timeout`: Concourse
 runs a hook after a limit ended the step, outside that limit. A timeout
 fails a step rather than erroring it, so the job's `on_error` hook doesn't
 post for it; the end task, in the job's `ensure`, reports the suite.
-The end task sits in no `try`: its inputs are optional, and a build that
-broke before its tools or trigger were there ends it at once. Its script
-lets every failure of `report suite` pass but exit 4, a suite's end that
-could not be recorded, which fails the job.
-The job's `on_error` and `on_abort` hooks (`report-error`) run `report
-suite` themselves when the build had got as far as its tools and its
-trigger, so a broken or aborted build still ends its suite and the run's
-round can end; only without them do they post the suite's status and the
-run's as errored. They hold the end task's tokens for that. A build
-aborted before any of its tasks got a worker runs no hook at all: its
-suite has no end until `pipelinegen end` or the run's idle bound.
+The end task sits in no `try`: its inputs are optional. Concourse runs the
+job's `ensure` on an abort too, so the end task runs whatever happened to
+the build. A build that broke or was aborted before its start task had the
+tools, such as one still waiting for a worker for that task, has no
+`tools`: the end task fetches them as the start task does (it holds the
+same pins) and reports the suite, so a continuous run's next round need
+not wait for it. A build that broke before its trigger was there has no
+commit to end, and ends at once. Its script lets every failure of `report
+suite` pass but exit 4, a suite's end that could not be recorded, which
+fails the job.
+The job's `on_error` and `on_abort` hooks (`report-error`) run before the
+`ensure`. They run `report suite` themselves when the build had got as far
+as its tools and its trigger; only without them do they post the suite's
+status and the run's as errored, and the end task then ends the suite.
+They hold the end task's tokens for that. A build aborted while it was
+pending, before it started, and one that broke before it had its trigger
+or the planner image the end task runs in, end no suite: theirs has no end
+until `pipelinegen end` or the run's idle bound.
 Each of pipelinegen's own steps gets `PIPELINEGEN_LIMIT` (the key and its
 minutes), and a task that begins with a script exports
 `PIPELINEGEN_DEADLINE` at its start: pipelinegen ends two minutes before
