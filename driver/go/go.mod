@@ -2,7 +2,7 @@ module github.com/sideways-works/pipelinegen-plugins/driver/go
 
 go 1.27.1
 
-require github.com/sideways-works/pipelinegen v0.2.0
+require github.com/sideways-works/pipelinegen v0.3.1
 
 require (
 	github.com/bazelbuild/buildtools v0.0.0-20260904073137-eaa4d125b423 // indirect
