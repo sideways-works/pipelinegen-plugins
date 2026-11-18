@@ -66,8 +66,8 @@ The checksum is the `react-correlator.mjs` line of the release's
 under `everything_on`, so that a pin change, like any other change to the
 config, runs every slice.
 
-Recording also needs the Playwright fixture in the test setup and two
-things of the build, which are requirements, not tips:
+Recording also needs the Playwright fixture in the test setup, and the
+build has two requirements:
 
 - Every app a recording run serves is built with source maps (Vite:
   `build.sourcemap: true` or `--sourcemap`). A built script without its
@@ -114,8 +114,8 @@ included), a `namespace` or `module` block (`declare module` and
 `declare global` augmentations included), any other import or export, and a
 triple-slash directive make it code, so a misjudged file is only ever left
 unmarked. A build step that reads types (generating code or a schema from
-them) makes such a file its input: that step's target must name it. Stylesheets, configs (`*.config.ts`),
-manifests, `tsconfig`s, HTML pages, assets a bundler copies under a new
+them) makes such a file its input, and that step's target must name it.
+Stylesheets, configs (`*.config.ts`), manifests, `tsconfig`s, HTML pages, assets a bundler copies under a new
 name, and build tooling (a script that imports `vite`, `rollup`,
 `rolldown`, `esbuild`, `webpack` or a plugin of theirs) are claimed without
 it: no recording holds them, or not every time a test depends on them, so a
@@ -215,9 +215,10 @@ its imports tried and found absent (the files with each extension a
 bundler tries before the one it found, the index files, the `tsconfig.json`
 of every directory between the importer and the one in effect). Those
 paths are listed under the set's `absent`, apart from its `inputs`, which
-are files of the tree; `links` also answers the set when asked about any
-of them, so a file that appears at one asks about the set again. The inputs themselves are the files the imports resolved to (with
-their extension, the index file, the workspace package's entry), the
+are files of the tree. `links` also answers the set when asked about any
+of them, so a file that appears at one asks about the set again. The
+inputs themselves are the files the imports resolved to (with their
+extension, the index file, the workspace package's entry), the
 importer, and every `package.json` and `tsconfig.json`, so a package that
 gains a name asks again too. An import of an installed package is a
 `dep:npm:` unit, never an input. On a frontend of about 900 files this adds
@@ -250,40 +251,44 @@ step gets the repository's source, the batch's result and its coverage
 output, and nothing else the batch task had.
 
 The fixture therefore keeps every script the pages ran, and its source
-map, with the recording: once per script, by the sha its records carry, in
-`<out>/_setup/<name>/scripts/` (`<sha>.js`, `<sha>.map`, or `<sha>.nomap`
-for a script that names no map). It fetches each map from the page, so a
-test's own routing serves it too, and from the test process when the page
-can't (a page that is closing), each attempt bounded at 60 seconds. An
-answer counts as the map only when it is JSON with `mappings` and
-`sources`, or an index map's `sections`, and its content type is no HTML
-page's: a server's single-page fallback answers a map it lacks with its
-page and status 200. A map neither attempt gets leaves `<sha>.mapfail`
-with why (each attempt's HTTP status and content type and what came
-instead, such as "it is an HTML document", or its error). A kept map that
-is no source map (one a fixture before this check kept) is read the same
-way, with that as the reason. `observe` then reads the build for that
-script, and when
-the build's copy differs it says so with both shas, both sizes, the first
-differing byte and the reason. A script the recording kept nothing of is
-said apart: the build is not the one the specs were served. `observe` reads those instead of a
-build, so a recording is whole in the coverage output and needs no build
-where it is observed. A script served alike by several apps (`/assets/...`
-on each port) is placed in the build of the app its origin serves, learned
-from the scripts only one build holds; else in the app whose build holds
-it, else the one its map's sources resolve in. A kept script without a map
-(a page's inline script, the bundler's runtime) goes to the app the
-origin's other kept maps resolve in, so with no build where `observe`
-runs it is still named in its own app and binds its own app's page. With several builds
-configured, stderr names what each origin was found to serve
-(`origins: http://127.0.0.1:7151 serves apps/web/dist`). A kept script
-without a map is the bundler's own code only when its origin served
-other scripts with maps; an app that sent none can't be told. The
-files are written whole or not at all, so workers of one batch and batches
-sharing an output can write the same script at once. They cost the size of
-the scripts the specs loaded and their maps, once per batch's output: for
-three apps of about 25 MB of minified scripts, roughly 100 MB if every
-spec loaded everything.
+map, with the recording. It keeps each script once, by the sha its records
+carry, in `<out>/_setup/<name>/scripts/` (`<sha>.js`, `<sha>.map`, or
+`<sha>.nomap` for a script that names no map). `observe` reads those
+instead of a build, so a recording is whole in the coverage output and
+needs no build where it is observed. The files are written whole or not at
+all, so workers of one batch and batches sharing an output can write the
+same script at once. They cost the size of the scripts the specs loaded
+and their maps, once per batch's output: for three apps of about 25 MB of
+minified scripts, roughly 100 MB if every spec loaded everything.
+
+The fixture fetches each map from the page, so a test's own routing serves
+it too, and from the test process when the page can't (a page that is
+closing), with each attempt bounded at 60 seconds. An answer counts as the
+map only when it is JSON with `mappings` and `sources`, or an index map's
+`sections`, and its content type isn't an HTML page's, because a server's
+single-page fallback answers a map it lacks with its page and status 200.
+A map that neither attempt gets leaves `<sha>.mapfail` with the reason
+(each attempt's HTTP status and content type and what came instead, such
+as "it is an HTML document", or its error). A kept map that isn't a source
+map (one kept by a fixture from before this check) is read the same way,
+with that as the reason. `observe` then reads the build for that script,
+and when the build's copy differs it says so with both shas, both sizes,
+the first differing byte and the reason. A script the recording kept
+nothing of is reported separately: the build is not the one the specs were
+served.
+
+A script served alike by several apps (`/assets/...` on each port) is
+placed in the build of the app its origin serves, which is learned from
+the scripts only one build holds. Failing that, it goes to the app whose
+build holds it, or, failing that too, to the one its map's sources resolve
+in. A kept
+script without a map (a page's inline script, the bundler's runtime) goes
+to the app the origin's other kept maps resolve in, so even with no build
+where `observe` runs it is named in its own app and binds its own app's
+page. Such a script is the bundler's own code only when its origin served
+other scripts with maps; for an app that sent none, it can't be told. With
+several builds configured, stderr names what each origin was found to
+serve (`origins: http://127.0.0.1:7151 serves apps/web/dist`).
 
 A script binds as the app's code only when its origin serves the app's
 build in that recording. The scripts tell which origins those are: one
@@ -300,7 +305,7 @@ other origins ran and bind nothing, as code no build of the tree holds:
 https://js.vendor.example (2)`). Nothing needs configuring for this. Where
 no script tells (no build where `observe` runs and no map kept), every
 origin may be the app's, so a missing build or a build without maps is
-said, never taken for foreign code.
+reported and never taken for foreign code.
 
 `build_root` stays for recordings made before the fixture kept scripts,
 and for a map it couldn't fetch: then the built files the specs were
@@ -309,8 +314,8 @@ served must be in the coverage output, laid out like the tree, and
 (`coverage/_builds`, say). The tree's own pages and `public` files are read
 from the source, as always.
 
-A `build_root` that doesn't exist where `observe` runs is said once, with
-what to do: "build_root prepared/tree does not exist here (<directory>):
+A `build_root` that doesn't exist where `observe` runs is reported once,
+with what to do: "build_root prepared/tree does not exist here (<directory>):
 the step that observes must be given the built files". When a script is
 in no build, the message lists each build as found (`apps/web/dist`, or
 `apps/web/dist in coverage/_builds`) or as "expected at apps/web/dist (not
@@ -319,8 +324,8 @@ found)".
 ### What the task must do
 
 Build the apps with source maps (Vite: `build.sourcemap: true`; esbuild:
-`sourcemap: true`). On a frontend of about 6,000 units this costs a few seconds of build time and some tens
-of MB per app.
+`sourcemap: true`). On a frontend of about 6,000 units this costs a few
+seconds of build time and some tens of MB per app.
 
 A map should hold its sources' text (`sourcesContent`), which Vite and
 esbuild write by default. rules_esbuild leaves it out unless the rule sets
@@ -344,8 +349,8 @@ the minifier inlined into its caller, merged with another, hoisted into a
 wrapper, or turned into a property assignment or a getter counts by its
 own code's place in the generated script, not by a function of its own
 (`test/shapes.test.ts` pins each shape), and a never-called function
-counts as nothing, whatever the minifier did around it. Names in the map aren't needed. Code that runs
-when a module loads (its init, a top-level value computed from a call)
+counts as nothing, whatever the minifier did around it. Names in the map
+aren't needed. Code that runs when a module loads (its init, a top-level value computed from a call)
 counts for every spec that loads the module, because it ran. What
 `observe` leaves out of that is what the bundler writes around a module
 without running the module's code: a declaration hoisted without its value
@@ -431,8 +436,8 @@ debugging session and ends when the page closes, and the worker's Node
 coverage can only be read from inside the worker, so no separate process
 could collect either. The fixture writes `coverage/<spec file>/react/`
 once the spec file's tests are done (when the next file's first hook or
-test starts, or when the worker ends), then calls `onSliceEnd`. A spec file can
-run more than once between a slice's start and end (once per Playwright
+test starts, or when the worker ends), then calls `onSliceEnd`. A spec
+file can run more than once between a slice's start and end (once per Playwright
 project, such as a phone and a desktop layout), so each run is a part of
 its own: a numbered directory `1/`, `2/`, ... inside, with
 `browser.json`, `node.json` and, written last, `done`. No part ever
@@ -442,8 +447,8 @@ runs too, as the batch's hook calls `slice start` once per run, and keeps
 part k ≥ 2 in `coverage/.pipelinegen/part-<k>/<spec file>/`: the end of
 each later part's `collect` moves the numbered directories the fixture
 wrote since the previous part into that part's `react/`, so every
-directory pipelinegen hands `observe` holds its own run. What ran before the first
-test goes into `coverage/_setup/react/` the same way, one part per
+directory pipelinegen hands `observe` holds its own run. What ran before
+the first test goes into `coverage/_setup/react/` the same way, one part per
 worker. Without `out` it records nothing. A page that stays open from one
 test to the next, such as one a `beforeAll` hook opened, is read at each
 test's end and covered on. The repository's own reporting still writes
@@ -463,15 +468,15 @@ came from, so no spec file runs unmarked. Without the directory nothing
 is marked. pipelinegen makes the directory afresh for each bundle it
 marks, but names it to every run of the suite's tests, so a spec file that
 runs again on its own after such a bundle (one the bundle left without a
-result) finds the directory with nobody taking marks there: its first hook or
-test waits the two minutes and fails.
+result) finds the directory with nobody taking marks there, so its first
+hook or test waits the two minutes and fails.
 
 - A spec file that goes on in a new worker (after a failed test, for a
   retry, or once per project) is marked again there and writes another
   part; pipelinegen adds the parts up as it does the fixture's.
 - A test or hook the run's stop cuts (Playwright's global timeout, an
-  interrupt) leaves its spec file unfinished: at the worker's end its part gets no
-  `done` and its stop is not marked, so pipelinegen can't take either
+  interrupt) leaves its spec file unfinished. At the worker's end its part
+  gets no `done` and its stop is not marked, so pipelinegen can't take either
   record for the whole file.
 - A spec file whose tests are all skipped runs no fixture, so it is not
   marked, and pipelinegen can't tell what it touched.
@@ -626,9 +631,9 @@ and nothing else.
 
 The requests and answers follow pipelinegen's
 [plugin protocol](https://github.com/sideways-works/pipelinegen/blob/main/docs/plugins.md).
-This section adds what is particular to react-correlator. Its
-capabilities are `detect`, `links`, `observe`, `collect` and `why`;
-`inputs` declares `detect` per file and `links` per set. It declares no
+What follows is particular to react-correlator. Its capabilities are
+`detect`, `links`, `observe`, `collect` and `why`, and `inputs` declares
+`detect` per file and `links` per set. It declares no
 namespace, and `collects` names only `slice-end`, so pipelinegen starts it
 once per slice.
 
@@ -746,12 +751,15 @@ fixture tree in `testdata/tree`:
 pipelinegen plugin test dist/react-correlator.mjs --tree testdata/tree
 ```
 
-Releases are built and published with `bazel run //correlator/react:release`, which
-runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
-describes: `react-correlator.mjs`, `plugin.json` (the plugin's own
-`describe`), `playwright.mjs` (the fixture, named in `package.json` under
-`pipelinegen.release`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `correlator/react/vX.Y.Z` on `main`.
-The release script fails unless the fixture it built is byte for byte the
+Releases are built and published with
+`bazel run //correlator/react:release`, which runs pipelinegen's release
+command as its [release
+guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+describes. For a tag `correlator/react/vX.Y.Z` on `main` it publishes
+`react-correlator.mjs`, `plugin.json` (the plugin's own `describe`),
+`playwright.mjs` (the fixture, named in `package.json` under
+`pipelinegen.release`), `LICENSE`, `NOTICE` and `SHA256SUMS`. The release
+script fails unless the fixture it built is byte for byte the
 committed file. A published release never changes; a wrong one gets a new
 version.
 
@@ -783,10 +791,10 @@ reading the 1 MB string. The other calls spend about 15 ms more unpacking
 and compiling the embedded part.
 
 Every compression setting is fixed and the build writes no timestamps, so
-two builds of one commit give the same bytes; pipelinegen's release script
-builds twice and fails on any difference. The compressed bytes come from
-Node's brotli encoder, so they follow the Node version in `.node-version`.
-The unpacked bytes don't.
+two builds of one commit give the same bytes, and pipelinegen's release
+script builds twice and fails on any difference. The compressed bytes come
+from Node's brotli encoder, so they follow the Node version in
+`.node-version`, while the unpacked bytes don't.
 
 To check that a release holds the code of its tag, build the tag afresh
 and compare: the check downloads the release and fails unless every file,
@@ -820,7 +828,7 @@ pipelinegen plugin test dist/react-correlator.mjs --tree testdata/tree --sbom <t
 - `dist/playwright.mjs`, the fixture a repository's tests import, is
   committed: after a change to its sources, build it and commit it. A
   test fails when it differs from a fresh build, and so does the release.
-- The last line is pipelinegen's conformance kit. It calls the built
+- The last line runs pipelinegen's conformance kit, which calls the built
   command the way pipelinegen does, on the fixture tree in
   `testdata/tree`, with ts-sbom's command beside it as `--sbom`, which says
   which claimed files hold units. Take `pipelinegen` from
