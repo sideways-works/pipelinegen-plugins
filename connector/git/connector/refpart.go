@@ -5,9 +5,8 @@ import (
 	"strings"
 )
 
-// RefPart turns a branch name into one ref part, byte for byte as
-// pipelinegen names its records: a change id is part of every record's
-// ref, so another encoding would lose a change's earlier runs.
+// RefPart encodes byte for byte as pipelinegen names its records: a change id is part
+// of every record's ref, so another encoding would lose a change's earlier runs.
 func RefPart(part string) string {
 	var b strings.Builder
 

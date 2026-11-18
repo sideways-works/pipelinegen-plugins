@@ -1,7 +1,3 @@
-// Command git-connector is a pipelinegen connector for a plain git server
-// with no host API: its proposed changes are branches whose names match
-// the config's patterns. pipelinegen lists the branches with git and hands
-// them in; the connector sends nothing and reports nowhere.
 package main
 
 import (
@@ -13,7 +9,6 @@ import (
 	"github.com/sideways-works/pipelinegen/plugin"
 )
 
-// Version is set by the release build.
 var Version = "dev"
 
 func main() {

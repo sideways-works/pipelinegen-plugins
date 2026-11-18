@@ -1,9 +1,3 @@
-// Package connector is the plain git connector's logic, for a git server
-// with no host API. Its proposed changes are the branches whose names match
-// the config's patterns. pipelinegen lists the remote's branches with git
-// and its read credential, and hands them in; the connector sends no
-// request, holds no token, and reports nowhere: a run's state is in its
-// records.
 package connector
 
 import (
@@ -19,18 +13,13 @@ import (
 	"github.com/sideways-works/pipelinegen/plugin"
 )
 
-// Name is the connector's plugin name in the config.
 const Name = "git"
 
-// IDPrefix starts every change id the connector gives: a branch, its name
-// encoded as one ref part.
 const IDPrefix = "branch-"
 
-// ErrGit is a call the connector can't answer.
 var ErrGit = errors.New("git connector")
 
-// Config is the connector's block. The core puts the code's remote in
-// every call, and the remote's branches, by name, in heads.
+// Config's Remote and Heads (branch name to commit) are filled by the core in every call.
 type Config struct {
 	Remote   string
 	Branches []string
@@ -40,7 +29,6 @@ type Config struct {
 
 var commitID = regexp.MustCompile(`^([0-9a-f]{40}|[0-9a-f]{64})$`)
 
-// ConfigFrom reads the connector's block.
 func ConfigFrom(m map[string]any) (Config, error) {
 	var c Config
 
@@ -77,9 +65,8 @@ func ConfigFrom(m map[string]any) (Config, error) {
 	return c, nil
 }
 
-// Describe is what the connector can tell: changes, each from the
-// repository itself, since a plain git server has no forks, and nothing a
-// host would keep (statuses, comments, drafts, labels).
+// Describe declares forks because it can answer them: every change comes from the
+// repository itself.
 func Describe(version string) plugin.Description {
 	return plugin.Description{
 		Protocol: plugin.Protocol, Kind: plugin.KindConnector, Name: Name, Version: version,
@@ -87,7 +74,6 @@ func Describe(version string) plugin.Description {
 	}
 }
 
-// Identify claims the configured remote and no other.
 func Identify(c Config, remote string) plugin.Identity {
 	if c.Remote == "" || strings.TrimSuffix(remote, "/") != strings.TrimSuffix(c.Remote, "/") {
 		return plugin.Identity{}
@@ -96,8 +82,6 @@ func Identify(c Config, remote string) plugin.Identity {
 	return plugin.Identity{Mine: true, Repository: repository(remote), GitRemote: remote}
 }
 
-// repository is a remote's path without its .git: owner/name on most
-// servers.
 func repository(remote string) string {
 	p := remote
 
@@ -110,11 +94,8 @@ func repository(remote string) string {
 	return strings.TrimSuffix(strings.Trim(p, "/"), ".git")
 }
 
-// ChangeID is a branch's change id.
 func ChangeID(branch string) string { return IDPrefix + RefPart(branch) }
 
-// Changes are the heads whose names match one of the patterns (path.Match),
-// but base, as proposed changes onto base, in branch order.
 func Changes(c Config, base string) []plugin.Change {
 	out := []plugin.Change{}
 
@@ -141,8 +122,6 @@ func matches(branch string, patterns []string) bool {
 	return false
 }
 
-// Links fills the config's page template for what is asked: {commit},
-// {branch} and {path}. Without a template there is no page.
 func Links(c Config, a plugin.LinksArgs) plugin.WebLinks {
 	if c.Links == "" {
 		return plugin.WebLinks{}
@@ -174,11 +153,8 @@ func Links(c Config, a plugin.LinksArgs) plugin.WebLinks {
 	return w
 }
 
-// Calls are the calls the connector answers besides describe.
 var Calls = []string{plugin.CallIdentify, plugin.CallChanges, plugin.CallLinks}
 
-// Round answers one round of a call. No call asks for a request: each
-// answers at once.
 func Round(call string, req plugin.ExchangeRequest) (plugin.Round, error) {
 	c, err := ConfigFrom(req.Config)
 	if err != nil {

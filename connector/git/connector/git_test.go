@@ -45,8 +45,6 @@ func TestChangesAreMatchingBranches(t *testing.T) {
 	}
 }
 
-// The ids are the ones pipelinegen's records already hold for these
-// branches.
 func TestChangeIDsKeepTheirRecords(t *testing.T) {
 	for branch, id := range map[string]string{
 		"review/a":        "branch-review%2Fa",
