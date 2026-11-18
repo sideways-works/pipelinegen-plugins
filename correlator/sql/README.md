@@ -5,7 +5,7 @@ sql-correlator is a correlator plugin for
 only the test slices a change can break. It records which database objects
 each test slice touched, from the statement log that the tests' own
 PostgreSQL server writes. It never connects to a database, starts no
-server and needs no container: files go in and JSON comes out.
+server and needs no container. It reads files and answers in JSON.
 
 It owns no units. The tables, views and functions it names are the units
 [pg-sbom](../../sbom/pg) reads from the
@@ -35,8 +35,8 @@ recorded `pg:relation:public.notes` for the first and
 
 A new migration adds a column to `tags`. pg-sbom says the file changes
 `pg:table:public.tags`. While pg-sbom's `migrations-by-table` narrowing is
-on, pipelinegen replaces each slice's dependency on the migration files by
-what the slice touched, so `api/tags_test.go` runs and
+on, pipelinegen replaces each slice's dependency on the migration files
+with what the slice touched, so `api/tags_test.go` runs and
 `api/notes_test.go` doesn't.
 
 ## Setting it up
@@ -151,14 +151,14 @@ log_statement = 'mod'
 ```
 
 `log_statement = 'mod'` adds what has no plan, such as `COPY` and
-`TRUNCATE`. The log must be in UTC: a slice's part is chosen by time, and
-`collect` refuses any other zone rather than misread it. Failed statements
+`TRUNCATE`. The log must be in UTC, because a slice's part is chosen by
+time, and `collect` refuses any other zone instead of misreading it. Failed statements
 reach the log as long as `log_min_error_statement` stays at its default,
 `error`.
 
 On a backend of a few hundred tables whose tests run whole flows through
-it, these settings cost the server 16 % more CPU than no logging and wrote
-2 to 27 MB of log per test file. The plain statement log
+it, these settings cost the server 16 % more CPU than no logging, and
+they wrote 2 to 27 MB of log per test file. The plain statement log
 (`log_statement = 'all'` without auto_explain) costs 6 % and 2 to 8 MB, and
 missed about a tenth of the objects each of those test files touched, all
 of them reached through triggers and nested functions.
@@ -173,13 +173,13 @@ Put the log directory inside the batch's coverage output, such as
 `coverage/pglog` under the batch task's working directory, with `log:
 coverage/pglog`. The step that reads the recordings after the batch sees
 only the tree and the coverage output, so the log's bytes have to be
-there: `collect` links each file of the log into the coverage output once,
-which costs nothing, and a link needs both on one filesystem. Where the log
+there. `collect` links each file of the log into the coverage output once,
+which costs nothing; a link needs both on one filesystem. Where the log
 is elsewhere and no link can be made (on CI systems that mount each output
 apart, as Concourse does), `collect` copies each slice's range of the log
 instead, which takes time in proportion to it, and says so in the batch's
-log. The server may rotate its files during the batch, but must not empty
-and write over one (`log_truncate_on_rotation = off`, the default) before
+log. The server may rotate its files during the batch, but it must not
+empty and write over one (`log_truncate_on_rotation = off`, the default) before
 the batch has ended.
 
 ### What collect and observe do
@@ -208,11 +208,11 @@ the longest line and the part's distinct statements, and keeps the
 statements logged in the part's window, once each with a count.
 
 A slice's statements are chosen by the time each line carries, which the
-server stamps when it writes the message, not by where the line lands in
-the file: the server writes its log through a separate process, a few
-milliseconds behind the statements, so a statement a slice ran but the
-server wrote out after the slice ended still counts for that slice. The
-log's times are in milliseconds:
+server stamps when it writes the message, and not by where the line lands
+in the file. The server writes its log through a separate process, a few
+milliseconds behind the statements, so a statement that a slice ran and
+the server wrote out after the slice ended still counts for that slice.
+The log's times are in milliseconds:
 
 - A slice's part runs from the millisecond of its start up to and
   including the millisecond of its end, and `slice-end` returns only once
@@ -232,16 +232,16 @@ server wrote to it, a line cut short, another format) is never skipped,
 since it could be a statement: `observe` answers "can't tell", with the
 file, the line and why, which binds the slice wide.
 
-What only the setup touched (the statements
-logged before the first slice, and those of `setup_databases` during the
-slice) is also answered in `setup_like`: with pipelinegen's setup split
-on, it counts as setup, which a sample covers. The setup's directory is
+What only the setup touched (the statements logged before the first
+slice, and those of `setup_databases` during the slice) is also answered
+in `setup_like`. With pipelinegen's setup split on, it counts as setup,
+which a sample covers. The setup's directory is
 the first of `dirs`, whatever it is called; a batch without one, or with
 an empty one, is fine.
 
 ### When it can't tell
 
-A window that holds no statement is positive evidence: `collect` noted
+A window that holds no statement is positive evidence. `collect` noted
 the slice's part of the log and the slice ran no SQL, so the answer is an
 empty list. `observe` answers "can't tell" (exit 3), with the reason
 below, when:
@@ -257,10 +257,10 @@ below, when:
 | `N statements don't parse`, with the first one's place in the log (file, byte, line), its length and its SHA-256, never its text | a statement libpg_query can't parse: find it in the build's log by its place, and report it |
 
 The `unbounded` marker is written when, at `slice-start`, the slice's
-directory already holds a file at its top: only the slice's own run (its
+directory already holds a file at its top. Only the slice's own run (its
 task, or its driver's recording, such as go-driver's `tests.coverprofile`)
-writes there, while every collector works in a directory of its own below
-it, and a slice's later part gets a new directory. A run step whose driver
+writes there. Every collector works in a directory of its own below it,
+and a slice's later part gets a new directory. A run step whose driver
 writes its recording only into directories below is not caught this way.
 
 pipelinegen then marks the slice, and the slice runs on every change until
@@ -275,8 +275,8 @@ statements touched, so a migration that changes table T runs the slices
 that touched T, and the others don't. What that can miss:
 
 - A statement on a code path the recorded run didn't take. Recording binds
-  what ran, as coverage does for code; the nightly run of everything is
-  the net.
+  what ran, as coverage does for code, and the nightly run of everything
+  catches the rest.
 - Triggers and cascades. With the settings above, the statements they run
   are logged and bound. With the plain statement log, a slice binds them
   only through pg-sbom's links from a table to its trigger functions, and a
@@ -299,9 +299,9 @@ link the function to its tables.
 
 In a backend whose tests run whole flows end to end, the flow tests shared
 a core of about a third of its tables, because one flow really writes that
-many. A migration on one of those still runs most flow tests. The gain is
-on the rest: half of the tables were touched by none of the six test files
-measured.
+many. A migration on one of those still runs most flow tests. The rest is
+where narrowing pays off: half of the tables were touched by none of the
+six test files measured.
 
 ## What it can't see
 
@@ -369,9 +369,9 @@ places in the log leave it.
 
 The requests and answers follow pipelinegen's
 [plugin protocol](https://github.com/sideways-works/pipelinegen/blob/main/docs/plugins.md).
-This section adds what is particular to sql-correlator. Its capabilities
-are `observe` and `collect`; it declares no namespace, no candidates and
-no `collects`, so pipelinegen calls it for all three actions.
+What follows is particular to sql-correlator. Its capabilities are
+`observe` and `collect`. It declares no namespace, no candidates and no
+`collects`, so pipelinegen calls it for all three actions.
 
 ### `collect`
 
@@ -430,12 +430,15 @@ go build -trimpath -o sql-correlator ./cmd/sql-correlator
 pipelinegen plugin test ./sql-correlator --tree testdata
 ```
 
-Releases are built and published with `bazel run //correlator/sql:release`, which
-runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
-describes: static `sql-correlator-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
-`-darwin-arm64`,
-`plugin.json` (the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `correlator/sql/vX.Y.Z` on `main`. A published release never changes; a wrong one gets a
-new version.
+Releases are built and published with
+`bazel run //correlator/sql:release`, which runs pipelinegen's release
+command as its [release
+guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+describes. For a tag `correlator/sql/vX.Y.Z` on `main` it publishes static
+`sql-correlator-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (the plugin's own `describe`), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. A published release never changes; a wrong one
+gets a new version.
 
 ## Developing
 
@@ -452,10 +455,8 @@ pipelinegen plugin test ./sql-correlator --tree testdata
 
 - Tests read the small statement logs in `testdata`, need no database
   and use no network.
-- The last line is pipelinegen's conformance kit. sql-correlator reads
-  no file of the tree, but the kit needs one, and
-  `testdata/.pipelinegen-kit.json` names a recording in it that the kit
-  observes. Take `pipelinegen` from [its
+- The last line runs pipelinegen's conformance kit on the recording that
+  `testdata/.pipelinegen-kit.json` names, as described above. Take `pipelinegen` from [its
   releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
 - Ids come from pg-sbom's `pgid` package, so both plugins name a
   database object the same way.
