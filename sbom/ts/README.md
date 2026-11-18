@@ -49,13 +49,14 @@ plugins:
       - name: ts
         kind: sbom
         path: sbom/ts
-        release: {version: vX.Y.Z, sha256: ...}
+        release: {version: v0.4.0, sums: …}
 ```
 
-The checksum is the `ts-sbom.mjs` line of the release's `SHA256SUMS`. A
-new pin selects nothing by itself. List `pipelinegen.yaml` under
-`everything_on`, so that a pin change, like any other change to the
-config, runs every slice.
+`sums` is the checksum of the release's `SHA256SUMS`, whose line for
+`ts-sbom.mjs` checks the command; `sha256:` with that line in place of
+`sums` pins the file alone. A new pin selects nothing by itself. List
+`pipelinegen.yaml` under `everything_on`, so that a pin change, like any
+other change to the config, runs every slice.
 
 ### The files it claims
 
@@ -87,7 +88,7 @@ To read less or more of the tree, put patterns on the plugin's entry:
       - name: ts
         kind: sbom
         path: sbom/ts
-        release: {version: vX.Y.Z, sha256: ...}
+        release: {version: v0.4.0, sums: …}
         exclude: ["apps/legacy/**"]
 ```
 
@@ -305,41 +306,54 @@ committed, so installing the package runs no script, with or without
 `--ignore-scripts`. `test/library.test.ts` fails when they differ from a
 fresh build of the sources.
 
-## Developing and releasing
+## Developing
 
-```sh
-npm install
-npm test          # node:test, against the fixtures in testdata
-npm run lint      # Biome and tsc --noEmit
-npm run build     # dist/ts-sbom.mjs, and the committed library files
-```
-
-The build runs on the Node version in `.node-version`; npm refuses another
+`bazel run //sbom/ts:test` installs the npm workspace at the root with
+`npm ci` and runs `npm test` here, and `bazel run //sbom/ts:lint` runs
+`npm run lint` (Biome and `tsc --noEmit`), both with the Node
+`MODULE.bazel` pins ([CONTRIBUTING](../../CONTRIBUTING.md)). The build
+runs on that Node, the version in `.node-version`; npm refuses another
 one (`devEngines` in `package.json`), so a release builds the same bytes
 on any machine. Running the built command needs Node 22.18 or later.
+esbuild's install script stays off (`allowScripts` in the root
+`package.json`): the build calls esbuild's JavaScript API, which finds
+its platform binary without that script, and a release installs with
+every script off. The tests use no network; their trees are the fixtures
+in `testdata`. `test/command.test.ts` fails when `describe` or `detect`
+loads the parser, so keep those calls in the small entry, `src/main.ts`,
+and it checks the built file as pipelinegen runs it.
 
-esbuild's install script stays off (`allowScripts` in `package.json`). The
-build calls esbuild's JavaScript API, which finds its platform binary
-without that script, and a release installs with every script off.
+The library's built files, `dist/lib.mjs` and `dist/detect.mjs`, are
+committed, so react-correlator imports them from the workspace without
+building ts-sbom first. After a change to their sources, build them and
+commit them; a test fails when they differ from a fresh build. The ids
+the library makes are what react-correlator names units by, so a change
+to an id's form is a change to both plugins.
 
-`test/command.test.ts` fails when `describe` or `detect` loads the parser,
-and checks the built file as pipelinegen runs it.
-
-The conformance kit checks the plugin the way pipelinegen calls it, on the
-fixture tree in `testdata/app`:
+pipelinegen's conformance kit calls the built command the way
+pipelinegen does, on the fixture tree in `testdata/app`. The commands
+below build it and run the kit from this directory with the pipelinegen
+that `tools/go.mod` pins:
 
 ```sh
-pipelinegen plugin test dist/ts-sbom.mjs --tree testdata/app
+npm ci
+npm run build
+go -C ../../tools tool pipelinegen plugin test "$PWD/dist/ts-sbom.mjs" --tree "$PWD/testdata/app"
 ```
 
-Releases are built and published with `bazel run //sbom/ts:release`,
-which runs pipelinegen's release command as its [release
-guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
-describes. For a tag `sbom/ts/vX.Y.Z` on `main` it publishes
-`ts-sbom.mjs`, `plugin.json` (the plugin's own `describe`), `LICENSE`,
-`NOTICE` and `SHA256SUMS`. The only code in the release is the bundled
-command; packages that use the library install it from git. A published
-release never changes; a wrong one gets a new version.
+`bazel run //sbom/ts:release` releases it from a tag `sbom/ts/vX.Y.Z` on
+`main`, as [CONTRIBUTING](../../CONTRIBUTING.md#releases) describes:
+`ts-sbom.mjs`, `plugin.json` (its own `describe` answer), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. The bundled command is the only code in the
+release. Its first release here is `v0.4.0`
+([RELEASING](../../RELEASING.md)), and a published release never
+changes. To check that a release holds the code of its tag, `bazel run
+//sbom/ts:release -- check vX.Y.Z` builds the tag afresh, downloads the
+release and fails unless every file, `ts-sbom.mjs` included, is byte for
+byte the fresh build.
+
+A change to what ts-sbom lists comes with its docs, so this README
+describes ts-sbom as it is on `main`.
 
 ### How the command file is built
 
@@ -370,42 +384,3 @@ two builds of one commit give the same bytes, and pipelinegen's release
 script builds twice and fails on any difference. The compressed bytes come
 from Node's brotli encoder, so they follow the Node version in
 `.node-version`, while the unpacked bytes don't.
-
-To check that a release holds the code of its tag, build the tag afresh
-and compare: the check downloads the release and fails unless every file,
-`ts-sbom.mjs` included, is byte for byte the fresh build:
-
-```sh
-bazel run //sbom/ts:release -- check vX.Y.Z
-```
-
-## Developing
-
-The tests and the lint run with the Go, golangci-lint and Node that the
-repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
-other commands run in this directory.
-
-```sh
-bazel run //sbom/ts:test
-bazel run //sbom/ts:lint
-npm ci
-npm run build                     # dist/ts-sbom.mjs, and the committed library files
-npm run build
-pipelinegen plugin test dist/ts-sbom.mjs --tree testdata/app
-```
-
-- The tests use no network; their trees are the fixtures in `testdata`.
-- The library's built files, `dist/lib.mjs` and `dist/detect.mjs`, are
-  committed, so that a package installing ts-sbom from git runs no
-  script: after a change to their sources, build them and commit them. A
-  test fails when they differ from a fresh build.
-- The ids the library makes are what react-correlator names units by, so a
-  change to an id's form is a change to both plugins.
-- `test/command.test.ts` fails when `describe` or `detect` loads the
-  parser: keep those calls in the small entry, `src/main.ts`.
-- The last line runs pipelinegen's conformance kit, which calls the built
-  command the way pipelinegen does, on the fixture tree in `testdata/app`.
-  Take `pipelinegen` from
-  [its releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
-- A change to what ts-sbom lists comes with its docs: the README describes
-  ts-sbom as it is on `main`.
