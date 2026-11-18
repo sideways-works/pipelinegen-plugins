@@ -1,0 +1,3 @@
+GET /api/notes/n1
+GET /api/notes
+GET /favicon.ico

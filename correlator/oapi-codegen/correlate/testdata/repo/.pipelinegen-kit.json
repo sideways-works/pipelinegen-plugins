@@ -1,0 +1,1 @@
+{"name": "api-uses", "observe": {"slice": "notes", "dirs": ["coverage/_setup/api-uses", "coverage/notes/api-uses"]}, "record": {"slice": "notes", "parts": 2, "run": ["sh", "source/kit-record.sh"], "config": {"request_log": "source/requests.log"}}}

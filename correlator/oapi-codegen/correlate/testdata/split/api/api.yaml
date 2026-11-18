@@ -1,0 +1,36 @@
+openapi: 3.0.3
+info:
+  title: Split API
+  version: "1.0.0"
+  description: The root lists every path; each context keeps its own in a file of its own.
+servers:
+  - url: /api/v1
+security:
+  - session: []
+paths:
+  /notes:
+    $ref: "notes/notes.yaml#/paths/~1notes"
+  /notes/{id}:
+    $ref: "notes/notes.yaml#/paths/~1notes~1{id}"
+  /accounts/me:
+    $ref: "accounts/accounts.yaml#/paths/~1accounts~1me"
+  /health:
+    get:
+      operationId: health
+      security: []
+      responses:
+        "200": { description: Up. }
+components:
+  securitySchemes:
+    session:
+      type: apiKey
+      in: cookie
+      name: session
+  parameters:
+    Limit:
+      $ref: "shared/common.yaml#/components/parameters/Limit"
+  schemas:
+    Note:
+      $ref: "notes/notes.yaml#/components/schemas/Note"
+    Problem:
+      $ref: "shared/common.yaml#/components/schemas/Problem"
