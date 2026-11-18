@@ -1,0 +1,219 @@
+{
+  "sets": [
+    {
+      "group": "mail/locales",
+      "inputs": [
+        "mail/locales/en.json"
+      ],
+      "units": [
+        {
+          "id": "locale:mail/locales",
+          "group": "mail/locales",
+          "digest": "a5729ed0b430adae541fb214f6412fa5",
+          "kind": "catalog",
+          "executable": true,
+          "label": "the catalog mail/locales"
+        },
+        {
+          "id": "locale:mail/locales#en",
+          "group": "mail/locales",
+          "digest": "a5729ed0b430adae541fb214f6412fa5",
+          "kind": "language",
+          "executable": true,
+          "label": "en is there"
+        }
+      ]
+    },
+    {
+      "group": "mail/locales/en.json",
+      "inputs": [
+        "mail/locales/en.json"
+      ],
+      "units": [
+        {
+          "id": "locale:mail/locales#en/-",
+          "group": "mail/locales#en/-:",
+          "digest": "a5729ed0b430adae541fb214f6412fa5",
+          "file": "mail/locales/en.json",
+          "kind": "namespace",
+          "executable": true,
+          "label": "en/- is there"
+        },
+        {
+          "id": "locale:mail/locales#en/-:",
+          "group": "mail/locales#en/-:",
+          "digest": "c4fb9a1a732019b34b94e8fa9f771b3e",
+          "file": "mail/locales/en.json",
+          "kind": "object",
+          "executable": true,
+          "label": "en/-, whole"
+        },
+        {
+          "id": "locale:mail/locales#en/-:booking",
+          "group": "mail/locales#en/-:booking",
+          "digest": "91af03dd2f141c802adf414e8b4b393d",
+          "file": "mail/locales/en.json",
+          "kind": "object",
+          "executable": true
+        },
+        {
+          "id": "locale:mail/locales#en/-:booking.lines",
+          "group": "mail/locales#en/-:booking",
+          "digest": "5ce91fd9c74a6bad039d4997df750a82",
+          "file": "mail/locales/en.json",
+          "kind": "object",
+          "executable": true
+        },
+        {
+          "id": "locale:mail/locales#en/-:booking.lines.0",
+          "group": "mail/locales#en/-:booking",
+          "digest": "c25bf945aaff8fe16826d3c1ef117044",
+          "file": "mail/locales/en.json",
+          "kind": "key",
+          "executable": true
+        },
+        {
+          "id": "locale:mail/locales#en/-:booking.lines.1",
+          "group": "mail/locales#en/-:booking",
+          "digest": "086c68e9f7a72ce223c6a611e2e2ef65",
+          "file": "mail/locales/en.json",
+          "kind": "key",
+          "executable": true
+        },
+        {
+          "id": "locale:mail/locales#en/-:booking.subject",
+          "group": "mail/locales#en/-:booking",
+          "digest": "8811284053daaa165400cf46516b0b42",
+          "file": "mail/locales/en.json",
+          "kind": "key",
+          "executable": true
+        }
+      ]
+    },
+    {
+      "group": "web/locales",
+      "inputs": [
+        "web/locales/de/home.json",
+        "web/locales/en/home.json"
+      ],
+      "units": [
+        {
+          "id": "locale:web/locales",
+          "group": "web/locales",
+          "digest": "a5729ed0b430adae541fb214f6412fa5",
+          "kind": "catalog",
+          "executable": true,
+          "label": "the catalog web/locales"
+        },
+        {
+          "id": "locale:web/locales#de",
+          "group": "web/locales",
+          "digest": "a5729ed0b430adae541fb214f6412fa5",
+          "kind": "language",
+          "executable": true,
+          "label": "de is there"
+        },
+        {
+          "id": "locale:web/locales#en",
+          "group": "web/locales",
+          "digest": "a5729ed0b430adae541fb214f6412fa5",
+          "kind": "language",
+          "executable": true,
+          "label": "en is there"
+        }
+      ]
+    },
+    {
+      "group": "web/locales/de/home.json",
+      "inputs": [
+        "web/locales/de/home.json"
+      ],
+      "units": [
+        {
+          "id": "locale:web/locales#de/home",
+          "group": "web/locales#de/home:",
+          "digest": "a5729ed0b430adae541fb214f6412fa5",
+          "file": "web/locales/de/home.json",
+          "kind": "namespace",
+          "executable": true,
+          "label": "de/home is there"
+        },
+        {
+          "id": "locale:web/locales#de/home:",
+          "group": "web/locales#de/home:",
+          "digest": "4196bcbf3630cf770d906204c23c830d",
+          "file": "web/locales/de/home.json",
+          "kind": "object",
+          "executable": true,
+          "label": "de/home, whole"
+        },
+        {
+          "id": "locale:web/locales#de/home:title",
+          "group": "web/locales#de/home:title",
+          "digest": "76544339145b2fc85d26ce818c37115b",
+          "file": "web/locales/de/home.json",
+          "kind": "key",
+          "executable": true
+        }
+      ]
+    },
+    {
+      "group": "web/locales/en/home.json",
+      "inputs": [
+        "web/locales/en/home.json"
+      ],
+      "units": [
+        {
+          "id": "locale:web/locales#en/home",
+          "group": "web/locales#en/home:",
+          "digest": "a5729ed0b430adae541fb214f6412fa5",
+          "file": "web/locales/en/home.json",
+          "kind": "namespace",
+          "executable": true,
+          "label": "en/home is there"
+        },
+        {
+          "id": "locale:web/locales#en/home:",
+          "group": "web/locales#en/home:",
+          "digest": "4317dba25b4ef6714811ad81e7b981b2",
+          "file": "web/locales/en/home.json",
+          "kind": "object",
+          "executable": true,
+          "label": "en/home, whole"
+        },
+        {
+          "id": "locale:web/locales#en/home:cart",
+          "group": "web/locales#en/home:cart",
+          "digest": "85dda122bf4149e85c5f1afa61a815a5",
+          "file": "web/locales/en/home.json",
+          "kind": "object",
+          "executable": true
+        },
+        {
+          "id": "locale:web/locales#en/home:cart.items_one",
+          "group": "web/locales#en/home:cart",
+          "digest": "d726232a00b20c50461f4f4e5a18d050",
+          "file": "web/locales/en/home.json",
+          "kind": "key",
+          "executable": true
+        },
+        {
+          "id": "locale:web/locales#en/home:cart.items_other",
+          "group": "web/locales#en/home:cart",
+          "digest": "bf7fbeda9fb78e733d9bc37ec8425abe",
+          "file": "web/locales/en/home.json",
+          "kind": "key",
+          "executable": true
+        },
+        {
+          "id": "locale:web/locales#en/home:title",
+          "group": "web/locales#en/home:title",
+          "digest": "1fa79baa5f6a65d49bbee9e12d6e320e",
+          "file": "web/locales/en/home.json",
+          "kind": "key",
+          "executable": true
+        }
+      ]
+    }
+  ]
+}

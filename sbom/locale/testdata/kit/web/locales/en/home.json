@@ -1,0 +1,11 @@
+{
+  "title": "Welcome",
+  "cart": {
+    "items_one": "{{count}} ticket",
+    "items_other": "{{count}} tickets",
+    "empty": "Nothing here yet"
+  },
+  "greeting_male": "Welcome, sir",
+  "greeting": "Welcome, $t(title)",
+  "steps": ["Pick a date", "Pay"]
+}

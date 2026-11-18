@@ -1,0 +1,2 @@
+{"booking": {"subject": "Your booking", "lines": ["Hello {{name}}", "See you soon"], "extra": {"refund": "Refunded", "late": "Late entry"}},
+ "reminder": {"subject": "Tomorrow", "lines": ["Don't forget"]}}
