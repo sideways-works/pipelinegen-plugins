@@ -27,7 +27,6 @@ type module struct {
 
 type modules []module
 
-// ErrModule wraps a go.mod that can't be read.
 var ErrModule = errors.New("module")
 
 func findModules(root string) (modules, error) {

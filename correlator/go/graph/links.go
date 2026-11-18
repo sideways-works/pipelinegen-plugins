@@ -26,7 +26,6 @@ const (
 	WhileOn  = "on"
 )
 
-// Link is one typed link of a package's answer.
 type Link struct {
 	From, To  string
 	Kind      string
@@ -42,7 +41,6 @@ type Link struct {
 	Ref bool
 }
 
-// LinkSet is one package's links and what they depend on.
 type LinkSet struct {
 	Group string
 	// Inputs are the package's files, its module's go.mod and the go.work
@@ -58,7 +56,6 @@ type LinkSet struct {
 	CannotTell []CannotTell
 }
 
-// CannotTell is a unit whose links can't be told, and why.
 type CannotTell struct {
 	Unit, Reason string
 }

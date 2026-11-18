@@ -45,20 +45,16 @@ import (
 
 // The protocol's names. go-correlator's collect call speaks the other side.
 const (
-	// EnvDir names the directory the binary talks through.
 	EnvDir = "PIPELINEGEN_COVER_DIR"
 	// EnvName names the binary in file names and errors; its program
 	// name when unset.
-	EnvName = "PIPELINEGEN_COVER_NAME"
-	// RequestFile is the request every binary of the directory polls.
+	EnvName     = "PIPELINEGEN_COVER_NAME"
 	RequestFile = "request"
-	// ReadySuffix ends a live binary's file.
 	ReadySuffix = ".ready"
 	// DoneInfix sits between a binary's name and the sequence number it
 	// answered.
 	DoneInfix = ".done."
-	// Poll is how often a binary reads the request.
-	Poll = 100 * time.Millisecond
+	Poll      = 100 * time.Millisecond
 )
 
 // counterModeAtomic is the meta-data header's counter mode for
@@ -69,7 +65,6 @@ const counterModeAtomic = 3
 // after the magic, version, length, entry count, hash and string table.
 const modeOffset = 48
 
-// ErrMode is a binary whose counters can't be cleared.
 var ErrMode = errors.New("cover: the binary must be built with -cover -covermode=atomic")
 
 // The package is linked for this alone: a binary built for coverage starts
@@ -164,7 +159,6 @@ func (b *binary) step() {
 	}
 }
 
-// ReadRequest reads the request in dir: its sequence number and target.
 func ReadRequest(dir string) (int, string, bool) {
 	b, err := os.ReadFile(filepath.Join(dir, RequestFile)) //nolint:gosec // the directory the stack's runner names
 	if err != nil {

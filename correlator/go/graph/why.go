@@ -6,7 +6,6 @@ import (
 	"github.com/sideways-works/pipelinegen-sbom-go/goid"
 )
 
-// Step is one unit on the path Why finds, with how it was reached.
 type Step struct {
 	Unit string
 	Note string

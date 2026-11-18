@@ -183,7 +183,6 @@ type block struct {
 	ran       bool
 }
 
-// ErrProfile wraps a coverprofile line that can't be read.
 var ErrProfile = errors.New("coverprofile")
 
 func parseProfiles(texts [][]byte) ([]block, error) {

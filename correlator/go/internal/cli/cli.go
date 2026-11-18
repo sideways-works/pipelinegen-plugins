@@ -1,5 +1,3 @@
-// Package cli answers pipelinegen's plugin calls for go-correlator:
-// describe, bind, links, observe, collect and why.
 package cli
 
 import (
@@ -30,7 +28,6 @@ const (
 	exitCannotTell = 3
 )
 
-// The calls this plugin answers.
 const (
 	callDescribe = "describe"
 	callDetect   = "detect"
@@ -43,7 +40,6 @@ const (
 	callLinks = "links"
 )
 
-// Config is the plugin's own block of the repository's config.
 type Config struct {
 	// Modules are the directories of the Go modules to read; none reads
 	// every go.mod of the tree.
@@ -97,13 +93,11 @@ type Request struct {
 	To   string `json:"to"`
 }
 
-// Claimed is one claimed file.
 type Claimed struct {
 	Path string `json:"path"`
 	Role string `json:"role"`
 }
 
-// Slice is one slice of a bind request.
 type Slice struct {
 	Suite   string   `json:"suite"`
 	Name    string   `json:"name"`
@@ -124,7 +118,6 @@ var (
 	errUncacheable = errors.New("not cacheable")
 )
 
-// Run answers one call and returns the exit code.
 func Run(args []string, stdin io.Reader, stdout, stderr io.Writer, version string) int {
 	if len(args) != 1 {
 		say(stderr, errUsage)

@@ -25,9 +25,7 @@ const (
 	doneInfix   = ".done."
 )
 
-// Options say where the binaries talk and how long to wait for them.
 type Options struct {
-	// Dir is the directory the binaries talk through.
 	Dir string
 	// Stack says a stack of binaries runs: none ready is then a failure,
 	// not a batch of plain test binaries that write their own coverage.
@@ -40,7 +38,6 @@ type Options struct {
 	Stale time.Duration
 }
 
-// Report says what happened to each binary.
 type Report struct {
 	Answered []string
 	// Gone are binaries whose ready file had gone stale and that didn't
@@ -48,7 +45,6 @@ type Report struct {
 	Gone []string
 }
 
-// ErrSnapshot wraps binaries that didn't hand over their counters.
 var ErrSnapshot = errors.New("cover snapshot")
 
 const pollEvery = 20 * time.Millisecond

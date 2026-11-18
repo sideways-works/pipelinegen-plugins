@@ -322,7 +322,6 @@ func NotBuilding(dir string, b decls.Build, first string) string {
 		dir, strings.Join(b.Context().BuildTags, " "), first)
 }
 
-// Broken are the tree's packages that don't build, by directory, with why.
 func (t *Tree) Broken() map[string]string {
 	out := map[string]string{}
 

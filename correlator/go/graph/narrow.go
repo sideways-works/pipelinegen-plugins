@@ -51,7 +51,6 @@ const (
 	NarrowSetupSplit = "setup-split"
 )
 
-// Narrowing describes one narrowing for describe and the docs.
 type Narrowing struct {
 	Name string
 	// OffAt is the lowest narrowing level that switches it off.

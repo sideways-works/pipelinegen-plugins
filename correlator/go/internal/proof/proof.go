@@ -28,7 +28,6 @@ import (
 // errOutside is an archive entry that would land outside the tree.
 var errOutside = errors.New("git archive: an entry leaves the tree")
 
-// Options say what to measure.
 type Options struct {
 	// Repo is the git repository holding both commits; it is only read.
 	Repo       string
@@ -56,7 +55,6 @@ type Options struct {
 	AnyLink bool
 }
 
-// Report is what the measurement found, per suite and per slice.
 type Report struct {
 	Narrowing string        `json:"narrowing"`
 	Level     int           `json:"level"`
@@ -70,7 +68,6 @@ type Report struct {
 	Explained map[string][2][]string `json:"explained,omitempty"`
 }
 
-// SuiteReport counts one suite's slices.
 type SuiteReport struct {
 	Suite string `json:"suite"`
 	Total int    `json:"total"`
@@ -112,7 +109,6 @@ type SliceResult struct {
 	Off     map[string][]string `json:"off,omitempty"`
 }
 
-// Run measures the narrowing on the change.
 func Run(ctx context.Context, o Options) (*Report, error) {
 	if o.Narrowing == "" {
 		o.Narrowing = graph.NarrowInterfaceMethods
@@ -786,7 +782,6 @@ func entry(r io.Reader, h *tar.Header, p string) error {
 	return wrap(f.Close())
 }
 
-// Write prints the report for people.
 func (r *Report) Write(w io.Writer) {
 	say := func(format string, a ...any) {
 		if _, err := fmt.Fprintf(w, format+"\n", a...); err != nil {

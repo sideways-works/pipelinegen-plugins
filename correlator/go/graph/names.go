@@ -65,8 +65,7 @@ type Names struct {
 	// files: an interface method its tests call is one of them.
 	testSels map[string]map[string]bool
 	bins     []testBin
-	// Inputs are what the set reads.
-	Inputs []string
+	Inputs   []string
 	// Uncacheable says why the answer depends on the machine (a
 	// dependency's source missing from the module cache), when it does.
 	Uncacheable string
@@ -84,7 +83,6 @@ type TypeMethods struct {
 	Sigs       map[string]string
 }
 
-// NamesOptions say what ReadNames reads.
 type NamesOptions struct {
 	// Modules are the directories of the modules to read; none reads
 	// every go.mod of the tree.
@@ -96,7 +94,6 @@ type NamesOptions struct {
 	Cache string
 }
 
-// ReadNames reads N for a tree.
 func ReadNames(ctx context.Context, root string, o NamesOptions) (*Names, error) {
 	root, err := decls.Root(root)
 	if err != nil {

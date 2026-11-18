@@ -1,5 +1,3 @@
-// Command go-correlator is a pipelinegen plugin that records who uses which Go
-// declaration and module, and which declarations a test ran.
 package main
 
 import (
@@ -8,7 +6,6 @@ import (
 	"github.com/sideways-works/pipelinegen-correlator-go/internal/cli"
 )
 
-// Version is set by the release build.
 var Version = "dev"
 
 func main() {

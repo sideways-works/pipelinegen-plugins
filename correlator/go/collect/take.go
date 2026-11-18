@@ -16,8 +16,6 @@ import (
 // covdir is the subdirectory a task writes a GOCOVERDIR into.
 const covdir = "gocoverdir"
 
-// ErrTake wraps coverage that couldn't be moved into the plugin's own
-// directory.
 var ErrTake = errors.New("take coverage")
 
 // Take moves the Go coverage a task wrote into a slice's directory into own,

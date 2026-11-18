@@ -25,7 +25,6 @@ const (
 	Dependents
 )
 
-// Widths are both widths, in order.
 var Widths = []Width{Executed, Dependents}
 
 // String is the width's name in the protocol.
@@ -37,7 +36,6 @@ func (w Width) String() string {
 	return "executed"
 }
 
-// Slice is what binding needs of one slice.
 type Slice struct {
 	Suite string
 	Name  string
@@ -79,7 +77,6 @@ type Reason struct {
 	Via  string
 }
 
-// Binding is one slice's units in one width.
 type Binding struct {
 	// Everything marks a slice without a list: bound to every unit.
 	Everything bool
@@ -103,14 +100,12 @@ type Binding struct {
 	Vias map[string][]string
 }
 
-// Result is one slice's binding in one width.
 type Result struct {
 	Suite, Slice string
 	Width        Width
 	Binding      Binding
 }
 
-// Request is what Bind binds.
 type Request struct {
 	Slices     []Slice
 	Narrowings []string
@@ -144,7 +139,6 @@ func optionsOf(on map[string]bool) options {
 	}
 }
 
-// Bind binds every slice of the request in both widths.
 func (t *Tree) Bind(r Request) Answer {
 	on := map[string]bool{}
 	for _, n := range r.Narrowings {

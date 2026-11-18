@@ -23,7 +23,6 @@ import (
 	"github.com/sideways-works/pipelinegen-sbom-go/goid"
 )
 
-// Decl is one top-level declaration of a tree.
 type Decl struct {
 	ID   goid.ID
 	File string
@@ -45,7 +44,6 @@ type Decl struct {
 	node ast.Node
 }
 
-// Tree is one checkout's declarations and the references between them.
 type Tree struct {
 	Root  string
 	Decls []*Decl
@@ -142,7 +140,6 @@ type pendingVar struct {
 	info *types.Info
 }
 
-// Package is one package directory of the tree.
 type Package struct {
 	Dir       string
 	Module    string // the module's directory
@@ -191,7 +188,6 @@ type Package struct {
 	Units []goid.ID
 }
 
-// ErrLoad wraps a tree that can't be read.
 var ErrLoad = errors.New("load")
 
 // ErrToolchain is a go command older than a module of the tree asks for.
@@ -210,7 +206,6 @@ type work struct {
 	test  bool
 }
 
-// Options say what Load reads.
 type Options struct {
 	// Modules are the directories of the Go modules to read, relative to
 	// the root; none reads every go.mod of the tree.
@@ -581,19 +576,16 @@ func newTree(root string, mods modules, o Options) *Tree {
 	return t
 }
 
-// Has tells whether the tree has a declaration.
 func (t *Tree) Has(id goid.ID) bool {
 	_, ok := t.byID[id]
 
 	return ok
 }
 
-// Packages are the tree's package directories, sorted.
 func (t *Tree) Packages() []string {
 	return sortedKeys(t.pkgs)
 }
 
-// Package is one package directory, or nil.
 func (t *Tree) Package(dir string) *Package {
 	return t.pkgs[dir]
 }
