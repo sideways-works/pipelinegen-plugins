@@ -167,14 +167,19 @@ repository's own parts from its include file.
   `pipeline` job. A suite job with one batch is four: `start`, the batch,
   the batch's `batch-end`, and `end`, plus the suite's prepare and its
   whole-suite checks.
-- The first of pipelinegen's tasks in a job begins with the bootstrap,
-  which fetches pipelinegen, bazelisk and the configured plugins by
-  checksum into `tools`, keeping them in the job's cache. Every run checks
+- Every task of pipelinegen's runs one short script, the bootstrap, and
+  then a step of the runner's own program, `concourse-runner step <name>`,
+  which does the task's work. The bootstrap fetches the runner the config's
+  plugins pin into `tools/plugins`, checked by its sha256 like every pinned
+  file, and runs the step; a task whose `tools` already hold the runner
+  runs it from there. The step fetches pipelinegen, bazelisk and the
+  configured plugins by checksum into `tools`, keeping them in the job's
+  cache, and then calls pipelinegen as the task needs. Every run checks
   a cached file against its checksum again and fetches it anew when it
   doesn't match, so a wrong file under a right name never runs. The cache
   keeps only what the job's pins name: Concourse copies a task's whole
   cache each time the task ends, so a release, a commit's build or a
-  bazelisk that no pin names any more is removed, and the bootstrap's log
+  bazelisk that no pin names any more is removed, and the task's log
   names it. A plugin pinned by a commit instead of a release is built from
   that commit, from `./cmd/<name>`. A release's file is
   `<name>-linux-amd64`, or, for a Node plugin, whose release has no such
@@ -219,7 +224,8 @@ repository's own parts from its include file.
   plans nothing ("nothing changed since the nightly of ..."), passes no new
   commit, and starts no suite.
 - A suite job that breaks before pipelinegen can report posts its status,
-  and its run's, as errored from a step that needs only `curl` and `awk`.
+  and its run's, as errored from the runner's `report-error` step, which
+  needs no pipelinegen.
 
 By default the `pipeline` job only checks. It regenerates the pipeline and,
 when it differs from the one set, fails with "the pipeline is stale: set
@@ -551,7 +557,7 @@ tools, such as one still waiting for a worker for that task, has no
 `tools`: the end task fetches them as the start task does (it holds the
 same pins) and reports the suite, so a continuous run's next round need
 not wait for it. A build that broke before its trigger was there has no
-commit to end, and ends at once. Its script lets every failure of `report
+commit to end, and ends at once. Its step lets every failure of `report
 suite` pass but exit 4, a suite's end that could not be recorded, which
 fails the job.
 The job's `on_error` and `on_abort` hooks (`report-error`) run before the
@@ -652,12 +658,15 @@ How Concourse fills those references decides whether `self_set` is safe:
 
 The token never goes into a URL, a command line, a variable of a script or
 a log. git asks a credential helper that reads it from the environment
-when it needs it; curl reads its `Authorization` header from standard
-input, written by `awk` from the environment, and drops it on a redirect
-to another host. No script traces commands or prints its environment.
-Tests check the generated pipeline and every script for the patterns that
-would leak it and for any line where the shell expands a secret. Plugins
-never get it: pipelinegen runs them with a fixed, minimal environment.
+when it needs it. The runner's steps read it from the environment into a
+request's `Authorization` header, which is dropped on a redirect to
+another host; the bootstrap's curl reads that header from standard input,
+written by `awk` from the environment. No script traces commands or prints
+its environment. Tests check the generated pipeline and the bootstrap for
+the patterns that would leak it and for any line where the shell expands
+a secret, and run every step to check that no token reaches a command's
+arguments or the log. Plugins never get it: pipelinegen runs them with a
+fixed, minimal environment.
 
 ## What it can't see
 

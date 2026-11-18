@@ -46,14 +46,16 @@ go tool pipelinegen plugin test ./concourse-runner
   tool move together: a change that makes a step call something new comes
   with the `go.mod` bump to the pipelinegen that has it, and the kit run
   with an older pipelinegen fails on it.
-- Tests run the steps' shell scripts with `sh` against a fake pipelinegen,
+- Tests run each step of `concourse-runner step` against a stand-in for
+  pipelinegen, the bootstrap with `sh` against a stand-in for the runner,
   and compare whole pipelines with the files in
   `internal/concourse/testdata`. With `fly` on your `PATH`, they also
   check every pipeline with `fly validate-pipeline --strict`; without it
   those checks are skipped, so run them with `fly` before a pull request.
-- No script prints a secret: tests check the generated pipeline and every
-  script for the patterns that would leak the token, and a change keeps
-  them passing rather than loosening them.
+- No step prints a secret: tests check the generated pipeline and the
+  bootstrap for the patterns that would leak the token, and run every
+  step to check none passes it on; a change keeps them passing rather
+  than loosening them.
 - A change to the pipeline comes with its docs: the README describes the
   pipeline as concourse-runner writes it on `main`.
 
