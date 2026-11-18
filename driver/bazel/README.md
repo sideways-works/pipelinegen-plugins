@@ -2,10 +2,10 @@
 
 A pipelinegen driver for slices that are Bazel test targets. pipelinegen
 chooses which slices a change runs; a driver says how they run. This one
-runs them with `bazel test`, all of a batch's targets in one invocation when
-the step's `batch` is on and one invocation per slice when it is off, both
-against the same Bazel server and output root, and gives each slice its
-result and, in a recording run, its coverage.
+runs them with `bazel test`. When the step's `batch` is on, all of a
+batch's targets go into one invocation; when it is off, each slice gets
+its own. Both use the same Bazel server and output root. The driver gives
+each slice its result and, in a recording run, its coverage.
 
 ```mermaid
 flowchart LR
@@ -43,32 +43,33 @@ Its settings, under `with`:
 | `instrument` | The instrumentation filter of a recording run, `^//` (every package) by default. |
 | `timeout` | Each test's limit in seconds (`--test_timeout`), Bazel's own by default. |
 
-The driver reads its settings before it starts Bazel and refuses the run
-when one is wrong, naming where: a key it doesn't take
+The driver reads its settings before it starts Bazel, so that no wrong
+setting is silently ignored. It refuses the run when one is wrong and
+names where: a key it doesn't take
 (`timout: unknown key; the keys of bazel-driver's settings are startup,
 flags, instrument, timeout`), a value of another type or with no value at
-all, a `timeout` below 1, and an empty `instrument`. A setting the driver
-ignored would leave the run without it, unseen. A step's `batch` sits
-beside `with`, not in it; the Bazel to run is the tools' `bazelisk` or the
-`bazel` on `PATH`; and the variables set-ups export reach the tests by
-themselves, so `with` holds none of these.
+all, a `timeout` below 1, and an empty `instrument`.
+
+Three things don't go in `with`. A step's `batch` sits beside `with`; the
+Bazel to run is the tools' `bazelisk` or the `bazel` on `PATH`; and the
+variables set-ups export reach the tests by themselves.
 
 `describe` says it takes any test rule, that a bundle keeps recordings
 apart, and that its recordings are LCOV.
 
 ## What it runs
 
-Every invocation gets `--keep_going` and its own build event file, and the
+Every invocation gets `--keep_going` and its own build event file. The
 request's `cache` holds Bazel's output root and repository cache, so a
-worker's server and outputs are reused from one batch to the next. A slice
+worker reuses its server and outputs from one batch to the next. A slice
 that names some tests of its target gets `--test_filter` in the form its
-rule reads: for `go_test` a pattern rules_go hands to `-test.run`. That
+rule reads: for `go_test`, a pattern rules_go hands to `-test.run`. That
 filter holds for a whole invocation, so slices of one target with different
-tests take one invocation each. A rule whose filter the driver doesn't know
-runs nothing and ends failed with the reason, rather than running all its
-tests as if filtered. Values a set-up step exported are set in Bazel's
-environment and passed to the tests with `--test_env`, since Bazel's tests
-inherit nothing.
+tests take one invocation each. A rule whose filter the driver doesn't
+know runs none of its tests, filtered or not, and the slice ends failed
+with the reason. Values a set-up step exported are set in Bazel's environment and
+passed to the tests with `--test_env`, since Bazel's tests inherit
+nothing.
 
 A recording run is `bazel coverage` with `--instrumentation_filter=^//` and
 `--combined_report=none`: Bazel's default filter instruments only the tests'
@@ -82,13 +83,13 @@ come out without a result.
 
 ## Results
 
-A slice's result comes from this invocation's build event file alone: the
-target's test summary gives its status, and each shard's and run's last
-attempt its files. Never from Bazel's exit code, and never from files found
-in `bazel-testlogs`, which survive from earlier invocations. The driver
-copies each part's `test.log` and `test.xml` into the slice's `extras`
-directory as soon as the result is read, because a later invocation
-replaces Bazel's copies. The test count and the failing tests come from
+A slice's result comes from this invocation's build event file alone.
+The target's test summary gives its status, and the last attempt of each
+shard and run gives its files. The driver never reads Bazel's exit code
+for a result, nor files found in `bazel-testlogs`, which survive from
+earlier invocations. It copies each part's `test.log` and `test.xml` into
+the slice's `extras` directory as soon as the result is read, because a
+later invocation replaces Bazel's copies. The test count and the failing tests come from
 `test.xml`; where it holds no cases (rules_go writes none under coverage) a
 failure carries the end of the failing part's log.
 
@@ -96,7 +97,7 @@ A target that did not build ends failed with Bazel's message and is not run
 again. A target the invocation gave no result (the server died, the
 invocation was interrupted, the target was skipped) gets no end event:
 pipelinegen runs it again on its own. A result Bazel replays from its cache
-is a result, marked replayed, with the stored files. A remote cache that
+counts as the slice's result, marked replayed, with the stored files. A remote cache that
 leaves outputs remote (`--remote_download_minimal`) keeps the result but
 leaves no recording, which reads as unknown, never as nothing run.
 
@@ -105,10 +106,10 @@ leaves no recording, which reads as unknown, never as nothing run.
 A suite whose tests run against servers a set-up step started is not
 hermetic for Bazel: the servers' code is no input of a test's action, so a
 replayed pass after a server changed would be a test missed. Every
-invocation of such a suite gets `--nocache_test_results`; this is the one
-place the driver forces tests to run. Bazel users would mark such tests
-`tags = ["external"]`, which does the same for every run; the driver does not
-need it.
+invocation of such a suite gets `--nocache_test_results`, the one place
+the driver forces tests to run. Marking such tests `tags = ["external"]`,
+as Bazel users would, does the same for every run; with the driver it
+isn't needed.
 
 In a recording run of a stack suite pipelinegen collects the servers'
 coverage between slices, and Bazel can't be paused from outside, so each
