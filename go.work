@@ -1,0 +1,24 @@
+go 1.27.1
+
+use (
+	./connector/git
+	./connector/github
+	./correlator/go
+	./correlator/go/cover
+	./correlator/gorm
+	./correlator/locale
+	./correlator/locale/gorecord
+	./correlator/oapi-codegen
+	./correlator/sql
+	./driver/bazel
+	./driver/go
+	./driver/playwright
+	./driver/shell
+	./runner/concourse
+	./sbom/go
+	./sbom/locale
+	./sbom/npm
+	./sbom/openapi
+	./sbom/pg
+	./tools
+)

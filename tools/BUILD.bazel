@@ -1,0 +1,92 @@
+load("//tools:defs.bzl", "launcher")
+
+# The tests and lint of the launcher and the commit-msg hook: bazel run //tools:test, //tools:lint
+launcher(
+    name = "test",
+    args = [
+        "test",
+        "tools",
+    ],
+)
+
+launcher(
+    name = "lint",
+    args = [
+        "lint",
+        "tools",
+    ],
+)
+
+# Installs the commit-msg hook in the checkout: bazel run //tools:hooks
+launcher(
+    name = "hooks",
+    args = ["hooks"],
+)
+
+# The pinned golangci-lint (MODULE.bazel) for the machine Bazel runs on.
+alias(
+    name = "golangci-lint",
+    actual = select({
+        ":darwin_amd64": "@golangci_lint_darwin_amd64//:golangci-lint",
+        ":darwin_arm64": "@golangci_lint_darwin_arm64//:golangci-lint",
+        ":linux_amd64": "@golangci_lint_linux_amd64//:golangci-lint",
+        ":linux_arm64": "@golangci_lint_linux_arm64//:golangci-lint",
+    }),
+    visibility = ["//visibility:public"],
+)
+
+# The pinned gh (MODULE.bazel), which a release publishes with.
+alias(
+    name = "gh",
+    actual = select({
+        ":darwin_amd64": "@gh_darwin_amd64//:bin/gh",
+        ":darwin_arm64": "@gh_darwin_arm64//:bin/gh",
+        ":linux_amd64": "@gh_linux_amd64//:bin/gh",
+        ":linux_arm64": "@gh_linux_arm64//:bin/gh",
+    }),
+    visibility = ["//visibility:public"],
+)
+
+# The pinned Node (MODULE.bazel).
+alias(
+    name = "node",
+    actual = select({
+        ":darwin_amd64": "@node_darwin_amd64//:bin/node",
+        ":darwin_arm64": "@node_darwin_arm64//:bin/node",
+        ":linux_amd64": "@node_linux_amd64//:bin/node",
+        ":linux_arm64": "@node_linux_arm64//:bin/node",
+    }),
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "darwin_amd64",
+    constraint_values = [
+        "@platforms//os:macos",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+config_setting(
+    name = "darwin_arm64",
+    constraint_values = [
+        "@platforms//os:macos",
+        "@platforms//cpu:aarch64",
+    ],
+)
+
+config_setting(
+    name = "linux_amd64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+config_setting(
+    name = "linux_arm64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+    ],
+)

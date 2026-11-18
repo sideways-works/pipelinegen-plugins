@@ -1,0 +1,11 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+# The main package of every `bazel run` target of this repository, each target giving it its own
+# arguments (tools/defs.bzl).
+go_library(
+    name = "lib",
+    srcs = ["main.go"],
+    importpath = "github.com/sideways-works/pipelinegen-plugins/tools/cmd/launch",
+    visibility = ["//visibility:public"],
+    deps = ["//tools/launch"],
+)

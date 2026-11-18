@@ -1,0 +1,11 @@
+# Bazel's output links
+/bazel-*
+/MODULE.bazel.lock
+
+# the go.work of the root is for development and committed; a plugin has none of its own
+go.work.sum
+
+# programs a plugin's working copy builds by hand
+/correlator/locale/locale-correlator
+/driver/bazel/bazel-driver
+/driver/shell/shell-driver

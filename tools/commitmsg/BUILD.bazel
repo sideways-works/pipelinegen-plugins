@@ -1,0 +1,8 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "commitmsg",
+    srcs = ["commitmsg.go"],
+    importpath = "github.com/sideways-works/pipelinegen-plugins/tools/commitmsg",
+    visibility = ["//tools:__subpackages__"],
+)

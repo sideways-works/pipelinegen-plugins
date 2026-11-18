@@ -1,0 +1,13 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "launch",
+    srcs = [
+        "launch.go",
+        "release.go",
+        "units.go",
+    ],
+    importpath = "github.com/sideways-works/pipelinegen-plugins/tools/launch",
+    visibility = ["//tools:__subpackages__"],
+    deps = ["//tools/commitmsg"],
+)

@@ -1,0 +1,35 @@
+load("//tools:defs.bzl", "launcher")
+
+# Every plugin's, template's and the tools' tests: bazel run //:test
+launcher(
+    name = "test",
+    args = [
+        "all",
+        "test",
+    ],
+)
+
+# Every unit's lint, the tool versions, pipelinegen's check of the repository and the commit
+# subjects: bazel run //:lint
+launcher(
+    name = "lint",
+    args = [
+        "all",
+        "lint",
+    ],
+)
+
+# Every plugin whose newest tag is on HEAD, built as that release: bazel run //:release -- build OUT
+launcher(
+    name = "release",
+    args = [
+        "all",
+        "release",
+    ],
+)
+
+# Every template built and run through pipelinegen's conformance kit: bazel run //:templates
+launcher(
+    name = "templates",
+    args = ["templates"],
+)

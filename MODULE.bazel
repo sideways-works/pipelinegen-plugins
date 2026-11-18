@@ -1,0 +1,122 @@
+module(name = "pipelinegen_plugins")
+
+# The tools this repository's `bazel run` targets run (tools/launch). Go, golangci-lint and Node
+# are at the versions .tool-versions names; the lint fails when they disagree.
+
+bazel_dep(name = "platforms", version = "1.1.0")
+bazel_dep(name = "rules_go", version = "0.64.1")
+
+go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
+go_sdk.download(
+    name = "go_sdk",
+    sdks = {
+        "darwin_amd64": ("go1.27.1.darwin-amd64.tar.gz", "8f8f52c6649542cf027bbc9b9c68d1ec042f9f34808a40413f0b8b3f66f3caa4"),
+        "darwin_arm64": ("go1.27.1.darwin-arm64.tar.gz", "ee215d57e0ec269c60cc9ceca68e6bda321ba9ee5afe24f4b0988703c2d87d12"),
+        "linux_amd64": ("go1.27.1.linux-amd64.tar.gz", "63d339f0da5ab53635a56f2490a7984dfe12dfcff22ad749f63edaf590168445"),
+        "linux_arm64": ("go1.27.1.linux-arm64.tar.gz", "3450b45a3f9ee8568792736a5c5e70a1f2e9b36c35a8f74958c03e51d7d92bec"),
+    },
+    version = "1.27.1",
+)
+use_repo(go_sdk, "go_sdk")
+
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# golangci-lint's release archives, by the checksums its release lists
+http_archive(
+    name = "golangci_lint_darwin_amd64",
+    build_file_content = 'exports_files(["golangci-lint"])',
+    sha256 = "a5667c1c3536be1740133213e1e822bfb8f0d98ea12903174d6d5f635e4ed68d",
+    strip_prefix = "golangci-lint-2.14.0-darwin-amd64",
+    url = "https://github.com/golangci/golangci-lint/releases/download/v2.14.0/golangci-lint-2.14.0-darwin-amd64.tar.gz",
+)
+
+http_archive(
+    name = "golangci_lint_darwin_arm64",
+    build_file_content = 'exports_files(["golangci-lint"])',
+    sha256 = "5ef5f36a7147e91dc58ef9ef4d11bb7bad5ead0c76eb6c01327a73c641d1dcc3",
+    strip_prefix = "golangci-lint-2.14.0-darwin-arm64",
+    url = "https://github.com/golangci/golangci-lint/releases/download/v2.14.0/golangci-lint-2.14.0-darwin-arm64.tar.gz",
+)
+
+http_archive(
+    name = "golangci_lint_linux_amd64",
+    build_file_content = 'exports_files(["golangci-lint"])',
+    sha256 = "ab90aeb7b066f92a33415b638a50fe5344bbb75a0d32ad30cc248d88f81032ab",
+    strip_prefix = "golangci-lint-2.14.0-linux-amd64",
+    url = "https://github.com/golangci/golangci-lint/releases/download/v2.14.0/golangci-lint-2.14.0-linux-amd64.tar.gz",
+)
+
+http_archive(
+    name = "golangci_lint_linux_arm64",
+    build_file_content = 'exports_files(["golangci-lint"])',
+    sha256 = "ee7ec5f3453d15ddf106fae5a4d6c71737712348a979d1fe9cd52ec7ea299bae",
+    strip_prefix = "golangci-lint-2.14.0-linux-arm64",
+    url = "https://github.com/golangci/golangci-lint/releases/download/v2.14.0/golangci-lint-2.14.0-linux-arm64.tar.gz",
+)
+
+# gh, which the release command publishes with, by the checksums its release lists
+http_archive(
+    name = "gh_darwin_amd64",
+    build_file_content = 'exports_files(["bin/gh"])',
+    sha256 = "2dc7f1fc4761f96732995f6e4f4c6b4d705f2635da4126620c8b30eaa67b9c98",
+    strip_prefix = "gh_2.103.2_macOS_amd64",
+    url = "https://github.com/cli/cli/releases/download/v2.103.2/gh_2.103.2_macOS_amd64.zip",
+)
+
+http_archive(
+    name = "gh_darwin_arm64",
+    build_file_content = 'exports_files(["bin/gh"])',
+    sha256 = "5416000f5d17580a187339e0c4068a01ca5c87f7d4fe6ca64933696f967bc418",
+    strip_prefix = "gh_2.103.2_macOS_arm64",
+    url = "https://github.com/cli/cli/releases/download/v2.103.2/gh_2.103.2_macOS_arm64.zip",
+)
+
+http_archive(
+    name = "gh_linux_amd64",
+    build_file_content = 'exports_files(["bin/gh"])',
+    sha256 = "62ccf747115ddc61237efffdde66a3c8f70ba249433dc64f70801089b59c59c8",
+    strip_prefix = "gh_2.103.2_linux_amd64",
+    url = "https://github.com/cli/cli/releases/download/v2.103.2/gh_2.103.2_linux_amd64.tar.gz",
+)
+
+http_archive(
+    name = "gh_linux_arm64",
+    build_file_content = 'exports_files(["bin/gh"])',
+    sha256 = "4c3e99a50bd8b181a3fe9d69b25dd978bac768148d88f01507c6b4d1ef61a443",
+    strip_prefix = "gh_2.103.2_linux_arm64",
+    url = "https://github.com/cli/cli/releases/download/v2.103.2/gh_2.103.2_linux_arm64.tar.gz",
+)
+
+# Node, for the Node plugins (correlator/react, sbom/ts) and the Go plugins whose tests run it, by
+# the checksums nodejs.org lists
+http_archive(
+    name = "node_darwin_amd64",
+    build_file_content = 'exports_files(["bin/node"])',
+    sha256 = "ebbe9ab9b58ad6bb54390d6e2c862c1afa7d4475fb7e8ae8146acde211bf70df",
+    strip_prefix = "node-v26.10.0-darwin-x64",
+    url = "https://nodejs.org/dist/v26.10.0/node-v26.10.0-darwin-x64.tar.gz",
+)
+
+http_archive(
+    name = "node_darwin_arm64",
+    build_file_content = 'exports_files(["bin/node"])',
+    sha256 = "751fdf7439f115d87ee2a8f3f18c065b6151852068e3e666ac60ac2996f75ac9",
+    strip_prefix = "node-v26.10.0-darwin-arm64",
+    url = "https://nodejs.org/dist/v26.10.0/node-v26.10.0-darwin-arm64.tar.gz",
+)
+
+http_archive(
+    name = "node_linux_amd64",
+    build_file_content = 'exports_files(["bin/node"])',
+    sha256 = "cb5c9ce9c80d7b8821e3a258543c71b939138cf17c74d5cc44bbe85d6dbc5ad8",
+    strip_prefix = "node-v26.10.0-linux-x64",
+    url = "https://nodejs.org/dist/v26.10.0/node-v26.10.0-linux-x64.tar.gz",
+)
+
+http_archive(
+    name = "node_linux_arm64",
+    build_file_content = 'exports_files(["bin/node"])',
+    sha256 = "423a41bff8e2a2fa15e702fefe2919ef95823b2378744daccb8439302534b44f",
+    strip_prefix = "node-v26.10.0-linux-arm64",
+    url = "https://nodejs.org/dist/v26.10.0/node-v26.10.0-linux-arm64.tar.gz",
+)
