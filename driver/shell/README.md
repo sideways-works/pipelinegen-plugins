@@ -3,9 +3,9 @@
 A pipelinegen driver for steps written as shell. pipelinegen chooses which
 slices a change runs; a driver says how they run. With this one a suite's
 steps are short scripts in `pipelinegen.yaml` instead of task files and
-shell scripts in the repository: a prepare step that builds something, a
-set-up that gets a batch ready and cleans up after it, and run steps that
-run a script per slice or per bundle, or run shell test files function by
+shell scripts in the repository. A prepare step builds something, a
+set-up gets a batch ready and cleans up after it, and run steps run a
+script per slice or per bundle, or run shell test files function by
 function.
 
 ```mermaid
@@ -52,7 +52,7 @@ suites:
             "$LINTER" ./...
 ```
 
-A step gives one of three things to run:
+A step gives one of these to run:
 
 - `script`, an inline script, run by the step's shell from a file of its
   own;
@@ -63,7 +63,8 @@ A step gives one of three things to run:
 
 pipelinegen's own `command` driver also runs commands, and starts servers
 and waits until they answer (`start` and `ready`). Use it for a server a
-batch's tests talk to; this driver's set-up runs a script to its end.
+batch's tests talk to, since this driver's set-up runs a script to its
+end.
 
 ## Settings
 
@@ -80,24 +81,24 @@ batch's tests talk to; this driver's set-up runs a script to its end.
 | `caches` | list | Directories kept between builds, each `{dir, env, mb, age, unit}`, trimmed before the script runs (below). |
 | `checks` | list | On a run step: named checks, each `{name, run, timeout, need}`, run as the slice's tests (below). |
 
-Every verb reads its step's settings before it runs anything and refuses
-the step when one is wrong, naming where: a key the driver doesn't take,
+Every verb reads its step's settings before it runs anything, so that no
+wrong setting is silently ignored. It refuses the step when one is wrong
+and names where: a key the driver doesn't take,
 at the top or inside a check or a cache (`checks[2].timout: unknown key;
 the keys of a check are name, run, timeout, need`), a value of another
 type or with no value at all, a script or stop of nothing but blanks, a
 variable name in `env` or a cache's `env` that is no variable's name or
 is one the driver sets itself (below), and a variable that `env` and a
-cache, or two caches, both set. A setting the driver ignored would leave
-the step running without it, unseen.
+cache, or two caches, both set.
 
 ## What a script gets
 
 A script runs with the environment pipelinegen gives the driver: the
 suite's `params`, the secrets the suite declares for the step's tasks,
 what earlier set-ups exported, and the tools directory first on `PATH`.
-pipelinegen keeps its tokens and its own variables out of that; the
-driver drops any that reach it all the same, so a script sees a token only
-when the suite declares it. Of pipelinegen's own it keeps what the batch
+pipelinegen keeps its tokens and its own variables out of that, and the
+driver drops any that reach it anyway, so a script sees a token only when
+the suite declares it. Of pipelinegen's own it keeps what the batch
 is (`PIPELINEGEN_RUN`, `PIPELINEGEN_SUITE`, `PIPELINEGEN_BATCH`,
 `PIPELINEGEN_RECORD`, `PIPELINEGEN_RUN_FILE`) and `PIPELINEGEN_COMMIT`,
 the commit the run runs. Over those it sets:
@@ -133,7 +134,7 @@ or runs out of time, leaves those slices without a result, and
 pipelinegen runs each of them again on its own, so a slice's result is
 always its own.
 
-A script that knows more than its exit status says it per slice, in
+A script that knows more than its exit status can say it per slice, in
 `PIPELINEGEN_RESULTS`, as `<slice name>.json` in pipelinegen's result form,
 or as `<slice name>.status` holding an exit status. The directories a
 slice's name needs are there already:
@@ -203,16 +204,19 @@ within its caps:
 
 Each cache is `dir` inside `PIPELINEGEN_CACHE`, made if it is missing, and
 `env` names a variable the step's scripts get its path in.
+
 `PIPELINEGEN_CACHE` is not the directory `{cache}` names in a suite's
-`params`: a param such as `BAZEL_ROOT: "{cache}/bazel"` points beside it,
+`params`. A param such as `BAZEL_ROOT: "{cache}/bazel"` points beside it,
 where no cap of this driver reaches, so name such a directory with `env`
-here instead. Before the step's script runs, the first time in a batch
-(a run step called once per slice trims once, and a set-up's trim serves
-the run steps after it), whatever is unused for longer than `age` goes, then
-the least lately used until the cache holds at most `mb` megabytes; the
+here instead.
+
+The trim runs before the step's script, the first time in a batch: a run
+step called once per slice trims once, and a set-up's trim serves the run
+steps after it. Whatever is unused for longer than `age` goes first, then
+the least lately used, until the cache holds at most `mb` megabytes. The
 log gets one line per cache with its size and what went. `age` is a
-duration, such as `6h` or `36h`, or a number of days, such as `14d`. What a trim
-removes at once is its `unit`:
+duration, such as `6h` or `36h`, or a number of days, such as `14d`. What
+a trim removes at once is its `unit`:
 
 - `files`, the default: each file on its own, by its modification time,
   for a cache whose every file is an entry of its own, such as Go's build
@@ -227,17 +231,17 @@ removes at once is its `unit`:
   only goes past `mb`, never by `age`.
 
 Directories are made writable before they are removed, since Go's module
-cache is read-only. A file the trim can't remove is a line on the log,
-never a failed step. A trim runs before the script, so it takes nothing
-of a set-up's 10 seconds to stop. It never runs into the step's own time:
-with less than two minutes of it left, the caches are not trimmed and the
-log says so, and a trim that reaches that point stops.
+cache is read-only. A file the trim can't remove gets a line on the log
+and doesn't fail the step. A trim runs before the script, so it takes
+nothing of a set-up's 10 seconds to stop. It never runs into the step's
+own time: with less than two minutes of it left, the caches are not
+trimmed and the log says so, and a trim that reaches that point stops.
 
-What you need to know before choosing caps:
+How the directory is kept matters for the caps:
 
-- The directory belongs to the task, not to the suite: a prepare's cache
-  is not the batches' cache, so what a prepare keeps there reaches the
-  batches only by copying it into `PIPELINEGEN_PREPARED`.
+- It belongs to the task, not to the suite. A prepare's cache is not the
+  batches' cache, so what a prepare keeps there reaches the batches only
+  by copying it into `PIPELINEGEN_PREPARED`.
 - It is kept per CI job and per machine: on Concourse, a pull request's
   suite job has a cache of its own, apart from the branch's, and a build
   on another worker starts with an empty one.
@@ -280,7 +284,7 @@ line `ok` or `FAIL`. The slice passes when every check passes, counts the
 checks that ran as its tests, and has a failure for each check that
 didn't pass, with the last 15 lines of that check's own output.
 
-A failed check doesn't stop the ones after it. A check that names others
+The checks after a failed check still run. A check that names others
 in `need` runs only if each of them passed; otherwise it doesn't run and
 fails, its failure saying which need didn't pass, and the checks that need
 it don't run either. `need` names only checks written before it, so the
@@ -301,12 +305,12 @@ Three limits hold, and a check stops at the first one that runs out:
   was stopped and those that never ran, and pipelinegen reports the slice
   as errored. A check cut short or never run is never passed.
 
-A stopped check gets TERM, and so does everything it started; what still
-runs once the check's own process ended, or 10 seconds after the TERM,
-gets KILL. A check runs in the driver's process
-group, like every script (see [Time](#time)), so its processes are
-stopped as a tree, not as a group of their own: a group of its own would
-escape the tool's stop of the driver.
+A stopped check gets TERM, and so does everything it started. Whatever
+still runs once the check's own process ended, or 10 seconds after the
+TERM, gets KILL. A check runs in the driver's process group, like every
+script (see [Time](#time)), so its processes are stopped as a tree. They
+don't get a process group of their own, which would escape the tool's
+stop of the driver.
 
 ## Set-ups
 
