@@ -8,12 +8,20 @@ import (
 	"path/filepath"
 
 	"github.com/sideways-works/pipelinegen/plugin"
+
+	"github.com/sideways-works/pipelinegen-runner-concourse/internal/runstep"
 )
 
 // Version is the plugin's version, set by the release build.
 var Version = "dev"
 
+// Serve answers pipelinegen's calls, and runs a step of the pipeline for
+// `concourse-runner step`.
 func Serve(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+	if len(args) > 0 && args[0] == "step" {
+		return runstep.Main(args[1:], stdout, stderr)
+	}
+
 	return plugin.Serve(args, stdin, stdout, stderr, map[string]plugin.Handler{
 		plugin.CallDescribe: func([]byte) (any, error) { return describe(), nil },
 		plugin.CallPipeline: pipeline,

@@ -59,3 +59,16 @@ func TestServeDescribeAndPipeline(t *testing.T) {
 		t.Fatalf("pipeline: %v", err)
 	}
 }
+
+// A task's command reaches its step through the plugin's one program.
+func TestServeRunsASteps(t *testing.T) {
+	var out, errs bytes.Buffer
+
+	if code := Serve([]string{"step", "no-such-step"}, strings.NewReader(""), &out, &errs); code != 2 || !strings.Contains(errs.String(), `no step "no-such-step"`) {
+		t.Errorf("exit %d: %s", code, errs.String())
+	}
+
+	if code := Serve([]string{"no-such-call"}, strings.NewReader("{}"), &out, &errs); code == 0 {
+		t.Error("an unknown call was answered")
+	}
+}
