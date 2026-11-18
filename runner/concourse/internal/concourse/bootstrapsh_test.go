@@ -3,6 +3,7 @@ package concourse
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -336,5 +337,80 @@ func TestEveryBootstrapHoldsTheRunnersPin(t *testing.T) {
 		if seen < 10 {
 			t.Errorf("%s: only %d tasks run the bootstrap", c.pin.Name, seen)
 		}
+	}
+}
+
+// The error hooks post the errored statuses with curl when the runner can't
+// be had, so a status never stays pending.
+func TestTheErrorHookPostsWithoutTheRunner(t *testing.T) {
+	if _, err := exec.LookPath("curl"); err != nil {
+		t.Skip("no curl")
+	}
+
+	for _, c := range []struct {
+		name, version string
+		status, code  int
+		posts         int
+		says          string
+	}{
+		{name: "posted", version: `{"commit": "abc123"}`, status: http.StatusCreated, posts: 2, says: "posting the statuses as errored\n"},
+		{name: "no trigger", status: http.StatusCreated, says: "no trigger: nothing to post to\n"},
+		{name: "refused", version: `{"commit":"abc123"}`, status: http.StatusUnprocessableEntity, code: 22, posts: 1},
+	} {
+		var (
+			mu    sync.Mutex
+			posts []string
+		)
+
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodPost {
+				w.WriteHeader(http.StatusNotFound)
+
+				return
+			}
+
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				t.Error(err)
+			}
+
+			mu.Lock()
+
+			posts = append(posts, r.URL.Path+" "+r.Header.Get("Authorization")+" "+string(body))
+			mu.Unlock()
+
+			w.WriteHeader(c.status)
+		}))
+
+		work := t.TempDir()
+		if c.version != "" {
+			writeTestFile(t, filepath.Join(work, "trigger", ".git", "resource", "version.json"), c.version)
+		}
+
+		out, code := bootstrap(t, work, cleanEnv(t, runnerPins(srv, "v1", sha256Hex(fakeRunner),
+			"PIPELINEGEN_REPORT_TOKEN=report-token-value", "REPOSITORY=o/r", "SUITE_CONTEXT=p/pr/e2e", "RUN_CONTEXT=p/pr",
+			"TARGET_URL=https://ci/x")...), "report-error")
+
+		srv.Close()
+
+		if code != c.code || !strings.HasSuffix(out, c.says) || strings.Contains(out, "token-value") {
+			t.Errorf("%s: exit %d\n%s", c.name, code, out)
+		}
+
+		mu.Lock()
+
+		if len(posts) != c.posts {
+			t.Errorf("%s: posted %d", c.name, len(posts))
+		}
+
+		for i, p := range posts {
+			ctx := []string{"p/pr/e2e", "p/pr"}[i]
+			if want := "/repos/o/r/statuses/abc123 Bearer report-token-value " +
+				`{"state":"error","context":"` + ctx + `","description":"the build broke before it could report","target_url":"https://ci/x"}`; p != want {
+				t.Errorf("%s: posted %q", c.name, p)
+			}
+		}
+
+		mu.Unlock()
 	}
 }

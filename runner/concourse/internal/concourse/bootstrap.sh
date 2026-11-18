@@ -15,6 +15,34 @@ if [ "${1:-}" = end ]; then
   trap 'rc=$?; if [ "$rc" -ne 0 ]; then echo "the tools could not be fetched (exit $rc): the build broke before it could report" >&2; exit 0; fi' EXIT
 fi
 
+# The error hooks post the suite's and the run's statuses as errored when
+# the runner can't be had either, so a status never stays pending.
+errored() {
+  echo "the runner could not be fetched (exit $1): posting the statuses as errored" >&2
+  commit=
+  if [ -f trigger/.git/resource/version.json ]; then
+    commit=$(tr -d '\n ' < trigger/.git/resource/version.json | sed -n 's/.*"commit":"\([0-9a-f]*\)".*/\1/p')
+  elif [ -d trigger/.git ]; then
+    commit=$(git -C trigger rev-parse HEAD)
+  fi
+  if [ -z "$commit" ]; then
+    echo "no trigger: nothing to post to" >&2
+    exit 0
+  fi
+  # curl reads its authorization header from awk, which reads the token
+  # from the environment
+  for context in "$SUITE_CONTEXT" "$RUN_CONTEXT"; do
+    awk 'BEGIN { t = ENVIRON["PIPELINEGEN_REPORT_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }' |
+      curl -fsS -X POST -H @- -H "Accept: application/vnd.github+json" \
+        "${PIPELINEGEN_GITHUB_API:-https://api.github.com}/repos/$REPOSITORY/statuses/$commit" \
+        -d "{\"state\":\"error\",\"context\":\"$context\",\"description\":\"the build broke before it could report\",\"target_url\":\"$TARGET_URL\"}" >/dev/null
+  done
+  exit 0
+}
+if [ "${1:-}" = report-error ]; then
+  trap 'rc=$?; if [ "$rc" -ne 0 ]; then errored "$rc"; fi' EXIT
+fi
+
 (
   # the planner's params and secrets are the prepare command's alone
   for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
