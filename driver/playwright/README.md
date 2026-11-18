@@ -2,10 +2,10 @@
 
 A pipelinegen driver for slices that are Playwright spec files. pipelinegen
 chooses which slices a change runs; a driver says how they run. This one
-runs a batch's spec files with `playwright test`, all in one run when the
-step's `batch` is on and one run per spec file when it is off, reads each
-file's result from Playwright's JSON report, and in a recording run checks
-that each file left its recording.
+runs a batch's spec files with `playwright test`: all in one run when the
+step's `batch` is on, one run per spec file when it is off. It reads each
+file's result from Playwright's JSON report, and in a recording run it
+checks that each file left its recording.
 
 ```mermaid
 flowchart LR
@@ -45,13 +45,13 @@ Its settings, under `with`:
 | `flags` | Options of `playwright test`, passed through. |
 | `files` | Keeps a failed test's screenshot, error context and trace as the slice's failure files; on by default, `false` turns it off. |
 
-The driver reads its settings before it runs anything and refuses the
-step when one is wrong, naming where: a key it doesn't take
+The driver reads its settings before it runs anything, so that no wrong
+setting is silently ignored. It refuses the step when one is wrong and
+names where: a key it doesn't take
 (`wokers: unknown key; the keys of playwright-driver's settings are ...`),
 a value of another type or with no value at all, `workers` below 1, an
 empty `project` (which would run every project) or `config`, and a `dir`
-outside the tree. A setting the driver ignored would leave the step
-running without it, unseen.
+outside the tree.
 
 `describe` says it takes the files `**/*.ts`, `**/*.mts`, `**/*.js`,
 `**/*.mjs`, `**/*.tsx` and `**/*.jsx` (a step's `take` narrows that to
@@ -64,17 +64,21 @@ Before the tests, the driver installs the project's packages with `npm
 ci` when `node_modules` is older than `package-lock.json`, with npm's
 cache in the request's cache directory. It then runs `npx playwright test
 --reporter=json` in `dir` with the slices' spec files. Bundled, the spec
-files go to one run, which Playwright spreads over its workers as it
-always does; not bundled, each spec file is a run of its own. Each file's
-result, its test count and its failing tests come from the JSON report. A
-file whose worker died before its tests finished gets no result, and
-pipelinegen runs it again on its own. So does a file with a skipped test in
-a run Playwright stopped before its end (its global timeout, a failure
-outside the tests): Playwright reports the tests such a run was running or
-never reached as skipped, the same as a `test.skip`, so no file passes on a
-skip there, and the log names what stopped the run. The request's variables reach the
-tests, and a deadline in the request becomes Playwright's global timeout,
-a minute before it, so the results are still reported.
+files go to one run, which Playwright spreads over its workers as usual;
+not bundled, each spec file is a run of its own. Each file's result, its
+test count and its failing tests come from the JSON report.
+
+A file whose worker died before its tests finished gets no result, and
+pipelinegen runs it again on its own. The same goes for a file with a
+skipped test in a run Playwright stopped before its end (its global
+timeout, a failure outside the tests). Playwright reports the tests such a
+run was running or never reached as skipped, exactly like a `test.skip`,
+so in such a run no file passes on a skip, and the log names what stopped
+the run.
+
+The request's variables reach the tests. A deadline in the request
+becomes Playwright's global timeout, set a minute before the deadline so
+the results are still reported.
 
 A failing test's failure holds the last 15 lines of its error and, when
 the test had a page, the page as it was at the failure: the accessibility
@@ -105,9 +109,10 @@ export default {
 };
 ```
 
-The driver takes the attachments from Playwright's JSON report, not from
-`test-results`, which a bundle's spec files share, and copies them right
-after each `playwright test`, before the next run clears the directory.
+The driver takes the attachments from Playwright's JSON report rather
+than from `test-results`, which a bundle's spec files share. It copies
+them right after each `playwright test`, before the next run clears the
+directory.
 Each failed test gets a directory of its own in the slice's failure
 files, named as Playwright named its output directory, and each file a
 label such as `screenshot of [chromium] checkout pays with a card`.
@@ -120,10 +125,10 @@ out:
 $ pipelinegen report files --run pr --change pr-12 --slice e2e/checkout.spec.ts --out failure-files
 ```
 
-A failure file holds what the page showed and the test printed, secrets
-included when a test shows one: it goes only into the run's records in
-the repository's own store, which has the same readers as the code,
-never into the pull request's comment. With an older pipelinegen, whose
+A failure file holds what the page showed and the test printed, including
+any secret a test shows. It goes only into the run's records in the
+repository's own store, which has the same readers as the code, and never
+into the pull request's comment. With an older pipelinegen, whose
 requests name no directory for them, the driver keeps nothing.
 
 ## Recording
