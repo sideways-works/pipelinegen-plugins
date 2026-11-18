@@ -429,3 +429,48 @@ func TestPruneKeepsHiddenEntries(t *testing.T) {
 		t.Errorf("left %v", left)
 	}
 }
+
+// No step passes a token on in a command's arguments or prints it: each
+// reads its token from the environment.
+func TestNoStepPassesATokenOn(t *testing.T) {
+	tokens := []string{
+		"GITHUB_TOKEN=token-one-value", "PIPELINEGEN_READ_TOKEN=token-read-value", "PIPELINEGEN_CHANGES_TOKEN=token-changes-value",
+		"PIPELINEGEN_REPORT_TOKEN=token-report-value", "PIPELINEGEN_STORE_TOKEN=token-store-value", "GO_TOKEN=token-planner-value",
+	}
+
+	for _, name := range Names() {
+		if name == "tools" {
+			continue
+		}
+
+		tk, out := task(t, append(tokens, "PIPELINEGEN_RUN=r", "PIPELINEGEN_SUITE=s", "PIPELINEGEN_PLANNER_ENV=GO_TOKEN",
+			"PIPELINEGEN_GIT_TOKEN=GO_TOKEN", "PIPELINEGEN_PREPARE=echo prepared", "REPOSITORY=o/r", "SUITE_CONTEXT=p/r/s",
+			"RUN_CONTEXT=p/r", "TARGET_URL=https://ci/x", "PIPELINEGEN_GITHUB_API=http://127.0.0.1:1")...)
+		fakeTool(t, tk, "echo \"$*\" >> calls\necho \"said $*\"\n")
+
+		for _, d := range []string{"trigger/.git/resource", "base", "sweep/plan/7", "sweep/handoff/9/.git/resource", "plans/7", "gate", "batches", "handoffs"} {
+			if err := os.MkdirAll(filepath.Join(tk.Dir, d), 0o750); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		write(t, filepath.Join(tk.Dir, "trigger", ".git", "resource", "version.json"), `{"commit":"abc"}`, 0o600)
+		write(t, filepath.Join(tk.Dir, "sweep", "handoff", "9", ".git", "resource", "version.json"), `{"commit":"abc"}`, 0o600)
+
+		args := []string{name}
+		if name == "continuous-plan" {
+			args = append(args, "--plan-minutes", "60")
+		}
+
+		tk.Run(args)
+
+		calls, err := os.ReadFile(filepath.Join(tk.Dir, "calls"))
+		if err != nil {
+			t.Fatalf("%s: called nothing: %v\n%s", name, err, out)
+		}
+
+		if strings.Contains(string(calls), "token-") || strings.Contains(out.String(), "token-") {
+			t.Errorf("%s passed a token on (withheld)", name)
+		}
+	}
+}
