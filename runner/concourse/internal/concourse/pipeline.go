@@ -418,12 +418,11 @@ func (g *gen) trigger(run string, tags []string, passed []string) []any {
 
 		return []any{handoff, get("trigger", branchResource(t.Branch), false)}
 	default:
+		// Every commit, in order, in the planning job and in the suites: a
+		// suite takes each planned commit in turn, so one the planning job
+		// skipped would hold every later commit back for good.
 		step := get("trigger", branchResource(t.Branch), true)
-		// Every planned commit, in order: one left out would keep its pending
-		// statuses forever.
-		if len(passed) > 0 {
-			step["version"] = "every"
-		}
+		step["version"] = "every"
 
 		return []any{step}
 	}

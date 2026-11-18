@@ -511,9 +511,11 @@ func TestNoJobIsSerializedUnlessTheConfigAsks(t *testing.T) {
 	}
 
 	// Suite jobs take every planned commit in turn, never the timer, so a
-	// nightly on an unchanged branch starts no suite.
+	// nightly on an unchanged branch starts no suite. A branch run's
+	// planning job takes every commit too, so none the suites wait for is
+	// skipped.
 	versions := map[string]any{
-		"main-backend": "every", "main-e2e": "every", "plan-main": nil,
+		"main-backend": "every", "main-e2e": "every", "plan-main": "every",
 		"nightly-backend": "every", "nightly-e2e": "every", "plan-nightly": nil,
 		"pr-backend": "every", "pr-e2e": "every", "plan-pr": "every",
 	}

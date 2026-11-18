@@ -201,6 +201,7 @@ jobs:
               tags:
                 - planner
               trigger: true
+              version: every
             - get: planner
               tags:
                 - planner

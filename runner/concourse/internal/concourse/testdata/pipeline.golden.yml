@@ -47,7 +47,7 @@ jobs:
                 PIPELINEGEN_CONCOURSE_URL: https://ci.example
                 PIPELINEGEN_LIMIT: limits.steps=20
                 PIPELINEGEN_PIPELINE: fixture
-                PIPELINEGEN_PIPELINE_SHA256: ad7dec0587cea3e38a6d49f14eb7571f5101ff94b8c3ea7d2bc089d461c49d39
+                PIPELINEGEN_PIPELINE_SHA256: d0cefb7a4694d94e92cfe4eba7a0a13d7c54aa85e58625aba94747712e317bb4
                 PIPELINEGEN_PIPELINE_STEP: "1"
                 PIPELINEGEN_PLUGINS: ""
                 PIPELINEGEN_PRIVATE: ""
@@ -194,6 +194,7 @@ jobs:
               tags:
                 - planner
               trigger: true
+              version: every
             - get: planner
               tags:
                 - planner
