@@ -4,7 +4,7 @@
 //   2. a built browser script without a source map;
 //   3. a map source inside the tree that the commit doesn't hold (listed only).
 //
-//   node scripts/check-recording.ts --commit <rev> --coverage <dir> [--repo <dir>] [--build <dir>]...
+//   react-correlator check-recording --commit <rev> --coverage <dir> [--repo <dir>] [--build <dir>]...
 //
 // --coverage is the directory the recording run left; --build each directory a build was served
 // from, for check 2. Exit 0: no slice affected; 1: record the listed slices again; 2: wrong use.
@@ -94,10 +94,10 @@ function inTree(p: string): boolean {
   return !p.startsWith("..") && !p.split("/").includes("node_modules") && !p.includes("\0");
 }
 
-function main(): number {
+export function checkRecording(argv: string[]): number {
   let o: ReturnType<typeof args>;
   try {
-    o = args(process.argv.slice(2));
+    o = args(argv);
   } catch (e) {
     process.stderr.write(`check-recording: ${(e as Error).message}\n`);
     return 2;
@@ -185,5 +185,3 @@ function main(): number {
     );
   return affected > 0 ? 1 : 0;
 }
-
-process.exitCode = main();

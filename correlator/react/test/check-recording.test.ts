@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 
-const script = join(import.meta.dirname, "..", "scripts", "check-recording.ts");
+const main = join(import.meta.dirname, "..", "src", "main.ts");
 const tree = join(import.meta.dirname, "..", "testdata", "tree");
 
 function git(dir: string, ...a: string[]) {
@@ -29,7 +29,7 @@ function repo(): string {
 function check(dir: string, coverage: string, ...more: string[]) {
   return spawnSync(
     process.execPath,
-    [script, "--repo", dir, "--commit", "HEAD", "--coverage", coverage, ...more],
+    [main, "check-recording", "--repo", dir, "--commit", "HEAD", "--coverage", coverage, ...more],
     {
       encoding: "utf8",
     },

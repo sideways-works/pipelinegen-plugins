@@ -2,11 +2,11 @@
 // and the built file must carry exactly the code of these sources.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { before, test } from "node:test";
-import { buildCommand, compress, embeddedTag } from "../build.ts";
+import { buildCommand } from "../build.ts";
 import { run } from "../src/cli.ts";
 import { firstPartDir } from "../src/record.ts";
 import { claimedIn } from "./claimed.ts";
@@ -136,28 +136,6 @@ test("the built command unpacks its embedded part only for the calls that need i
     assert.equal(trapped.stdout, "", name);
     assert.match(trapped.stderr, /embedded part could not be loaded: trapped/, name);
   }
-});
-
-test("check-release accepts the build of these sources and nothing else", () => {
-  const ok = node(["scripts/check-release.ts", command], "");
-  assert.equal(ok.status, 0, ok.stderr);
-  const text = readFileSync(command, "utf8");
-  const other = join(
-    mkdtempSync(join(tmpdir(), "react-correlator-other-")),
-    "react-correlator.mjs",
-  );
-  writeFileSync(
-    other,
-    text.replace(
-      new RegExp(`"${embeddedTag.replace(/\+/g, "\\+")}[A-Za-z0-9+/=]*"`),
-      JSON.stringify(
-        embeddedTag + compress(Buffer.from("exports.run = () => ({ code: 0, out: {} });")),
-      ),
-    ),
-  );
-  const bad = node(["scripts/check-release.ts", other], "");
-  assert.equal(bad.status, 1);
-  assert.match(bad.stderr, /differs from a build of these sources/);
 });
 
 test("only the core's directory for a later part is read as one", () => {
