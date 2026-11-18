@@ -10,9 +10,9 @@ changes when what the code does can change, and stays the same when only
 comments or formatting do.
 
 It records what exists. Which units a test ran and which units use which
-is [react-correlator](https://github.com/sideways-works/pipelinegen-correlator-react)'s
+is [react-correlator](../../correlator/react)'s
 job, and npm packages are
-[npm-sbom](https://github.com/sideways-works/pipelinegen-sbom-npm)'s. Both ts-sbom and
+[npm-sbom](../npm)'s. Both ts-sbom and
 react-correlator name units through this package's library, so they can't
 disagree about an id.
 
@@ -45,10 +45,12 @@ checksum:
 
 ```yaml
 plugins:
-  - name: ts
-    kind: sbom
-    repository: sideways-works/pipelinegen-sbom-ts
-    release: {version: vX.Y.Z, sha256: ...}
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - name: ts
+        kind: sbom
+        path: sbom/ts
+        release: {version: vX.Y.Z, sha256: ...}
 ```
 
 The checksum is the `ts-sbom.mjs` line of the release's `SHA256SUMS`. A
@@ -81,11 +83,13 @@ starts no process.
 To read less or more of the tree, put patterns on the plugin's entry:
 
 ```yaml
-  - name: ts
-    kind: sbom
-    repository: sideways-works/pipelinegen-sbom-ts
-    release: {version: vX.Y.Z, sha256: ...}
-    exclude: ["apps/legacy/**"]
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - name: ts
+        kind: sbom
+        path: sbom/ts
+        release: {version: vX.Y.Z, sha256: ...}
+        exclude: ["apps/legacy/**"]
 ```
 
 ### Config
@@ -329,10 +333,10 @@ fixture tree in `testdata/app`:
 pipelinegen plugin test dist/ts-sbom.mjs --tree testdata/app
 ```
 
-Releases are built and published with pipelinegen's `ci/release.sh`, as
-its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+Releases are built and published with `bazel run //sbom/ts:release`, which
+runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
 describes: `ts-sbom.mjs`, `plugin.json` (the plugin's own `describe`),
-`LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `vX.Y.Z` on `main`.
+`LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `sbom/ts/vX.Y.Z` on `main`.
 Of the code, the release holds only the bundled command; packages that
 use the library install it from git. A published release never changes; a
 wrong one gets a new version.
@@ -379,3 +383,34 @@ node scripts/check-release.ts path/to/ts-sbom.mjs
 
 The tests run the checker on a fresh build, and on a build whose embedded
 part was swapped for other code, which it must refuse.
+
+## Developing
+
+The tests and the lint run with the Go, golangci-lint and Node that the
+repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
+other commands run in this directory.
+
+```sh
+bazel run //sbom/ts:test
+bazel run //sbom/ts:lint
+npm ci
+npm run build                     # dist/ts-sbom.mjs, and the committed library files
+npm run build
+pipelinegen plugin test dist/ts-sbom.mjs --tree testdata/app
+```
+
+- The tests use no network; their trees are the fixtures in `testdata`.
+- The library's built files, `dist/lib.mjs` and `dist/detect.mjs`, are
+  committed, so that a package installing ts-sbom from git runs no
+  script: after a change to their sources, build them and commit them. A
+  test fails when they differ from a fresh build.
+- The ids the library makes are what react-correlator names units by, so a
+  change to an id's form is a change to both plugins.
+- `test/command.test.ts` fails when `describe` or `detect` loads the
+  parser: keep those calls in the small entry, `src/main.ts`.
+- The last line is pipelinegen's conformance kit. It calls the built
+  command the way pipelinegen does, on the fixture tree in `testdata/app`.
+  Take `pipelinegen` from
+  [its releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
+- A change to what ts-sbom lists comes with its docs: the README describes
+  ts-sbom as it is on `main`.

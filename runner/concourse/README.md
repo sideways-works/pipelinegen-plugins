@@ -45,10 +45,12 @@ checksum:
 
 ```yaml
 plugins:
-  - name: concourse
-    kind: runner
-    repository: sideways-works/pipelinegen-runner-concourse
-    release: {version: vX.Y.Z, sha256: ...}
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - name: concourse
+        kind: runner
+        path: runner/concourse
+        release: {version: vX.Y.Z, sha256: ...}
 ```
 
 The checksum is the `concourse-runner-linux-amd64` line of the release's
@@ -89,16 +91,18 @@ the `config` of its entry in `plugins`, under `placement`:
 
 ```yaml
 plugins:
-  - name: concourse
-    kind: runner
-    repository: sideways-works/pipelinegen-runner-concourse
-    release: {version: vX.Y.Z, sha256: ...}
-    config:
-      placement:
-        default: [small]
-        rules:
-          - {for: suite, run: nightly, tags: [nightly]}
-          - {for: suite, suite: e2e, tags: [browsers]}
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - name: concourse
+        kind: runner
+        path: runner/concourse
+        release: {version: vX.Y.Z, sha256: ...}
+        config:
+          placement:
+            default: [small]
+            rules:
+              - {for: suite, run: nightly, tags: [nightly]}
+              - {for: suite, suite: e2e, tags: [browsers]}
 ```
 
 Each rule is `for` one kind of step, may name a `suite` and a `run`, and
@@ -710,12 +714,46 @@ go build -trimpath -o concourse-runner ./cmd/concourse-runner
 pipelinegen plugin test ./concourse-runner
 ```
 
-Releases are built and published with pipelinegen's `ci/release.sh`, as
-its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+Releases are built and published with `bazel run //runner/concourse:release`, which
+runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
 describes: static `concourse-runner-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
 `-darwin-arm64`,
-`plugin.json` (the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag
-`vX.Y.Z` on `main`. A published release never changes; a wrong one gets a
+`plugin.json` (the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `runner/concourse/vX.Y.Z` on `main`. A published release never changes; a wrong one gets a
 new version. A change to what the pipeline's steps call ships with the
 pipelinegen release that has those commands, both pins moving in one
 commit.
+
+## Developing
+
+The tests and the lint run with the Go, golangci-lint and Node that the
+repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
+other commands run in this directory. The tests need a POSIX shell.
+
+```sh
+bazel run //runner/concourse:test
+bazel run //runner/concourse:lint
+go build -trimpath -o concourse-runner ./cmd/concourse-runner
+go tool pipelinegen plugin test ./concourse-runner
+```
+
+- The last line is pipelinegen's conformance kit, run with the pipelinegen
+  that `go.mod` requires as a tool. It calls the concourse-runner you
+  built the way pipelinegen does and checks that the pipeline it writes
+  calls only commands and flags that pipelinegen has. A runner needs no
+  fixture tree.
+- The pipeline's steps call pipelinegen's commands, so the runner and the
+  tool move together: a change that makes a step call something new comes
+  with the `go.mod` bump to the pipelinegen that has it, and the kit run
+  with an older pipelinegen fails on it.
+- Tests run each step of `concourse-runner step` against a stand-in for
+  pipelinegen, the bootstrap with `sh` against a stand-in for the runner,
+  and compare whole pipelines with the files in
+  `internal/concourse/testdata`. With `fly` on your `PATH`, they also
+  check every pipeline with `fly validate-pipeline --strict`; without it
+  those checks are skipped, so run them with `fly` before a pull request.
+- No step prints a secret: tests check the generated pipeline and the
+  bootstrap for the patterns that would leak the token, and run every
+  step to check none passes it on; a change keeps them passing rather
+  than loosening them.
+- A change to the pipeline comes with its docs: the README describes the
+  pipeline as concourse-runner writes it on `main`.

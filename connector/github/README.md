@@ -28,7 +28,9 @@ checksum. A `plugins` entry named `github` pins another:
 
 ```yaml
 plugins:
-  - {name: github, kind: connector, repository: sideways-works/pipelinegen-connector-github, release: {version: v0.1.0, sums: ...}}
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - {name: github, kind: connector, path: connector/github, release: {version: v0.1.0, sums: ...}}
 ```
 
 On GitHub Enterprise Server, the step's `PIPELINEGEN_GITHUB_API` names the
@@ -66,3 +68,22 @@ status, a commit and an empty comment thread. By hand:
 The requests pipelinegen's own GitHub clients sent before this connector
 replaced them are kept in `connector/testdata/requests.json`; a test holds
 the connector to them, request by request.
+
+## Developing
+
+The tests and the lint run with the Go, golangci-lint and Node that the
+repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
+other commands run in this directory.
+
+```sh
+bazel run //connector/github:test
+bazel run //connector/github:lint
+```
+
+- The tests include pipelinegen's conformance kit: `TestTheKit` builds
+  the connector and runs `go tool pipelinegen plugin test` on it with the
+  fixture in `connector/testdata/kit`, with the pipelinegen that `go.mod` requires as
+  a tool. By hand:
+  `pipelinegen plugin test ./github-connector --tree connector/testdata/kit`.
+- A change to what github-connector answers comes with its docs: the README
+  describes github-connector as it is on `main`.

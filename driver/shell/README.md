@@ -20,10 +20,12 @@ flowchart LR
 
 ```yaml
 plugins:
-  - name: shell
-    kind: driver
-    repository: sideways-works/pipelinegen-driver-shell
-    release: {version: <tag>, sha256: <the release's checksum>}
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - name: shell
+        kind: driver
+        path: driver/shell
+        release: {version: <tag>, sha256: <the release's checksum>}
 
 suites:
   unit:
@@ -386,3 +388,20 @@ each slice's start and stop, as pipelinegen asks.
 on `driver/testdata/sh`. A release is built and published like every
 pipelinegen plugin: static binaries, the driver's `describe` answer as
 `plugin.json`, and `SHA256SUMS`.
+
+## Developing
+
+The tests and the lint run with the Go, golangci-lint and Node that the
+repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
+other commands run in this directory. The tests need `sh` and `bash` on
+your `PATH`.
+
+```sh
+bazel run //driver/shell:test
+bazel run //driver/shell:lint
+```
+
+The tests include pipelinegen's conformance kit (`go tool pipelinegen
+plugin test`) on the fixture in `driver/testdata/sh`, which runs every
+verb the driver declares. A change to what the driver does comes with its
+test and its paragraph in the README.

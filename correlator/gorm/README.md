@@ -9,9 +9,9 @@ runs a GORM statement to the tables and views that statement reads or
 writes.
 
 It owns no units. Its links go from Go declarations, which
-[go-sbom](https://github.com/sideways-works/pipelinegen-sbom-go) lists
+[go-sbom](../../sbom/go) lists
 (`go:<package dir>#<kind>:<name>`, named by go-sbom's `goid` package), to
-what [pg-sbom](https://github.com/sideways-works/pipelinegen-sbom-pg) lists: relations
+what [pg-sbom](../../sbom/pg) lists: relations
 as `pg:relation:<schema>.<name>`, the alias pg-sbom gives every table,
 view and materialised view so a link doesn't need to know which one a name
 is, and functions and procedures as `pg:routine:<schema>.<name>`, which
@@ -48,10 +48,12 @@ by a release and its checksum:
 
 ```yaml
 plugins:
-  - name: gorm
-    kind: correlator
-    repository: sideways-works/pipelinegen-correlator-gorm
-    release: {version: vX.Y.Z, sha256: ...}
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - name: gorm
+        kind: correlator
+        path: correlator/gorm
+        release: {version: vX.Y.Z, sha256: ...}
 ```
 
 The checksum is the `gorm-correlator-linux-amd64` line of the release's
@@ -388,10 +390,42 @@ kit=$(mktemp -d)
 pipelinegen plugin test ./gorm-correlator --tree internal/analysis/testdata/app --cache "$kit"
 ```
 
-Releases are built and published with pipelinegen's `ci/release.sh`, as
-its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+Releases are built and published with `bazel run //correlator/gorm:release`, which
+runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
 describes: static `gorm-correlator-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
 `-darwin-arm64`,
-`plugin.json` (the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag
-`vX.Y.Z` on `main`. A published release never changes; a wrong one gets a
+`plugin.json` (the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `correlator/gorm/vX.Y.Z` on `main`. A published release never changes; a wrong one gets a
 new version.
+
+## Developing
+
+The tests and the lint run with the Go, golangci-lint and Node that the
+repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
+other commands run in this directory. go-sbom
+([sbom/go](../../sbom/go)), built or taken from a release, runs beside
+it in the conformance kit.
+
+```sh
+bazel run //correlator/gorm:test
+bazel run //correlator/gorm:lint
+go build -trimpath -o gorm-correlator ./cmd/gorm-correlator
+kit=$(mktemp -d)
+(cd internal/analysis/testdata/app && GOMODCACHE=$kit/gomodcache go mod download)
+pipelinegen plugin test ./gorm-correlator --tree internal/analysis/testdata/app --cache "$kit" --sbom <go-sbom>
+```
+
+- The tests type-check the small modules under
+  `internal/analysis/testdata`, which require GORM, so fill the module
+  cache once (`go mod download` in `internal/analysis/testdata/app`);
+  after that they use no network.
+- The last lines are pipelinegen's conformance kit. It calls the
+  gorm-correlator you built the way pipelinegen does, on the fixture
+  module, with a module cache of its own that you fill first. With
+  go-sbom beside it as `--sbom` (built from [its
+  repository](https://github.com/sideways-works/pipelinegen-sbom-go) or
+  taken from a release), the kit also checks that each link changes only
+  when one of its ends does; pg-sbom does the same. Take `pipelinegen`
+  from [its
+  releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
+- A change to what gorm-correlator links comes with its docs: the README
+  describes gorm-correlator as it is on `main`.

@@ -1,12 +1,12 @@
 # locale-correlator
 
-locale-correlator, from the repository
-[pipelinegen-correlator-locale](https://github.com/sideways-works/pipelinegen-correlator-locale),
+locale-correlator, from
+[pipelinegen-plugins](../..) (`correlator/locale`),
 tells [pipelinegen](https://github.com/sideways-works/pipelinegen)
 which keys of the message catalogs each test looked up: every probe
 i18next's resource store was asked for, misses included, in each language
 it tried, and every lookup a Go program's catalog code made. It answers
-them as [locale-sbom](https://github.com/sideways-works/pipelinegen-sbom-locale)'s
+them as [locale-sbom](../../sbom/locale)'s
 units, so a change to one key runs the tests that rendered it.
 
 Like every plugin it is a pure program: it reads the files the recorders
@@ -74,9 +74,9 @@ it.
 
 ### Go: gorecord
 
-`github.com/sideways-works/pipelinegen-correlator-locale/gorecord` is a
+`github.com/sideways-works/pipelinegen-plugins/correlator/locale/gorecord` is a
 module of its own inside this repository, with the standard library only,
-released by tags of its own (`gorecord/v<version>`). Product code
+released by tags of its own (`correlator/locale/gorecord/v<version>`). Product code
 calls it from a file that only recording builds compile, behind a build
 tag, and routes every read of its catalogs through one function per kind
 of read, each recording under a constant the release file sets to false,
@@ -87,7 +87,7 @@ so the compiler drops the blocks:
 
 package mail
 
-import "github.com/sideways-works/pipelinegen-correlator-locale/gorecord"
+import "github.com/sideways-works/pipelinegen-plugins/correlator/locale/gorecord"
 
 const catalogDir = "backend/internal/mail/locales"
 const recording = true
@@ -236,15 +236,17 @@ narrow nothing of what the stack looked up.
 
 ```yaml
 plugins:
-  - name: locale
-    kind: sbom
-    repository: sideways-works/pipelinegen-sbom-locale
-    release: {version: <tag>, sha256: ...}
-  - name: locale-uses
-    kind: correlator
-    repository: sideways-works/pipelinegen-correlator-locale
-    release: {version: <tag>, sha256: ...}
-    config: {log: locale-keys.log}   # a stack's shared log, if it has one
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - name: locale
+        kind: sbom
+        path: sbom/locale
+        release: {version: <tag>, sha256: ...}
+      - name: locale-uses
+        kind: correlator
+        path: correlator/locale
+        release: {version: <tag>, sha256: ...}
+        config: {log: locale-keys.log}   # a stack's shared log, if it has one
 ```
 
 List `locale-uses` in the `correlators` of every recorded suite whose tests
@@ -326,3 +328,37 @@ pipelinegen built from main:
   namespace of one language);
 - the web app's vitest files and browser specs were not run there: the
   install needs a registry credential.
+
+## Developing
+
+The tests and the lint run with the Go, golangci-lint and Node that the
+repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
+other commands run in this directory. The recorders' JavaScript tests
+also need a `node_modules` with i18next, vitest and @playwright/test,
+and one of them a headless Chromium.
+
+```sh
+bazel run //correlator/locale:test
+bazel run //correlator/locale:lint
+go build -trimpath -o locale-correlator ./cmd/locale-correlator
+LOCALE_NODE_MODULES=<node_modules> go test ./cmd/locale-correlator
+LOCALE_BROWSER=1 LOCALE_NODE_MODULES=<node_modules> go test ./cmd/locale-correlator -run Playwright
+pipelinegen plugin test ./locale-correlator --tree testdata/kit
+```
+
+- `gorecord` is a module of its own, which a repository's Go code links
+  in its recording builds, so `./...` stops at it and it is tested and
+  linted on its own.
+- Without `LOCALE_NODE_MODULES` the JavaScript recorders' tests are
+  skipped, and without `LOCALE_BROWSER=1` the one that starts a browser
+  is; run them before a change to the recorders. The README names the
+  versions they were tested with.
+- The last line is pipelinegen's conformance kit. It calls the
+  locale-correlator you built the way pipelinegen does, on the fixture
+  tree in `testdata/kit`. `PIPELINEGEN=<pipelinegen> go test
+  ./cmd/locale-correlator -run TestKit` runs the same kit from the
+  tests, which skip it when `PIPELINEGEN` names no binary. Take
+  `pipelinegen` from [its
+  releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
+- A change to what locale-correlator records comes with its docs: the
+  README describes locale-correlator as it is on `main`.

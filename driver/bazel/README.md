@@ -21,7 +21,9 @@ flowchart LR
 
 ```yaml
 plugins:
-  - {name: bazel, kind: driver, repository: sideways-works/pipelinegen-driver-bazel, release: {version: v0.1.0, sha256: ...}}
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - {name: bazel, kind: driver, path: driver/bazel, release: {version: v0.1.0, sha256: ...}}
 suites:
   unit:
     tag: unit-test
@@ -157,3 +159,24 @@ ok    no answer or message carries the token
 `go test ./cmd/bazel-driver` runs the kit that way, and runs it again on
 the same workspace with the Bazel on `PATH`, downloads included, unless
 there is none or the tests run with `-short`.
+
+## Developing
+
+The tests and the lint run with the Go, golangci-lint and Node that the
+repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
+other commands run in this directory. The tests need no Bazel.
+
+```sh
+bazel run //driver/bazel:test
+bazel run //driver/bazel:lint
+```
+
+- Tests run the driver against a fake Bazel that records the invocations
+  it is given, and read results from the build event and JUnit files in
+  `internal/bep/testdata` and `internal/junit/testdata`.
+- pipelinegen's conformance kit, `pipelinegen plugin test`, runs a driver
+  on a fixture tree whose `.pipelinegen-kit.json` has a `driver` section.
+  This repository has no such fixture yet, and the kit fails without one,
+  so it is not among these checks.
+- A change to what bazel-driver runs comes with its docs: the README
+  describes bazel-driver as it is on `main`.

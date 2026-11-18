@@ -11,7 +11,7 @@ no digest.
 
 It records what exists. Correlators link these units to the code that
 serves or calls each operation:
-[oapi-codegen-correlator](https://github.com/sideways-works/pipelinegen-correlator-oapi-codegen)
+[oapi-codegen-correlator](../../correlator/oapi-codegen)
 does it for Go servers that oapi-codegen generated, and also reads which
 operations a test requested. Correlators use this repository's `openapi`
 package (units, operation names, and the router that maps a request to its
@@ -45,10 +45,12 @@ checksum:
 
 ```yaml
 plugins:
-  - name: api
-    kind: sbom
-    repository: sideways-works/pipelinegen-sbom-openapi
-    release: {version: vX.Y.Z, sha256: ...}
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - name: api
+        kind: sbom
+        path: sbom/openapi
+        release: {version: vX.Y.Z, sha256: ...}
 ```
 
 The checksum is the `openapi-sbom-linux-amd64` line of the release's
@@ -309,10 +311,33 @@ go build -trimpath -o openapi-sbom ./cmd/openapi-sbom
 pipelinegen plugin test ./openapi-sbom --tree openapi/testdata/notes
 ```
 
-Releases are built and published with pipelinegen's `ci/release.sh`, as
-its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+Releases are built and published with `bazel run //sbom/openapi:release`, which
+runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
 describes: static `openapi-sbom-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
 `-darwin-arm64`,
-`plugin.json` (the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag
-`vX.Y.Z` on `main`. A published release never changes; a wrong one gets a
+`plugin.json` (the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `sbom/openapi/vX.Y.Z` on `main`. A published release never changes; a wrong one gets a
 new version.
+
+## Developing
+
+The tests and the lint run with the Go, golangci-lint and Node that the
+repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
+other commands run in this directory.
+
+```sh
+bazel run //sbom/openapi:test
+bazel run //sbom/openapi:lint
+go build -trimpath -o openapi-sbom ./cmd/openapi-sbom
+pipelinegen plugin test ./openapi-sbom --tree openapi/testdata/notes
+```
+
+- Tests read the fixture documents in `openapi/testdata` and use no
+  network.
+- The last line is pipelinegen's conformance kit. It calls the
+  openapi-sbom you built the way pipelinegen does, on the fixture
+  contract. Take `pipelinegen` from [its
+  releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
+- oapi-codegen-correlator names the units openapi-sbom lists, so a
+  change to an id's form is a change to both plugins.
+- A change to what openapi-sbom lists comes with its docs: the README
+  describes openapi-sbom as it is on `main`.

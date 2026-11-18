@@ -9,10 +9,10 @@ test ran, in the browser and in the test's own Node process.
 
 It owns no units. The units (functions, components, constants, types,
 module init, stylesheets) are the ones
-[ts-sbom](https://github.com/sideways-works/pipelinegen-sbom-ts) lists, and both
+[ts-sbom](../../sbom/ts) lists, and both
 plugins name them through ts-sbom's library: `ts:src/money.ts#fn:format`,
 `css:src/app.css`. The npm packages are
-[npm-sbom](https://github.com/sideways-works/pipelinegen-sbom-npm)'s
+[npm-sbom](../../sbom/npm)'s
 `dep:npm:<name>` units. A repository configures react-correlator with
 ts-sbom, and with npm-sbom for the packages.
 
@@ -49,14 +49,16 @@ release and its checksum:
 
 ```yaml
 plugins:
-  - name: ts
-    kind: sbom
-    repository: sideways-works/pipelinegen-sbom-ts
-    release: {version: vX.Y.Z, sha256: ...}
-  - name: react
-    kind: correlator
-    repository: sideways-works/pipelinegen-correlator-react
-    release: {version: vX.Y.Z, sha256: ...}
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - name: ts
+        kind: sbom
+        path: sbom/ts
+        release: {version: vX.Y.Z, sha256: ...}
+      - name: react
+        kind: correlator
+        path: correlator/react
+        release: {version: vX.Y.Z, sha256: ...}
 ```
 
 The checksum is the `react-correlator.mjs` line of the release's
@@ -376,33 +378,26 @@ own modules (`node:crypto`, `node:fs`, `node:inspector/promises`,
 the `@playwright/test` whose `test` it wraps. The file is committed with
 the sources and released byte for byte as committed;
 `test/fixture-file.test.ts` fails when it differs from a fresh build or
-imports anything else. Take it one of two ways:
+imports anything else. Take it as the release asset `playwright.mjs`,
+pinned like the plugin by its version and its line in the release's
+`SHA256SUMS` (npm can't install a package from a directory of a git
+repository, so a git dependency on this repository doesn't reach it).
+Fetch it where the recording step can reach it, check it, and import it by
+path:
 
-- As a git dependency on a release tag:
-  `npm install github:sideways-works/pipelinegen-correlator-react#vX.Y.Z`, then import
-  `@sideways-works/react-correlator/playwright`. Installing runs no script
-  and adds this one package, since the package has no runtime
-  dependencies. npm notes once that it skips the integrity check for a git
-  dependency; the pin to the tag's commit stands in for it. Every install
-  of the repository then needs read access to this repository, which is a
-  cost when only the recording step uses the fixture.
-- As the release asset `playwright.mjs`, pinned like the plugin by its
-  version and its line in the release's `SHA256SUMS`. Fetch it where the
-  recording step can reach it, check it, and import it by path:
+```sh
+gh release download correlator/react/vX.Y.Z -R sideways-works/pipelinegen-plugins -p playwright.mjs -p SHA256SUMS -D tools/react-correlator
+(cd tools/react-correlator && sha256sum --ignore-missing -c SHA256SUMS)
+```
 
-  ```sh
-  gh release download vX.Y.Z -R sideways-works/pipelinegen-correlator-react -p playwright.mjs -p SHA256SUMS -D tools/react-correlator
-  (cd tools/react-correlator && sha256sum --ignore-missing -c SHA256SUMS)
-  ```
+```ts
+import { withCoverage } from "../tools/react-correlator/playwright.mjs";
+```
 
-  ```ts
-  import { withCoverage } from "../tools/react-correlator/playwright.mjs";
-  ```
+The file brings no type declarations; TypeScript reads it as untyped
+JavaScript (`allowJs`, or a one-line `declare module`).
 
-  The file brings no type declarations; TypeScript reads it as untyped
-  JavaScript (`allowJs`, or a one-line `declare module`).
-
-Either way the file is an ES module. In a Playwright project, a test or
+The file is an ES module. In a Playwright project, a test or
 fixture file imports it with `import` whether the project is an ES module
 or CommonJS: Playwright's loader takes it on every Node 22 release (tried
 on 22.11.0, 22.12.0, 22.13.0 and 26.10.0). A plain `require()` from
@@ -750,12 +745,11 @@ fixture tree in `testdata/tree`:
 pipelinegen plugin test dist/react-correlator.mjs --tree testdata/tree
 ```
 
-Releases are built and published with pipelinegen's `ci/release.sh`, as
-its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+Releases are built and published with `bazel run //correlator/react:release`, which
+runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
 describes: `react-correlator.mjs`, `plugin.json` (the plugin's own
 `describe`), `playwright.mjs` (the fixture, named in `package.json` under
-`pipelinegen.release`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag
-`vX.Y.Z` on `main`.
+`pipelinegen.release`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `correlator/react/vX.Y.Z` on `main`.
 The release script fails unless the fixture it built is byte for byte the
 committed file. A published release never changes; a wrong one gets a new
 version.
@@ -805,3 +799,39 @@ node scripts/check-release.ts path/to/react-correlator.mjs
 
 The tests run the checker on a fresh build, and on a build whose embedded
 part was swapped for other code, which it must refuse.
+
+## Developing
+
+The tests and the lint run with the Go, golangci-lint and Node that the
+repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
+other commands run in this directory. ts-sbom, a dependency, is
+installed by git from its repository, so git needs read access to it;
+the browser tests run a real Chromium (`npx playwright install
+chromium`).
+
+```sh
+bazel run //correlator/react:test
+bazel run //correlator/react:lint
+npm ci
+npm run build                     # dist/react-correlator.mjs and dist/playwright.mjs
+npm run build
+pipelinegen plugin test dist/react-correlator.mjs --tree testdata/tree --sbom <ts-sbom.mjs>
+```
+
+- The tests use no network: the browser tests serve the fixture sites in
+  `testdata` through Playwright's routing, built by esbuild and by Vite
+  with rolldown.
+- `dist/playwright.mjs`, the fixture a repository's tests import, is
+  committed: after a change to its sources, build it and commit it. A
+  test fails when it differs from a fresh build, and so does the release.
+- The last line is pipelinegen's conformance kit. It calls the built
+  command the way pipelinegen does, on the fixture tree in
+  `testdata/tree`, with ts-sbom's command beside it as `--sbom`, which says
+  which claimed files hold units. Take `pipelinegen` from
+  [its releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md)
+  and `ts-sbom.mjs` from a release of ts-sbom or its own build.
+- `test/command.test.ts` fails when `describe`, `collect` or a `detect`
+  without a tsconfig loads TypeScript: keep those calls in the small
+  entry, `src/main.ts`.
+- A change to what react-correlator records comes with its docs: the
+  README describes react-correlator as it is on `main`.

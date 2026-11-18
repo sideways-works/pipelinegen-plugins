@@ -8,7 +8,7 @@ PostgreSQL server writes. It never connects to a database, starts no
 server and needs no container: files go in and JSON comes out.
 
 It owns no units. The tables, views and functions it names are the units
-[pg-sbom](https://github.com/sideways-works/pipelinegen-sbom-pg) reads from the
+[pg-sbom](../../sbom/pg) reads from the
 migration files, and both build ids with pg-sbom's `pgid` package, so they
 name every object the same way.
 
@@ -46,12 +46,14 @@ and its checksum, with the one run-time location it needs, the log:
 
 ```yaml
 plugins:
-  - name: sql
-    kind: correlator
-    repository: sideways-works/pipelinegen-correlator-sql
-    release: {version: vX.Y.Z, sha256: ...}
-    config:
-      log: /var/log/postgresql-tests
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - name: sql
+        kind: correlator
+        path: correlator/sql
+        release: {version: vX.Y.Z, sha256: ...}
+        config:
+          log: /var/log/postgresql-tests
 ```
 
 The checksum is the `sql-correlator-linux-amd64` line of the release's
@@ -428,10 +430,34 @@ go build -trimpath -o sql-correlator ./cmd/sql-correlator
 pipelinegen plugin test ./sql-correlator --tree testdata
 ```
 
-Releases are built and published with pipelinegen's `ci/release.sh`, as
-its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+Releases are built and published with `bazel run //correlator/sql:release`, which
+runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
 describes: static `sql-correlator-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
 `-darwin-arm64`,
-`plugin.json` (the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag
-`vX.Y.Z` on `main`. A published release never changes; a wrong one gets a
+`plugin.json` (the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `correlator/sql/vX.Y.Z` on `main`. A published release never changes; a wrong one gets a
 new version.
+
+## Developing
+
+The tests and the lint run with the Go, golangci-lint and Node that the
+repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
+other commands run in this directory.
+
+```sh
+bazel run //correlator/sql:test
+bazel run //correlator/sql:lint
+go build -trimpath -o sql-correlator ./cmd/sql-correlator
+pipelinegen plugin test ./sql-correlator --tree testdata
+```
+
+- Tests read the small statement logs in `testdata`, need no database
+  and use no network.
+- The last line is pipelinegen's conformance kit. sql-correlator reads
+  no file of the tree, but the kit needs one, and
+  `testdata/.pipelinegen-kit.json` names a recording in it that the kit
+  observes. Take `pipelinegen` from [its
+  releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
+- Ids come from pg-sbom's `pgid` package, so both plugins name a
+  database object the same way.
+- A change to what sql-correlator observes comes with its docs: the
+  README describes sql-correlator as it is on `main`.

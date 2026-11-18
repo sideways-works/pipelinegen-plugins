@@ -8,7 +8,7 @@ dependencies between packages, and the Node and npm versions the workspace
 declares.
 
 It records what exists. Which source file loads which package is
-[react-correlator](https://github.com/sideways-works/pipelinegen-correlator-react)'s
+[react-correlator](../../correlator/react)'s
 knowledge: it links files to the `dep:npm:` units listed here.
 
 ```mermaid
@@ -46,10 +46,12 @@ checksum:
 
 ```yaml
 plugins:
-  - name: npm
-    kind: sbom
-    repository: sideways-works/pipelinegen-sbom-npm
-    release: {version: vX.Y.Z, sha256: ...}
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - name: npm
+        kind: sbom
+        path: sbom/npm
+        release: {version: vX.Y.Z, sha256: ...}
 ```
 
 The checksum is the `npm-sbom-linux-amd64` line of the release's
@@ -285,10 +287,32 @@ pipelinegen plugin test ./npm-sbom --tree npm/testdata/workspace
 pipelinegen plugin test ./npm-sbom --tree npm/testdata/pnpm
 ```
 
-Releases are built and published with pipelinegen's `ci/release.sh`, as
-its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+Releases are built and published with `bazel run //sbom/npm:release`, which
+runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
 describes: static `npm-sbom-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
 `-darwin-arm64`,
-`plugin.json` (the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag
-`vX.Y.Z` on `main`. A published release never changes; a wrong one gets a
+`plugin.json` (the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `sbom/npm/vX.Y.Z` on `main`. A published release never changes; a wrong one gets a
 new version.
+
+## Developing
+
+The tests and the lint run with the Go, golangci-lint and Node that the
+repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
+other commands run in this directory.
+
+```sh
+bazel run //sbom/npm:test
+bazel run //sbom/npm:lint
+go build -trimpath -o npm-sbom ./cmd/npm-sbom
+pipelinegen plugin test ./npm-sbom --tree npm/testdata/workspace
+pipelinegen plugin test ./npm-sbom --tree npm/testdata/pnpm
+```
+
+- Tests read the fixture workspaces in `npm/testdata` and use no
+  network.
+- The last two lines are pipelinegen's conformance kit. It calls the
+  npm-sbom you built the way pipelinegen does, on an npm workspace and
+  on a pnpm one. Take `pipelinegen` from [its
+  releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
+- A change to what npm-sbom lists comes with its docs: the README
+  describes npm-sbom as it is on `main`.

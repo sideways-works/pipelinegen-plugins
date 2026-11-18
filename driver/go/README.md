@@ -19,7 +19,9 @@ flowchart LR
 
 ```yaml
 plugins:
-  - {name: go, kind: driver, repository: sideways-works/pipelinegen-driver-go, release: {version: v0.1.0, sha256: ...}}
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - {name: go, kind: driver, path: driver/go, release: {version: v0.1.0, sha256: ...}}
 suites:
   go:
     tests: ["**/*_test.go"]
@@ -156,3 +158,27 @@ cache directory is kept per task and per machine: on Concourse, a pull
 request's suite job has its own, apart from the branch's, a build on
 another worker starts with an empty one, and nothing but these caps trims
 it.
+
+## Developing
+
+The tests and the lint run with the Go, golangci-lint and Node that the
+repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
+other commands run in this directory.
+
+```sh
+bazel run //driver/go:test
+bazel run //driver/go:lint
+```
+
+- The tests include pipelinegen's conformance kit: `TestTheKit` builds
+  the driver and runs `go tool pipelinegen plugin test` on it with the
+  fixture module in `driver/testdata/mod`, with the pipelinegen that
+  `go.mod` requires as a tool. The kit runs every slice of the fixture one
+  by one and bundled, recording and not, compares the results and the
+  recordings, and checks the marks of a recorded stack suite's bundle. By
+  hand: `pipelinegen plugin test ./go-driver --tree driver/testdata/mod`.
+- Tests run the go command on the fixture module, whose `kid` package
+  starts a child process, so the go on your `PATH` must be at least the
+  version in `go.mod`.
+- A change to what go-driver runs comes with its docs: the README
+  describes go-driver as it is on `main`.

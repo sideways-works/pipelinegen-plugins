@@ -42,7 +42,9 @@ A `plugins` entry named `git` pins another release:
 
 ```yaml
 plugins:
-  - {name: git, kind: connector, repository: sideways-works/pipelinegen-connector-git, release: {version: v0.1.0, sums: ...}}
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - {name: git, kind: connector, path: connector/git, release: {version: v0.1.0, sums: ...}}
 ```
 
 ## What it answers
@@ -75,3 +77,22 @@ would list and whose `no_forks` says why it names no fork. By hand:
 `pipelinegen plugin test <the built executable> --tree connector/testdata/kit`.
 A pipelinegen whose kit predates `no_forks` fails its fork check on a host
 without forks; the kit test allows exactly that one failure.
+
+## Developing
+
+The tests and the lint run with the Go, golangci-lint and Node that the
+repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
+other commands run in this directory.
+
+```sh
+bazel run //connector/git:test
+bazel run //connector/git:lint
+```
+
+- The tests include pipelinegen's conformance kit: `TestTheKit` builds
+  the connector and runs `go tool pipelinegen plugin test` on it with the
+  fixture in `connector/testdata/kit`, with the pipelinegen that `go.mod` requires as
+  a tool. By hand:
+  `pipelinegen plugin test ./git-connector --tree connector/testdata/kit`.
+- A change to what git-connector answers comes with its docs: the README
+  describes git-connector as it is on `main`.

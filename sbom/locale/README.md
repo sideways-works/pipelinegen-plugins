@@ -1,12 +1,12 @@
 # locale-sbom
 
-locale-sbom, from the repository
-[pipelinegen-sbom-locale](https://github.com/sideways-works/pipelinegen-sbom-locale),
+locale-sbom, from
+[pipelinegen-plugins](../..) (`sbom/locale`),
 tells [pipelinegen](https://github.com/sideways-works/pipelinegen)
 what the message catalogs of a repository hold: the JSON files an i18next
 app or a Go lookup takes its texts from. It lists each key of each
 namespace in each language as a unit whose digest is the key's meaning.
-With [locale-correlator](https://github.com/sideways-works/pipelinegen-correlator-locale),
+With [locale-correlator](../../correlator/locale),
 which records the keys each test looked up, a change to one key runs the
 tests that rendered that key. Without them, every test whose Bazel target
 names a catalog runs.
@@ -131,14 +131,16 @@ changed file until the core compresses its entries.
 
 ```yaml
 plugins:
-  - name: locale
-    kind: sbom
-    repository: sideways-works/pipelinegen-sbom-locale
-    release: {version: <tag>, sha256: ...}
-  - name: locale-uses
-    kind: correlator
-    repository: sideways-works/pipelinegen-correlator-locale
-    release: {version: <tag>, sha256: ...}
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - name: locale
+        kind: sbom
+        path: sbom/locale
+        release: {version: <tag>, sha256: ...}
+      - name: locale-uses
+        kind: correlator
+        path: correlator/locale
+        release: {version: <tag>, sha256: ...}
 ```
 
 ## Narrowing
@@ -180,3 +182,28 @@ How it was tested:
 - the conformance kit on `testdata/kit` with pipelinegen built from main,
   every check passing, its cache checks included;
 - on a copy of an adopter's tree, as measured under Scale.
+
+## Developing
+
+The tests and the lint run with the Go, golangci-lint and Node that the
+repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
+other commands run in this directory.
+
+```sh
+bazel run //sbom/locale:test
+bazel run //sbom/locale:lint
+go build -trimpath -o locale-sbom ./cmd/locale-sbom
+pipelinegen plugin test ./locale-sbom --tree testdata/kit
+```
+
+- Tests use the catalogs in `testdata` and no network.
+- The last line is pipelinegen's conformance kit. It calls the
+  locale-sbom you built the way pipelinegen does, on the fixture tree in
+  `testdata/kit`. `PIPELINEGEN=<pipelinegen> go test ./cmd/locale-sbom
+  -run TestKit` runs the same kit from the tests, which skip it when
+  `PIPELINEGEN` names no binary. Take `pipelinegen` from [its
+  releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
+- locale-correlator names the units locale-sbom lists, so a change to an
+  id's form is a change to both plugins.
+- A change to what locale-sbom lists comes with its docs: the README
+  describes locale-sbom as it is on `main`.

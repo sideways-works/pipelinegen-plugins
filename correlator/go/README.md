@@ -9,7 +9,7 @@ modules each package links, and, from a test's coverage, which
 declarations the test ran.
 
 It owns no units. The declarations and modules it names are the units
-[go-sbom](https://github.com/sideways-works/pipelinegen-sbom-go) lists, and both
+[go-sbom](../../sbom/go) lists, and both
 plugins spell ids through go-sbom's `goid` package, so they always agree:
 `go:internal/notes#func:Create`, `dep:go:golang.org/x/text`. A repository
 configures the two together.
@@ -53,14 +53,16 @@ release and its checksum:
 
 ```yaml
 plugins:
-  - name: go
-    kind: sbom
-    repository: sideways-works/pipelinegen-sbom-go
-    release: {version: vX.Y.Z, sha256: ...}
-  - name: go-uses
-    kind: correlator
-    repository: sideways-works/pipelinegen-correlator-go
-    release: {version: vX.Y.Z, sha256: ...}
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - name: go
+        kind: sbom
+        path: sbom/go
+        release: {version: vX.Y.Z, sha256: ...}
+      - name: go-uses
+        kind: correlator
+        path: correlator/go
+        release: {version: vX.Y.Z, sha256: ...}
 ```
 
 The checksum is the `go-correlator-linux-amd64` line of the release's
@@ -302,16 +304,16 @@ its own:
 
 package main
 
-import _ "github.com/sideways-works/pipelinegen-correlator-go/cover"
+import _ "github.com/sideways-works/pipelinegen-plugins/correlator/go/cover"
 ```
 
 and is built with `-tags pipelinegen_cover -cover -covermode=atomic
 -coverpkg=<module>/...`. The `cover` package is a module of its own with no
 dependencies beyond the standard library. It is released with the plugin,
-under the same version and the tag `cover/vX.Y.Z`:
+under the same version and the tag `correlator/go/cover/vX.Y.Z`:
 
 ```sh
-go get github.com/sideways-works/pipelinegen-correlator-go/cover@vX.Y.Z
+go get github.com/sideways-works/pipelinegen-plugins/correlator/go/cover@vX.Y.Z
 ```
 
 While the repository is private, the go command needs
@@ -783,11 +785,43 @@ go build -trimpath -o go-correlator ./cmd/go-correlator
 pipelinegen plugin test ./go-correlator --tree graph/testdata
 ```
 
-Releases are built and published with pipelinegen's `ci/release.sh`, as
-its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+Releases are built and published with `bazel run //correlator/go:release`, which
+runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
 describes: static `go-correlator-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
 `-darwin-arm64`,
 `plugin.json` (the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`. Each release
 tags the commit `vX.Y.Z` and the `cover` module `cover/vX.Y.Z` on the same
 commit. A published release never changes; a wrong one gets a new
 version.
+
+## Developing
+
+The tests and the lint run with the Go, golangci-lint and Node that the
+repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
+other commands run in this directory. go-sbom
+([sbom/go](../../sbom/go)), built or taken from a release, runs beside
+it in the conformance kit.
+
+```sh
+bazel run //correlator/go:test
+bazel run //correlator/go:lint
+go build -trimpath -o go-correlator ./cmd/go-correlator
+pipelinegen plugin test ./go-correlator --tree graph/testdata --sbom <go-sbom>
+```
+
+- `cover` is a module of its own, which coverage builds of a repository
+  link, so `./...` stops at it and it is tested and linted on its own.
+  It keeps to the standard library.
+- The last line is pipelinegen's conformance kit. It calls the
+  go-correlator you built the way pipelinegen does, on the fixture tree
+  in `graph/testdata`, whose `.pipelinegen-kit.json` names the slices to
+  bind and the recording in `coverage/` that `observe` reads. With go-sbom
+  beside it as `--sbom`, the kit also checks that each link changes only
+  when one of its ends does. Take `pipelinegen` from
+  [its releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
+- Tests type-check fixture trees through the go command, so the go on
+  your `PATH` must be at least the version in `go.mod`. They use no
+  network: a test that needs modules serves them from a directory.
+- A change to what go-correlator binds comes with its docs: the README
+  describes go-correlator as it is on `main`, and a narrowing says there
+  what it can miss.

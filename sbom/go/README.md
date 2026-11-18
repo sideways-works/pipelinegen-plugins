@@ -14,7 +14,7 @@ repository, each thing as a unit with an id and a digest:
 
 It records what exists. Which code uses a declaration or a module, and
 which declarations a test ran, is
-[go-correlator](https://github.com/sideways-works/pipelinegen-correlator-go)'s job.
+[go-correlator](../../correlator/go)'s job.
 go-correlator names units through go-sbom's `goid` package, so the two
 always agree. A repository configures the two together.
 
@@ -52,10 +52,12 @@ release and its checksum:
 
 ```yaml
 plugins:
-  - name: go
-    kind: sbom
-    repository: sideways-works/pipelinegen-sbom-go
-    release: {version: vX.Y.Z, sha256: ...}
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - name: go
+        kind: sbom
+        path: sbom/go
+        release: {version: vX.Y.Z, sha256: ...}
 ```
 
 The checksum is the `go-sbom-linux-amd64` line of the release's
@@ -131,7 +133,7 @@ dependencies. pipelinegen caches each set by the content of its inputs.
 ### Declaration ids
 
 Plugins that name Go declarations import
-`github.com/sideways-works/pipelinegen-sbom-go/goid`, so every plugin names a
+`github.com/sideways-works/pipelinegen-plugins/sbom/go/goid`, so every plugin names a
 declaration the same way. The format changes only with a new major
 version of this module.
 
@@ -274,7 +276,7 @@ edit to the contract, and since start-up reads it, every slice depends on
 it. Such a variable can take its digest from other units instead, so the
 plugin that knows the contract decides what an edit reaches.
 
-[oapi-codegen-correlator](https://github.com/sideways-works/pipelinegen-correlator-oapi-codegen)
+[oapi-codegen-correlator](../../correlator/oapi-codegen)
 reports this relation for code that oapi-codegen generated. For other
 cases, the config's `digest_from` says it by hand:
 
@@ -453,10 +455,34 @@ go build -trimpath -o go-sbom ./cmd/go-sbom
 pipelinegen plugin test ./go-sbom --tree testdata/kit
 ```
 
-Releases are built and published with pipelinegen's `ci/release.sh`, as
-its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+Releases are built and published with `bazel run //sbom/go:release`, which
+runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
 describes: static `go-sbom-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
 `-darwin-arm64`, `plugin.json`
-(the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `vX.Y.Z` on
-`main`. A published release never changes; a wrong one gets a new
+(the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `sbom/go/vX.Y.Z` on `main`. A published release never changes; a wrong one gets a new
 version.
+
+## Developing
+
+The tests and the lint run with the Go, golangci-lint and Node that the
+repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
+other commands run in this directory.
+
+```sh
+bazel run //sbom/go:test
+bazel run //sbom/go:lint
+go build -trimpath -o go-sbom ./cmd/go-sbom
+pipelinegen plugin test ./go-sbom --tree testdata/kit
+```
+
+- The last line is pipelinegen's conformance kit. It calls the go-sbom
+  you built the way pipelinegen does, on the fixture tree in
+  `testdata/kit`, and checks every answer against the protocol. Take
+  `pipelinegen` from
+  [its releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
+- Tests use no network and no module cache of yours: their trees and
+  caches are fixtures in temporary directories.
+- The ids in `goid` are what other plugins import to name a declaration.
+  Their format changes only with a new major version of this module.
+- A change to what go-sbom answers comes with its docs: the README
+  describes go-sbom as it is on `main`.

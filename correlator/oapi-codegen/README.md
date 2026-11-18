@@ -8,8 +8,8 @@ records which code serves each operation of an OpenAPI contract, and which
 operations a test requested.
 
 It owns no units. It links Go declarations
-([go-sbom](https://github.com/sideways-works/pipelinegen-sbom-go)'s units) to the
-`api:` units [openapi-sbom](https://github.com/sideways-works/pipelinegen-sbom-openapi)
+([go-sbom](../../sbom/go)'s units) to the
+`api:` units [openapi-sbom](../../sbom/openapi)
 lists, and it reads request logs. Both plugins read the documents with
 openapi-sbom's `openapi` package, so they name every operation the same
 way.
@@ -45,10 +45,12 @@ plugins, pinned by a release and its checksum:
 
 ```yaml
 plugins:
-  - name: api-uses
-    kind: correlator
-    repository: sideways-works/pipelinegen-correlator-oapi-codegen
-    release: {version: vX.Y.Z, sha256: ...}
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - name: api-uses
+        kind: correlator
+        path: correlator/oapi-codegen
+        release: {version: vX.Y.Z, sha256: ...}
 ```
 
 The checksum is the `oapi-codegen-correlator-linux-amd64` line of the release's
@@ -495,8 +497,39 @@ and declares the narrowings they carry. `correlate/testdata/split` holds a
 contract whose root lists its paths as refs into one file per context,
 with a recording against it.
 
-Releases are built and published with pipelinegen's `ci/release.sh`, as
-its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+Releases are built and published with `bazel run //correlator/oapi-codegen:release`, which
+runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
 describes: static `oapi-codegen-correlator-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
-`-darwin-arm64`, `plugin.json` (the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `vX.Y.Z` on `main`. A published release never
+`-darwin-arm64`, `plugin.json` (the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `correlator/oapi-codegen/vX.Y.Z` on `main`. A published release never
 changes; a wrong one gets a new version.
+
+## Developing
+
+The tests and the lint run with the Go, golangci-lint and Node that the
+repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
+other commands run in this directory. openapi-sbom
+([sbom/openapi](../../sbom/openapi)), built or taken from a release,
+runs beside it in the conformance kit.
+
+```sh
+bazel run //correlator/oapi-codegen:test
+bazel run //correlator/oapi-codegen:lint
+go build -trimpath -o oapi-codegen-correlator ./cmd/oapi-codegen-correlator
+pipelinegen plugin test ./oapi-codegen-correlator --tree correlate/testdata/repo --sbom <openapi-sbom>
+pipelinegen plugin test ./oapi-codegen-correlator --tree correlate/testdata/split --sbom <openapi-sbom>
+```
+
+- The fixture in `correlate/testdata/repo` is a module with a contract
+  and the code oapi-codegen generated from it, and its `go.mod` requires
+  the generator and the generated code's modules. The tests read those
+  from the module cache, so fill it once (`go mod download` in
+  `correlate/testdata/repo`); after that they use no network.
+- The last two lines are pipelinegen's conformance kit. It calls the
+  oapi-codegen-correlator you built the way pipelinegen does, on the
+  fixture with the recording its `.pipelinegen-kit.json` names, and on
+  `correlate/testdata/split`, a contract split into one file per
+  context. openapi-sbom beside it lists the units the links name. Take
+  `pipelinegen` from [its
+  releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
+- A change to what oapi-codegen-correlator links or observes comes with
+  its docs: the README describes it as it is on `main`.

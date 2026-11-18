@@ -14,9 +14,9 @@ needs no container.
 
 It records what exists. Which tests touched which objects is a
 correlator's knowledge:
-[sql-correlator](https://github.com/sideways-works/pipelinegen-correlator-sql) reads
+[sql-correlator](../../correlator/sql) reads
 it from the tests' statement log, and
-[gorm-correlator](https://github.com/sideways-works/pipelinegen-correlator-gorm) links
+[gorm-correlator](../../correlator/gorm) links
 Go code to the tables it reaches through GORM. All of them build ids with
 pg-sbom's `pgid` package and read SQL with its `sqlref` package, so they
 name things the same way.
@@ -53,10 +53,12 @@ checksum:
 
 ```yaml
 plugins:
-  - name: pg
-    kind: sbom
-    repository: sideways-works/pipelinegen-sbom-pg
-    release: {version: vX.Y.Z, sha256: ...}
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - name: pg
+        kind: sbom
+        path: sbom/pg
+        release: {version: vX.Y.Z, sha256: ...}
 ```
 
 The checksum is the `pg-sbom-linux-amd64` line of the release's
@@ -373,10 +375,37 @@ curl -sfL https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/
 install the extensions into an empty database of the versions to describe
 and run `model/extensions.sql` there; the file says how.
 
-Releases are built and published with pipelinegen's `ci/release.sh`, as
-its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+Releases are built and published with `bazel run //sbom/pg:release`, which
+runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
 describes: static `pg-sbom-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
 `-darwin-arm64`, `plugin.json`
-(the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `vX.Y.Z` on
-`main`. A published release never changes; a wrong one gets a new
+(the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `sbom/pg/vX.Y.Z` on `main`. A published release never changes; a wrong one gets a new
 version.
+
+## Developing
+
+The tests and the lint run with the Go, golangci-lint and Node that the
+repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
+other commands run in this directory. No C toolchain and no database:
+PostgreSQL's parser comes compiled to WebAssembly.
+
+```sh
+bazel run //sbom/pg:test
+bazel run //sbom/pg:lint
+go build -trimpath -o pg-sbom ./cmd/pg-sbom
+pipelinegen plugin test ./pg-sbom --tree testdata/notes
+```
+
+- Tests read the small migration trees in `testdata`, need no database
+  and use no network.
+- The last line is pipelinegen's conformance kit. It calls the pg-sbom
+  you built the way pipelinegen does, on the fixture tree. Take
+  `pipelinegen` from [its
+  releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
+- The ids made by the `pgid` package are what sql-correlator and
+  gorm-correlator name database objects by, so a change to an id's form
+  is a change to those plugins too.
+- `sqlref/builtins.txt` and `model/extensions.txt` are generated; the
+  README says how to refresh them.
+- A change to what pg-sbom lists comes with its docs: the README
+  describes pg-sbom as it is on `main`.

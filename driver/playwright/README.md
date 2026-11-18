@@ -20,7 +20,9 @@ flowchart LR
 
 ```yaml
 plugins:
-  - {name: playwright, kind: driver, repository: sideways-works/pipelinegen-driver-playwright, release: {version: v0.1.0, sha256: ...}}
+  - repository: https://github.com/sideways-works/pipelinegen-plugins
+    with:
+      - {name: playwright, kind: driver, path: driver/playwright, release: {version: v0.1.0, sha256: ...}}
 suites:
   e2e:
     tests: ["e2e/**/*.spec.ts"]
@@ -161,3 +163,31 @@ import { markStart, markStop } from "./support/marks.mjs";
 Commit the written file beside the fixture, and write it again when you
 take a new release of the driver. It is byte for byte `marks.mjs` at the
 root of this repository at the release's tag.
+
+## Developing
+
+The tests and the lint run with the Go, golangci-lint and Node that the
+repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
+other commands run in this directory.
+
+```sh
+bazel run //driver/playwright:test
+bazel run //driver/playwright:lint
+```
+
+- The tests run the driver on copies of the fixture project in
+  `driver/testdata/web`, three spec files whose tests need no browser.
+  The driver installs the fixture's `@playwright/test` with `npm ci`, so
+  the first run needs the npm registry; npm's downloads are kept in
+  `playwright-driver-test` under your user cache directory, or in the
+  directory `PLAYWRIGHT_DRIVER_TEST_CACHE` names.
+- The tests include pipelinegen's conformance kit: `TestTheKit` builds the
+  driver and runs `go tool pipelinegen plugin test` on it with the
+  fixture, with the pipelinegen that `go.mod` requires as a tool. By hand:
+  `pipelinegen plugin test ./playwright-driver --tree driver/testdata/web`.
+- `marks.mjs` is the module a suite's own coverage fixture imports to
+  mark each spec file's start and end. The fixture's
+  `driver/testdata/web/e2e/marks.mjs` must stay byte for byte the same
+  file, and a test checks that.
+- A change to what playwright-driver runs comes with its docs: the README
+  describes playwright-driver as it is on `main`.
