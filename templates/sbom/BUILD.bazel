@@ -1,3 +1,9 @@
 load("//tools:defs.bzl", "template")
 
-template()
+filegroup(
+    name = "files",
+    srcs = glob(["**"]),
+    visibility = ["//:__pkg__"],
+)
+
+template(dir = "templates/sbom")

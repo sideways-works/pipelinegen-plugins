@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -172,9 +173,7 @@ func (l *Launch) npmCI(ctx context.Context, dir string) error {
 	return l.run(ctx, dir, "npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund")
 }
 
-// All tests or lints every unit, all of them even when one fails. The lint also checks that
-// .tool-versions names the pinned tools, runs pipelinegen's check of the repository and checks the
-// subjects of the commits HEAD brings.
+// All tests or lints every unit, all of them even when one fails; the lint then runs Checks.
 func (l *Launch) All(ctx context.Context, lint bool) error {
 	units, err := Units(l.workspace)
 	if err != nil {
@@ -185,12 +184,41 @@ func (l *Launch) All(ctx context.Context, lint bool) error {
 		return l.each(units, func(dir string) error { return l.Test(ctx, dir) })
 	}
 
-	return errors.Join(
-		l.versions(ctx),
-		l.each(units, func(dir string) error { return l.Lint(ctx, dir) }),
-		l.Check(ctx),
-		l.Subjects(ctx),
-	)
+	return errors.Join(l.each(units, func(dir string) error { return l.Lint(ctx, dir) }), l.Checks(ctx))
+}
+
+// Checks are the checks of the whole repository: .tool-versions and each .node-version against the
+// pinned tools, pipelinegen's check of the repository and the subjects of the commits HEAD brings.
+func (l *Launch) Checks(ctx context.Context) error {
+	return errors.Join(l.versions(ctx), l.unitsListed(), l.Check(ctx), l.Subjects(ctx))
+}
+
+var listed = regexp.MustCompile(`(?m)^\s*"([^"]+)",\s*$`)
+
+// unitsListed fails unless tools/units.bzl lists exactly the plugins and templates there are: the
+// root's //:checks takes their files from that list, so one missing would change unchecked.
+func (l *Launch) unitsListed() error {
+	data, err := os.ReadFile(filepath.Join(l.workspace, "tools", "units.bzl"))
+	if err != nil {
+		return fmt.Errorf("units: %w", err)
+	}
+
+	var got []string
+	for _, m := range listed.FindAllStringSubmatch(string(data), -1) {
+		got = append(got, m[1])
+	}
+
+	units, err := Units(l.workspace)
+	if err != nil {
+		return err
+	}
+
+	want := slices.DeleteFunc(units, func(u string) bool { return u == "tools" })
+	if !slices.Equal(got, want) {
+		return fmt.Errorf("units: tools/units.bzl lists %v, the plugins and templates are %v", got, want) //nolint:err113 // said once, to the person
+	}
+
+	return nil
 }
 
 func (l *Launch) versions(ctx context.Context) error {

@@ -1,0 +1,82 @@
+# This repository's own CI, made by pipelinegen. A suite per plugin kind, one for the templates
+# and one for the tools: each slice is a unit's :test target (tools/defs.bzl), selected when the
+# unit's files change. The lint suite's slices are every unit's :lint and //:checks, which every
+# change selects. Each slice runs as `bazel run <its label>`, with the tools MODULE.bazel pins.
+
+pipeline: pipelinegen-plugins
+
+bazel:
+  workspace: .
+
+github:
+  repository: sideways-works/pipelinegen-plugins
+  token: github_token
+
+concourse:
+  url: https://concourse.home.simulevski.at
+  team: sideways-works
+  repository:
+    uri: https://github.com/sideways-works/pipelinegen-plugins.git
+    username: x-access-token
+    password: ((github_token))
+  planner:
+    image: {repository: golang, tag: 1.27.1}
+    digest: sha256:162be5298a40ed317005c8339c6de4d10d3eef336d66dc8e9259b03ab9d3a6d2
+    bootstrap:
+      release: {version: v0.3.1, sha256: 119fac88198818624591c11fdfc6cad908a98c8eea3643c995cfdf76f75f9b12}
+      bazelisk: {version: v1.30.0, sha256: a248ae2b2b62b5baebb748f6fba7203bff1a27e5d01b55399a8406744cb539e8}
+  include: ci/root.yml
+
+plugins:
+  - name: concourse
+    kind: runner
+    repository: sideways-works/pipelinegen-runner-concourse
+    release: {version: v0.3.1, sha256: 2c73971737f97b80798390087a779364be01dbf9e42c4f05d9fd12d9eec2b346}
+
+suites:
+  lint:
+    tag: slice-plugins-lint
+    image: golang
+    # Go's, npm's and bazelisk's caches, and Bazel's output, stay with the job; Bazel's output at
+    # a path of its own, since Bazel names an output base after the checkout's path
+    params: &params
+      GOFLAGS: -trimpath
+      GOCACHE: "{cache}/go-build"
+      GOMODCACHE: "{cache}/mod"
+      XDG_CACHE_HOME: "{cache}/xdg"
+      npm_config_cache: "{cache}/npm"
+    steps: &bazel-run
+      - run: command
+        with:
+          each: [bazelisk, "--output_user_root={cache}/bazel/root", "--output_base={cache}/bazel/base", --max_idle_secs=5, run, "{name}"]
+  connector: {tag: slice-plugins-connector, image: golang, params: *params, steps: *bazel-run}
+  correlator: {tag: slice-plugins-correlator, image: golang, params: *params, steps: *bazel-run}
+  driver: {tag: slice-plugins-driver, image: golang, params: *params, steps: *bazel-run}
+  runner: {tag: slice-plugins-runner, image: golang, params: *params, steps: *bazel-run}
+  sbom: {tag: slice-plugins-sbom, image: golang, params: *params, steps: *bazel-run}
+  templates: {tag: slice-plugins-templates, image: golang, params: *params, steps: *bazel-run}
+  tools: {tag: slice-plugins-tools, image: golang, params: *params, steps: *bazel-run}
+
+runs:
+  main:
+    trigger: {branch: main, continuous: true}
+    compare: last_passed
+    select: affected
+    suites: {lint: {}, connector: {}, correlator: {}, driver: {}, runner: {}, sbom: {}, templates: {}, tools: {}}
+  nightly:
+    trigger:
+      timer: {start: "3:00", stop: "4:00", location: Europe/Berlin}
+      branch: main
+    compare: none
+    select: all
+    suites: {lint: {}, connector: {}, correlator: {}, driver: {}, runner: {}, sbom: {}, templates: {}, tools: {}}
+
+everything_on:
+  # the pinned tools and the targets every slice runs through
+  - MODULE.bazel
+  - .bazelversion
+  - REPO.bazel
+  - tools/defs.bzl
+  - ci/*
+  # the fixture Bazel ignores, a workspace of its own
+  - driver/bazel/cmd/bazel-driver/testdata/workspace/**

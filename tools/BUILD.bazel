@@ -7,6 +7,8 @@ launcher(
         "test",
         "tools",
     ],
+    data = [":module"],
+    tags = ["slice-plugins-tools"],
 )
 
 launcher(
@@ -14,6 +16,23 @@ launcher(
     args = [
         "lint",
         "tools",
+    ],
+    data = [
+        ":module",
+        "//:lint-config",
+    ],
+    tags = ["slice-plugins-lint"],
+)
+
+# The tools module's files: this package's and its subpackages'.
+filegroup(
+    name = "module",
+    visibility = ["//:__pkg__"],
+    srcs = [
+        ":files",
+        "//tools/cmd/launch:files",
+        "//tools/commitmsg:files",
+        "//tools/launch:files",
     ],
 )
 
@@ -89,4 +108,10 @@ config_setting(
         "@platforms//os:linux",
         "@platforms//cpu:aarch64",
     ],
+)
+
+filegroup(
+    name = "files",
+    srcs = glob(["**"]),
+    visibility = ["//:__pkg__"],
 )

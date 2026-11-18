@@ -1,0 +1,7 @@
+# The resources of this repository's pipeline beside the jobs pipelinegen generates: the image the
+# suites' tasks run in (suites.<s>.image).
+resources:
+  - name: golang
+    type: registry-image
+    icon: language-go
+    source: {repository: golang, tag: 1.27.1}

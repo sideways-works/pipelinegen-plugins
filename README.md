@@ -37,6 +37,7 @@ its own history, and a template per kind starts a new one.
                     or a Node package, with its README, docs, LICENSE and the NOTICE its release needs
 templates/<kind>/   a minimal plugin of each kind that passes pipelinegen's conformance kit
 tools/              the launcher every bazel run target runs, and the commit-msg hook
+pipelinegen.yaml    this repository's own CI: a suite per kind, each plugin's tests a slice
 MODULE.bazel        the pinned Go SDK, golangci-lint, Node and gh, by checksum per platform
 go.work             every module at once, for an editor; builds, tests and releases leave it off
 ```
@@ -103,15 +104,19 @@ says how one is cut.
 2. Set the module path in `go.mod` to
    `github.com/sideways-works/pipelinegen-plugins/<kind>/<name>`, and the
    imports with it; add the module to `go.work`.
-3. Make its `BUILD.bazel` the plugin's: `plugin()` from `//tools:defs.bzl`
-   in place of `template()`, which gives it `:test`, `:lint` and
-   `:release`.
+3. Make its `BUILD.bazel` the plugin's: `plugin(dir = "<kind>/<name>",
+   tags = ["slice-plugins-<kind>"])` from `//tools:defs.bzl` in place of
+   `template(...)`, which gives it `:test`, `:lint` and `:release`, and
+   list it in `tools/units.bzl`.
 4. Give it a README that says what it does and how to pin it, its `LICENSE`
    (the root's), and the `NOTICE` that
    `bazel run //<kind>/<name>:release -- notice` writes.
-5. Give its tests a slice in `pipelinegen.yaml` (the `slice-<kind>`
-   filegroups in its `BUILD.bazel`): `pipelinegen check`, part of `//:lint`,
-   refuses a test in no slice.
+
+Its `:test` and `:lint` are then slices of this repository's own CI
+([pipelinegen.yaml](pipelinegen.yaml)), in its kind's suite and the lint
+suite, and run when its files change. `//:lint` fails while
+`tools/units.bzl` misses it, and `pipelinegen check`, part of it, fails
+while a file of the repository is in no slice.
 
 A Node plugin is a package with `test`, `lint` and `build` scripts whose
 build writes `dist/<program>.mjs`, and `.node-version` naming the Node

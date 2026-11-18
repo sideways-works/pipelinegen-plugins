@@ -1,3 +1,7 @@
-# Fixture workspaces and trees the tests copy, and installed Node packages: none of them is a
-# package of this workspace.
-ignore_directories(["**/testdata/**", "**/node_modules/**"])
+# Directories that are no part of this workspace: a fixture that is a Bazel workspace of its own,
+# and the Node plugins' installed packages. Every other fixture is a file of its plugin's package.
+ignore_directories([
+    "driver/bazel/cmd/bazel-driver/testdata/workspace",
+    "correlator/react/node_modules",
+    "sbom/ts/node_modules",
+])

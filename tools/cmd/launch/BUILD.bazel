@@ -9,3 +9,9 @@ go_library(
     visibility = ["//visibility:public"],
     deps = ["//tools/launch"],
 )
+
+filegroup(
+    name = "files",
+    srcs = glob(["**"]),
+    visibility = ["//:__subpackages__"],
+)

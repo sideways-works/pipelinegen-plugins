@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "launcher")
+load("//tools:units.bzl", "UNITS")
 
 # Every plugin's, template's and the tools' tests: bazel run //:test
 launcher(
@@ -9,14 +10,27 @@ launcher(
     ],
 )
 
-# Every unit's lint, the tool versions, pipelinegen's check of the repository and the commit
-# subjects: bazel run //:lint
+# Every unit's lint, then the checks below: bazel run //:lint
 launcher(
     name = "lint",
     args = [
         "all",
         "lint",
     ],
+)
+
+# The checks of the whole repository: the pinned tools' versions against .tool-versions and each
+# .node-version, pipelinegen's check of pipelinegen.yaml and the subjects of the commits a change
+# brings. Every file of the repository is its data, so every change runs it: the lint suite's slice
+# that covers what no plugin, template or tool does.
+launcher(
+    name = "checks",
+    args = ["checks"],
+    data = [
+        ":files",
+        "//tools:module",
+    ] + ["//" + u + ":files" for u in UNITS],
+    tags = ["slice-plugins-lint"],
 )
 
 # Every plugin whose newest tag is on HEAD, built as that release: bazel run //:release -- build OUT
@@ -32,4 +46,25 @@ launcher(
 launcher(
     name = "templates",
     args = ["templates"],
+)
+
+# What every Go lint reads besides the code.
+filegroup(
+    name = "lint-config",
+    srcs = [
+        ".golangci.yml",
+        ".tool-versions",
+    ],
+    visibility = ["//:__subpackages__"],
+)
+
+filegroup(
+    name = "files",
+    srcs = glob(
+        ["**"],
+        exclude = [
+            ".git/**",
+            "bazel-*/**",
+        ],
+    ),
 )

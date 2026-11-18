@@ -18,7 +18,7 @@ import (
 )
 
 const usage = `usage: launch --go=RLOCATION [--lint=RLOCATION] [--node=RLOCATION] [--gh=RLOCATION] COMMAND
-  test DIR... | lint DIR... | all test|lint | all release build OUT | templates | hooks | subjects
+  test DIR... | lint DIR... | all test|lint | all release build OUT | checks | templates | hooks | subjects
   release DIR build OUT [VERSION] | release DIR notice | release DIR publish VERSION OUT | release DIR check VERSION`
 
 var errUsage = errors.New(usage)
@@ -98,6 +98,8 @@ func (l *Launch) dispatch(ctx context.Context, args []string) (int, error) {
 		return 0, l.All(ctx, true)
 	case args[0] == cmdAll && len(args) == 4 && args[1] == "release" && args[2] == cmdBuild:
 		return 0, l.ReleaseTagged(ctx, l.abs(args[3]))
+	case args[0] == "checks" && len(args) == 1 && l.lint != "":
+		return 0, l.Checks(ctx)
 	case args[0] == "templates" && len(args) == 1:
 		return 0, l.Templates(ctx)
 	case args[0] == "hooks" && len(args) == 1:

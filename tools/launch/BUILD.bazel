@@ -11,3 +11,9 @@ go_library(
     visibility = ["//tools:__subpackages__"],
     deps = ["//tools/commitmsg"],
 )
+
+filegroup(
+    name = "files",
+    srcs = glob(["**"]),
+    visibility = ["//:__subpackages__"],
+)

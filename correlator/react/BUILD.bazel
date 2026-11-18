@@ -1,3 +1,12 @@
 load("//tools:defs.bzl", "plugin")
 
-plugin()
+filegroup(
+    name = "files",
+    srcs = glob(["**"]),
+    visibility = ["//:__pkg__"],
+)
+
+plugin(
+    dir = "correlator/react",
+    tags = ["slice-plugins-correlator"],
+)

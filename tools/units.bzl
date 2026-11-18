@@ -1,0 +1,27 @@
+"""Every plugin and template: the launcher's lint checks that this list is the one it finds."""
+
+UNITS = [
+    "connector/git",
+    "connector/github",
+    "correlator/go",
+    "correlator/gorm",
+    "correlator/locale",
+    "correlator/oapi-codegen",
+    "correlator/react",
+    "correlator/sql",
+    "driver/bazel",
+    "driver/go",
+    "driver/playwright",
+    "driver/shell",
+    "runner/concourse",
+    "sbom/go",
+    "sbom/locale",
+    "sbom/npm",
+    "sbom/openapi",
+    "sbom/pg",
+    "sbom/ts",
+    "templates/connector",
+    "templates/correlator",
+    "templates/driver",
+    "templates/sbom",
+]
