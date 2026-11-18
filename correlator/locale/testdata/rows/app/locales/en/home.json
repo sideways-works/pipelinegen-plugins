@@ -1,0 +1,9 @@
+{
+  "title": "Welcome",
+  "greeting": "Hello",
+  "greeting_male": "Hello, sir",
+  "cart": {
+    "items_one": "{{count}} ticket",
+    "items_other": "{{count}} tickets"
+  }
+}
