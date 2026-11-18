@@ -35,8 +35,8 @@ code and tests to operations, only what uses `getNote` runs.
 Rewording the description of `getNote` changes no operation's digest, so
 it runs nothing while the `doc-text` narrowing is on. Every backend test
 that reads the contract file depends on the whole file through the build
-graph; while `document-units` is on, pipelinegen replaces that dependency
-by the operations each test was seen to touch.
+graph. While `document-units` is on, pipelinegen replaces that dependency
+with the operations each test was seen to touch.
 
 ## Setting it up
 
@@ -75,8 +75,8 @@ a contract:
 Any other YAML or JSON file is left alone. `by_units` lets pipelinegen
 bind a test that depends on the contract file itself (as Bazel data, say)
 to the units of it the test touched, while `document-units` is on. A
-fragment that only another fragment refers to isn't claimed this way, but
-`units` reads it as parts all the same when a document reaches it.
+fragment that only another fragment refers to isn't claimed this way,
+though `units` still reads it as parts when a document reaches it.
 
 ### Config
 
@@ -150,15 +150,15 @@ pattern that matches, so a route added, removed, moved or given another
 method can take requests from an operation whose template looks nothing
 like it: Go's `ServeMux` serves `HEAD` with the `GET` pattern unless a
 `HEAD` pattern exists, and a pattern ending in a slash serves every path
-below it. A real conflict makes the server panic at start-up; shadowing
-doesn't. So each document has a routing-table unit, `api:<file>#/paths`,
-whose digest is its list of methods and templates, and every operation
-uses the routing table of every document in the tree. Several generated
+below it. A real conflict makes the server panic at start-up, but
+shadowing doesn't. Each document therefore has a routing-table unit,
+`api:<file>#/paths`, whose digest is its list of methods and templates,
+and every operation uses the routing table of every document in the tree. Several generated
 servers may register on one router, and which documents share one can't
 be read from the documents, so route changes count across all of them. A
 way to declare separate servers can come when someone needs it.
 
-The cost: a commit that adds or moves a route runs every test bound to
+In exchange, a commit that adds or moves a route runs every test bound to
 any operation. With `document-units` off nothing changes, since every
 reader of the document runs anyway.
 
@@ -261,9 +261,9 @@ changed about twice as many operations.
 
 The requests and answers follow pipelinegen's
 [plugin protocol](https://github.com/sideways-works/pipelinegen/blob/main/docs/plugins.md).
-This section adds what is particular to openapi-sbom. Its capabilities
-are `detect`, `units` and `document`; its namespace is `api`; `inputs`
-declares `units` and `document` per set and `detect` per file: a
+What follows is particular to openapi-sbom. Its capabilities are
+`detect`, `units` and `document`, and its namespace is `api`. `inputs`
+declares `units` and `document` per set and `detect` per file, because a
 document's operations may be read out of the files its paths refer to.
 
 ### `detect`
@@ -276,10 +276,10 @@ $ echo '{"protocol":1,"tree":".","paths":["api/notes.yaml","api/common.yaml","de
 ### `units`
 
 `units` answers the sets that hold the files named in `paths`, which
-pipelinegen fills with the claimed files it has no answer for; `claimed`
-names every contract, which the contracts' set needs. Run by hand without
-`paths` or `claimed`, the plugin detects the contracts in the tree
-itself:
+pipelinegen fills with the claimed files it has no answer for.
+`claimed` names every contract, which the contracts' set needs. When run
+by hand without `paths` or `claimed`, the plugin detects the contracts in
+the tree itself:
 
 ```console
 $ echo '{"protocol":1,"tree":".","config":{"documents":[{"path":"api.yaml"}]},
@@ -311,12 +311,14 @@ go build -trimpath -o openapi-sbom ./cmd/openapi-sbom
 pipelinegen plugin test ./openapi-sbom --tree openapi/testdata/notes
 ```
 
-Releases are built and published with `bazel run //sbom/openapi:release`, which
-runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
-describes: static `openapi-sbom-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
-`-darwin-arm64`,
-`plugin.json` (the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `sbom/openapi/vX.Y.Z` on `main`. A published release never changes; a wrong one gets a
-new version.
+Releases are built and published with
+`bazel run //sbom/openapi:release`, which runs pipelinegen's release
+command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+describes. For a tag `sbom/openapi/vX.Y.Z` on `main` it publishes static
+`openapi-sbom-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (the plugin's own `describe`), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. A published release never changes; a wrong one
+gets a new version.
 
 ## Developing
 
@@ -333,7 +335,7 @@ pipelinegen plugin test ./openapi-sbom --tree openapi/testdata/notes
 
 - Tests read the fixture documents in `openapi/testdata` and use no
   network.
-- The last line is pipelinegen's conformance kit. It calls the
+- The last line runs pipelinegen's conformance kit, which calls the
   openapi-sbom you built the way pipelinegen does, on the fixture
   contract. Take `pipelinegen` from [its
   releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
