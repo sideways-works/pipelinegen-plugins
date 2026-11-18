@@ -1,5 +1,3 @@
-// Command pg-sbom is a pipelinegen sbom plugin that answers the database
-// objects a repository's migration files make, as units with digests.
 package main
 
 import (
@@ -25,7 +23,6 @@ import (
 	"github.com/sideways-works/pipelinegen-sbom-pg/pgid"
 )
 
-// Version is set at release time and reported by describe.
 var Version = "dev"
 
 // migrationsByTable is the narrowing under which a slice that depends on
@@ -34,8 +31,6 @@ const migrationsByTable = "migrations-by-table"
 
 const roleMigration = "migration"
 
-// config is the plugin's block in the repository's config; everything in it
-// is optional.
 type config struct {
 	// Migrations names the detected directories to read, leaving the
 	// others out; a layout given is checked against the detected one.

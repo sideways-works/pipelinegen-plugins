@@ -13,9 +13,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-// Ref is a relation or function some SQL names.
 type Ref struct {
-	// Function is true for a function call, false for a relation.
 	Function bool
 	// Schema is empty when the SQL left the name unqualified.
 	Schema string
@@ -69,7 +67,6 @@ func Refs(sql string) ([]Ref, error) {
 	return Of(nodes...), nil
 }
 
-// Of lists what parsed statements or expressions name.
 func Of(nodes ...*pg.Node) []Ref {
 	w := walker{refs: map[string]*Ref{}, writes: map[*pg.RangeVar]bool{}, upserts: map[*pg.RangeVar]bool{}}
 

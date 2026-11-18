@@ -15,7 +15,6 @@ import (
 	"github.com/sideways-works/pipelinegen-sbom-pg/sqlref"
 )
 
-// Unit is one object of the database.
 type Unit struct {
 	ID   string
 	Kind string
@@ -37,7 +36,6 @@ const (
 	catalogSchema = "pg_catalog"
 )
 
-// Link kinds.
 const (
 	Reads  = "reads"
 	Writes = "writes"
@@ -105,7 +103,6 @@ func (o *object) use(to *object) {
 	o.uses[to] = Uses
 }
 
-// Report counts how much of the migrations the model understood.
 type Report struct {
 	Files      int            `json:"files"`
 	Statements int            `json:"statements"`
@@ -123,7 +120,6 @@ type Report struct {
 	Unparsed []string `json:"unparsed"`
 }
 
-// Model holds the database after a sequence of migration files.
 type Model struct {
 	// path is the search_path in force: SET search_path lasts for the
 	// session the migrations run in, SET LOCAL until the file's end
@@ -294,7 +290,6 @@ func (m *Model) indexOwner(schema, name string) *object {
 	return nil
 }
 
-// Result is the database the migrations leave, as units and links.
 type Result struct {
 	Units []Unit
 	Links []Link
@@ -308,7 +303,6 @@ type Result struct {
 // that starts conflicting with a row a new migration adds.
 const RowsToReaders = "rows-to-readers"
 
-// Result computes the units and links of everything applied so far.
 func (m *Model) Result() Result {
 	opaque := ""
 	if len(m.opaque) > 0 {

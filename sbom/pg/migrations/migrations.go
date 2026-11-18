@@ -17,7 +17,6 @@ import (
 
 const prismaFile = "migration.sql"
 
-// Layouts.
 const (
 	Pairs     = "pairs"
 	Sections  = "sections"
@@ -27,7 +26,6 @@ const (
 	Repeating = "repeatable"
 )
 
-// Migration is one version's change.
 type Migration struct {
 	Version string
 	Name    string
@@ -39,7 +37,6 @@ type Migration struct {
 	Layout string
 }
 
-// Set is one directory of migrations.
 type Set struct {
 	Dir        string
 	Layout     string
@@ -61,7 +58,6 @@ var (
 	errNoUp      = errors.New("a migration has no up file")
 )
 
-// ErrNoLayout says a directory's files follow no known layout.
 var ErrNoLayout = errors.New("no known migration layout")
 
 // Detect groups the given .sql paths (relative to root) by directory and
