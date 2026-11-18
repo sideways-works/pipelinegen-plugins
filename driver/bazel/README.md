@@ -23,7 +23,7 @@ flowchart LR
 plugins:
   - repository: https://github.com/sideways-works/pipelinegen-plugins
     with:
-      - {name: bazel, kind: driver, path: driver/bazel, release: {version: v0.1.0, sha256: ...}}
+      - {name: bazel, kind: driver, path: driver/bazel, release: {version: v0.4.0, sums: …}}
 suites:
   unit:
     tag: unit-test
@@ -163,21 +163,38 @@ there is none or the tests run with `-short`.
 
 ## Developing
 
-The tests and the lint run with the Go, golangci-lint and Node that the
-repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
-other commands run in this directory. The tests need no Bazel.
+`bazel run //driver/bazel:test` runs the tests and `bazel run
+//driver/bazel:lint` the lint, with the Go, golangci-lint and Node the
+repository pins in `MODULE.bazel`
+([CONTRIBUTING](../../CONTRIBUTING.md)). The tests run the driver
+against a fake Bazel that records the invocations it gets, and read
+results from the build event and JUnit files in `internal/bep/testdata`
+and `internal/junit/testdata`.
+
+They include pipelinegen's conformance kit, with the pipelinegen that
+`go.mod` requires as a tool, on the fixture workspace in
+`cmd/bazel-driver/testdata/workspace`, whose `.pipelinegen-kit.json`
+names three test targets to run. `TestTheKit` drives it with the fake
+Bazel in `cmd/bazel-driver/testdata/fake-bazel`. `TestTheKitWithBazel`
+runs a real `bazel` when one is on your `PATH` and the tests don't run
+under `-short`, since a real Bazel downloads its dependencies first.
+
+By hand, in this directory, with Bazel on your `PATH` and a directory of
+your own for the kit's cache:
 
 ```sh
-bazel run //driver/bazel:test
-bazel run //driver/bazel:lint
+go build -trimpath -o bazel-driver ./cmd/bazel-driver
+go tool pipelinegen plugin test ./bazel-driver --tree cmd/bazel-driver/testdata/workspace --cache <dir>
 ```
 
-- Tests run the driver against a fake Bazel that records the invocations
-  it is given, and read results from the build event and JUnit files in
-  `internal/bep/testdata` and `internal/junit/testdata`.
-- pipelinegen's conformance kit, `pipelinegen plugin test`, runs a driver
-  on a fixture tree whose `.pipelinegen-kit.json` has a `driver` section.
-  This repository has no such fixture yet, and the kit fails without one,
-  so it is not among these checks.
-- A change to what bazel-driver runs comes with its docs: the README
-  describes bazel-driver as it is on `main`.
+`bazel run //driver/bazel:release` releases it from a tag
+`driver/bazel/vX.Y.Z` on `main`, as
+[CONTRIBUTING](../../CONTRIBUTING.md#releases) describes: static
+`bazel-driver-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (its own `describe` answer), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. Its first release here is `v0.4.0`
+([RELEASING](../../RELEASING.md)), and a published release never
+changes.
+
+A change to what bazel-driver runs comes with its docs, so this README
+describes bazel-driver as it is on `main`.
