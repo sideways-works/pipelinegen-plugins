@@ -1,0 +1,38 @@
+# Parts every context uses.
+components:
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, maximum: 200 }
+  requestBodies:
+    NewNote:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              text: { type: string, maxLength: 500 }
+  responses:
+    BadRequest:
+      description: Bad request.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    NotFound:
+      description: Not found.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Problem" }
+    Unauthorized:
+      description: Not signed in.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Problem" }
+  schemas:
+    Problem:
+      type: object
+      properties:
+        title: { type: string }
+        status: { type: integer }

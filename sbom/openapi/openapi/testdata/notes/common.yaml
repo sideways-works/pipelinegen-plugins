@@ -1,0 +1,8 @@
+Tag:
+  type: object
+  description: A label on a note.
+  properties:
+    name: { type: string, minLength: 1 }
+Color:
+  type: string
+  enum: [red, green]
