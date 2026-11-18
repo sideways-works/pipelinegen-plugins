@@ -56,7 +56,6 @@ func skipped(p string) bool {
 	return false
 }
 
-// Why says why a tree path may never be a catalog file, or "" when it may.
 func Why(p string) string {
 	switch {
 	case !InTree(p):

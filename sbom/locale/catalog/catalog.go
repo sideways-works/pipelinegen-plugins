@@ -1,6 +1,5 @@
-// Package catalog names the units of message catalogs (the JSON files an
-// i18next app or a Go lookup reads) and decides which files are catalogs.
-// locale-sbom and locale-correlator both use it, so they agree on every name.
+// Package catalog is shared by locale-sbom and locale-correlator, so they agree on every
+// unit name and on which files are catalogs.
 package catalog
 
 import (
@@ -12,7 +11,6 @@ import (
 	"strings"
 )
 
-// Namespace is the namespace of every unit this package names.
 const Namespace = "locale"
 
 // Narrowing is the narrowing under which a slice that depends on a claimed
@@ -22,7 +20,6 @@ const Narrowing = "locale-keys"
 // NoNS is the namespace of a catalog with one file per language.
 const NoNS = "-"
 
-// The kinds of the units.
 const (
 	KindCatalog   = "catalog"
 	KindLanguage  = "language"
@@ -31,7 +28,6 @@ const (
 	KindObject    = "object"
 )
 
-// File is a catalog file as its path names it.
 type File struct {
 	Path    string
 	Catalog string

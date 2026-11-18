@@ -1,6 +1,3 @@
-// Command locale-sbom is a pipelinegen sbom plugin that lists the keys of
-// message catalogs as units, so a slice depends on the keys it looked up
-// rather than on every catalog its test target names.
 package main
 
 import (
@@ -20,7 +17,6 @@ import (
 	"github.com/sideways-works/pipelinegen-sbom-locale/catalog"
 )
 
-// Version is set at release time and reported by describe.
 var Version = "dev"
 
 const roleCatalog = "catalog"
