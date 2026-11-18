@@ -15,8 +15,11 @@ Until then, `PIPELINEGEN_SOURCE=<a pipelinegen checkout that has it>` in
 the environment of `bazel run` builds the command from that checkout.
 Move `tools/go.mod` to that release first.
 
-runner/concourse needs a pipelinegen release that has its steps in Go;
-move its `go.mod` to that release before its own.
+Every plugin requires pipelinegen v0.3.1 or later. runner/concourse
+builds and passes its tests with v0.3.1, but its conformance kit needs a
+pipelinegen whose kit runs the runner's own step program (v0.3.1's kit
+looks for the tool's calls in the task scripts, which the runner no
+longer writes); move its `go.mod` to that release before its own.
 
 ## The first releases: v0.4.0
 
