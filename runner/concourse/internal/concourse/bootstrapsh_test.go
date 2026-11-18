@@ -11,6 +11,8 @@ import (
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/sideways-works/pipelinegen/plugin"
 )
 
 // fakeRunner stands in for the runner: it notes how it was run and with
@@ -279,5 +281,60 @@ func writeExec(t *testing.T, p, body string) {
 
 	if err := os.WriteFile(p, []byte(body), 0o700); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// Every task that runs the bootstrap holds the runner's pin as the config's
+// plugins give it.
+func TestEveryBootstrapHoldsTheRunnersPin(t *testing.T) {
+	for _, c := range []struct {
+		pin  plugin.SpecTool
+		want map[string]string
+	}{
+		{
+			pin: plugin.SpecTool{Name: "concourse", Kind: plugin.KindRunner, Repository: "o/pipelinegen-runner-concourse", Version: "v1", SHA256: "abc"},
+			want: map[string]string{
+				"PIPELINEGEN_RUNNER": "concourse", "PIPELINEGEN_RUNNER_PROGRAM": "concourse-runner",
+				"PIPELINEGEN_RUNNER_REPOSITORY": "o/pipelinegen-runner-concourse", "PIPELINEGEN_RUNNER_VERSION": "v1",
+				"PIPELINEGEN_RUNNER_SHA256": "abc", "PIPELINEGEN_RUNNER_COMMIT": "",
+			},
+		},
+		{
+			pin: plugin.SpecTool{Name: "ci", Kind: plugin.KindRunner, Repository: "o/concourse-runner", Commit: "c0ffee"},
+			want: map[string]string{
+				"PIPELINEGEN_RUNNER": "ci", "PIPELINEGEN_RUNNER_PROGRAM": "concourse-runner",
+				"PIPELINEGEN_RUNNER_REPOSITORY": "o/concourse-runner", "PIPELINEGEN_RUNNER_VERSION": "",
+				"PIPELINEGEN_RUNNER_SHA256": "", "PIPELINEGEN_RUNNER_COMMIT": "c0ffee",
+			},
+		},
+	} {
+		spec, root := fixture(t)
+		spec.Tools = append(spec.Tools, c.pin)
+
+		p, err := Generate(spec, root)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		seen := 0
+
+		walkTasks(p, func(task M) {
+			cfg := asMap(task["config"])
+			if stepOf(asMap(cfg["run"])) == nil {
+				return
+			}
+
+			seen++
+
+			for k, v := range c.want {
+				if got, ok := asMap(cfg["params"])[k]; !ok || got != v {
+					t.Errorf("%s: %v: %s is %v, want %q", c.pin.Name, task["task"], k, got, v)
+				}
+			}
+		})
+
+		if seen < 10 {
+			t.Errorf("%s: only %d tasks run the bootstrap", c.pin.Name, seen)
+		}
 	}
 }
