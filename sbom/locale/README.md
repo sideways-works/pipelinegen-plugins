@@ -137,11 +137,11 @@ plugins:
       - name: locale
         kind: sbom
         path: sbom/locale
-        release: {version: <tag>, sha256: ...}
+        release: {version: v0.4.0, sums: …}
       - name: locale-uses
         kind: correlator
         path: correlator/locale
-        release: {version: <tag>, sha256: ...}
+        release: {version: v0.4.0, sums: …}
 ```
 
 ## Narrowing
@@ -160,52 +160,48 @@ languages), so adding or removing a file asks again about the catalog's
 set. An answer of more than 2,000 units goes into `sets.jsonl` in the work
 directory.
 
-## Development
-
-```sh
-go build -trimpath -o locale-sbom ./cmd/locale-sbom
-go test ./...
-PIPELINEGEN=/path/to/pipelinegen go test ./cmd/locale-sbom -run TestKit
-pipelinegen plugin test ./locale-sbom --tree testdata/kit
-golangci-lint run ./...
-```
-
-How it was tested:
-
-- unit tests for every rule above: layouts and language tags, ids and
-  groups, digests by meaning (layout, order, escapes), a changed value
-  changing only its key and its parents, flat and nested keys, the shapes
-  that are no catalog, paths outside the tree, secrets, symlinks;
-- a golden test of the `units` answer and a determinism test;
-- a test per kind of change (`TestWhatEachChangeDoesToTheUnits`), an
-  answer about one path agreeing with the whole tree's, a deleted file
-  answering an empty set, an unreadable catalog exiting 3, a large answer
-  going into a file;
-- the conformance kit on `testdata/kit` with pipelinegen built from main,
-  every check passing, its cache checks included;
-- on a copy of an adopter's tree, as measured under Scale.
-
 ## Developing
 
-The tests and the lint run with the Go, golangci-lint and Node that the
-repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
-other commands run in this directory.
+`bazel run //sbom/locale:test` runs the tests and `bazel run
+//sbom/locale:lint` the lint, with the Go, golangci-lint and Node the
+repository pins in `MODULE.bazel`
+([CONTRIBUTING](../../CONTRIBUTING.md)). The tests use the catalogs in
+`testdata` and no network. They cover every rule above: layouts and
+language tags, ids and groups, digests by meaning (layout, order,
+escapes), a changed value changing only its key and its parents, flat
+and nested keys, the shapes that are no catalog, paths outside the tree,
+secrets and symlinks. A golden test checks the `units` answer and a
+determinism test its bytes. `TestWhatEachChangeDoesToTheUnits` takes one
+kind of change at a time, and other tests check that an answer about one
+path agrees with the whole tree's, that a deleted file answers an empty
+set, that an unreadable catalog exits 3 and that a large answer goes
+into a file. The plugin was also tried on a copy of an adopter's tree,
+as measured under Scale.
+
+pipelinegen's conformance kit calls the locale-sbom you built the way
+pipelinegen does, on the fixture tree in `testdata/kit`, cache checks
+included. `PIPELINEGEN=<pipelinegen> go test ./cmd/locale-sbom -run
+TestKit` runs the same kit from the tests, which skip it when
+`PIPELINEGEN` names no binary. The commands below run it from this
+directory with the pipelinegen that `tools/go.mod` pins. The go on your
+`PATH` must be at least as new as `go.mod` asks.
 
 ```sh
-bazel run //sbom/locale:test
-bazel run //sbom/locale:lint
 go build -trimpath -o locale-sbom ./cmd/locale-sbom
-pipelinegen plugin test ./locale-sbom --tree testdata/kit
+go -C ../../tools tool pipelinegen plugin test "$PWD/locale-sbom" --tree "$PWD/testdata/kit"
 ```
 
-- Tests use the catalogs in `testdata` and no network.
-- The last line runs pipelinegen's conformance kit, which calls the
-  locale-sbom you built the way pipelinegen does, on the fixture tree in
-  `testdata/kit`. `PIPELINEGEN=<pipelinegen> go test ./cmd/locale-sbom
-  -run TestKit` runs the same kit from the tests, which skip it when
-  `PIPELINEGEN` names no binary. Take `pipelinegen` from [its
-  releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
-- locale-correlator names the units locale-sbom lists, so a change to an
-  id's form is a change to both plugins.
-- A change to what locale-sbom lists comes with its docs: the README
-  describes locale-sbom as it is on `main`.
+locale-correlator names the units locale-sbom lists, so a change to an
+id's form is a change to both plugins.
+
+`bazel run //sbom/locale:release` releases it from a tag
+`sbom/locale/vX.Y.Z` on `main`, as
+[CONTRIBUTING](../../CONTRIBUTING.md#releases) describes: static
+`locale-sbom-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (its own `describe` answer), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. Its first release here is `v0.4.0`
+([RELEASING](../../RELEASING.md)), and a published release never
+changes.
+
+A change to what locale-sbom lists comes with its docs, so this README
+describes locale-sbom as it is on `main`.
