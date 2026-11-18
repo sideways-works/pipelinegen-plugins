@@ -27,6 +27,16 @@ bazel run //templates/runner:lint
 bazel run //:templates                # every template built and run through the kit
 ```
 
+`bazel run //:templates` runs each template through the kit of the
+pipelinegen its own `go.mod` requires (`go tool pipelinegen`), v0.3.1
+here, so this template still faces the placement check. pipelinegen
+v0.4.0-rc.1's kit compares two pipelines written from different specs:
+the one with the placement from a spec whose tools carry the kit's own
+checksums, the one without it from a spec whose tools don't. A runner
+that writes its tools' pins into the pipeline, as this one does, fails
+that check under rc.1 for that reason alone; the kit is fixed in the
+next candidate.
+
 The kit by hand, in this directory:
 
 ```sh
