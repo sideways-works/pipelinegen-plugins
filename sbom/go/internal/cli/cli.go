@@ -1,5 +1,3 @@
-// Package cli answers pipelinegen's plugin calls for go-sbom: describe,
-// units and document.
 package cli
 
 import (
@@ -27,7 +25,6 @@ const (
 	exitCannotTell = 3
 )
 
-// The calls this plugin answers.
 const (
 	callDescribe = "describe"
 	callDetect   = "detect"
@@ -35,7 +32,6 @@ const (
 	callDocument = "document"
 )
 
-// Config is the plugin's own block of the repository's config.
 type Config struct {
 	// Modules are the directories of the Go modules to list, relative to
 	// the tree; none lists every go.mod under it.
@@ -47,7 +43,6 @@ type Config struct {
 	GoModCache string `json:"gomodcache"`
 }
 
-// Request is what every call but describe reads on stdin.
 type Request struct {
 	Protocol   int      `json:"protocol"`
 	Work       string   `json:"work"`
@@ -61,7 +56,6 @@ type Request struct {
 	Claimed []Claimed `json:"claimed"`
 }
 
-// Claimed is one claimed file.
 type Claimed struct {
 	Path string `json:"path"`
 	Role string `json:"role"`
@@ -73,7 +67,6 @@ var (
 	errCannotTell = errors.New("can't tell")
 )
 
-// Run answers one call and returns the exit code.
 func Run(args []string, stdin io.Reader, stdout, stderr io.Writer, version string) int {
 	if len(args) != 1 {
 		say(stderr, errUsage)
@@ -140,14 +133,10 @@ func say(w io.Writer, a ...any) {
 
 // The answer's types are the protocol's own.
 type (
-	// Unit is one unit of the answer.
-	Unit = plugin.Unit
-	// Link is a link among this plugin's own units.
-	Link = plugin.Link
-	// CannotTell is a unit whose links the files can't tell.
+	Unit       = plugin.Unit
+	Link       = plugin.Link
 	CannotTell = plugin.CannotTell
-	// Set is the answer for one set of files the core caches together.
-	Set = plugin.Set
+	Set        = plugin.Set
 	// UnitsAnswer answers units: one set per package and one for the dependencies.
 	UnitsAnswer = plugin.UnitsAnswer
 )
@@ -404,7 +393,6 @@ func packageSet(tree, dir string, cfg decls.Config) (Set, error) {
 	return s, nil
 }
 
-// The files a Go module is declared and pinned by.
 const (
 	fileGoMod = "go.mod"
 	fileGoSum = "go.sum"

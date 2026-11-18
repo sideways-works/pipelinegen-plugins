@@ -1,5 +1,3 @@
-// Command go-sbom is a pipelinegen plugin that lists a Go repository's
-// declarations, the modules it depends on and its toolchain.
 package main
 
 import (
@@ -8,7 +6,6 @@ import (
 	"github.com/sideways-works/pipelinegen-sbom-go/internal/cli"
 )
 
-// Version is set by the release build.
 var Version = "dev"
 
 func main() {

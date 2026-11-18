@@ -10,7 +10,6 @@ import (
 	"strings"
 )
 
-// Decl is one top-level declaration of a file.
 type Decl struct {
 	ID ID
 	// Node is the declaration: an *ast.FuncDecl, or one *ast.TypeSpec or
@@ -108,7 +107,6 @@ func specs(dir, file, suffix string, g *ast.GenDecl, blank *int) []Decl {
 	return out
 }
 
-// RecvName is a receiver's type name without *, parentheses or type parameters.
 func RecvName(e ast.Expr) string {
 	for {
 		switch t := e.(type) {
@@ -128,7 +126,6 @@ func RecvName(e ast.Expr) string {
 	}
 }
 
-// Index finds the declaration around a position, across files.
 type Index struct {
 	byFile map[string][]entry
 }
@@ -138,12 +135,10 @@ type entry struct {
 	start, end token.Position
 }
 
-// NewIndex makes an empty index.
 func NewIndex() *Index {
 	return &Index{byFile: map[string][]entry{}}
 }
 
-// Add takes in a file's declarations.
 func (x *Index) Add(fset *token.FileSet, decls []Decl) {
 	touched := map[string]bool{}
 

@@ -118,7 +118,6 @@ func Dirs(root, dir string) ([]string, error) {
 	return out, nil
 }
 
-// HasGo tells whether a directory holds a .go file.
 func HasGo(dir string) bool {
 	entries, err := os.ReadDir(dir)
 	if err != nil {

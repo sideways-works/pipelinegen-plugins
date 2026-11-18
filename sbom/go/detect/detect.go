@@ -9,7 +9,6 @@ import (
 	"strings"
 )
 
-// The roles of the files the Go plugins read.
 const (
 	RoleSource    = "source"
 	RoleGenerated = "generated"
@@ -18,16 +17,13 @@ const (
 	RoleDirective = "directive"
 )
 
-// vendorDir is where go mod vendor writes.
 const vendorDir = "vendor"
 
-// Candidates are the path patterns of the files worth asking about.
 var Candidates = []string{
 	"**/*.go", "**/go.mod", "**/go.sum", "**/go.work", "**/go.work.sum",
 	"**/vendor/modules.txt", "MODULE.bazel",
 }
 
-// Claim is one claimed file.
 type Claim struct {
 	Path string `json:"path"`
 	Role string `json:"role"`
@@ -39,7 +35,6 @@ var generated = regexp.MustCompile(`(?m)^// Code generated .*DO NOT EDIT\.$`)
 
 var sdkDownload = regexp.MustCompile(`go_sdk\.download\(`)
 
-// File claims one file by its path and content, or says nothing.
 func File(p string, content []byte) (Claim, bool) {
 	if skipped(p) {
 		return Claim{}, false

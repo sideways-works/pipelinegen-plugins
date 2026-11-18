@@ -20,7 +20,6 @@ import (
 	"github.com/sideways-works/pipelinegen-sbom-go/goid"
 )
 
-// Unit is one declaration.
 type Unit struct {
 	ID     goid.ID
 	File   string // from the repository's root
@@ -41,11 +40,9 @@ type DigestFrom struct {
 	From  []string `json:"from"`
 }
 
-// Config is what the repository says about its declarations.
 type Config struct {
 	DigestFrom []DigestFrom `json:"digest_from"`
-	// Build is the build the repository's tests run with.
-	Build Build `json:"build"`
+	Build      Build        `json:"build"`
 }
 
 // Build says which files the build constraints keep. It is fixed rather than
@@ -65,7 +62,6 @@ type Build struct {
 // other.
 var DefaultTags = []string{"pipelinegen_cover"}
 
-// Context is the build context b describes.
 func (b Build) Context() build.Context {
 	ctx := build.Default
 	ctx.GOOS, ctx.GOARCH, ctx.CgoEnabled = "linux", "amd64", b.Cgo
@@ -122,7 +118,6 @@ func matchID(pat, id string) bool {
 	return strings.HasSuffix(rest, parts[len(parts)-1])
 }
 
-// Package is one package directory's units.
 type Package struct {
 	Dir   string
 	Units []Unit
@@ -144,7 +139,6 @@ type Package struct {
 	name    string
 }
 
-// ErrRead wraps a package that can't be read.
 var ErrRead = errors.New("read package")
 
 // Read reads the package in dir (relative to root) and its test files. A file
@@ -154,7 +148,6 @@ func Read(root, dir string) (*Package, error) {
 	return ReadWith(root, dir, Config{})
 }
 
-// ReadWith is Read with the repository's config.
 func ReadWith(root, dir string, cfg Config) (*Package, error) {
 	root, err := Root(root)
 	if err != nil {
@@ -164,7 +157,6 @@ func ReadWith(root, dir string, cfg Config) (*Package, error) {
 	return read(root, dir, cfg)
 }
 
-// Name is the package's name, empty when none was read.
 func (p *Package) Name() string { return p.name }
 
 func read(root, dir string, cfg Config) (*Package, error) {

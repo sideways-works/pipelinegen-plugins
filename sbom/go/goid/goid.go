@@ -36,10 +36,8 @@ const Namespace = "go"
 
 const prefix = Namespace + ":"
 
-// Kind is the kind of a top-level declaration.
 type Kind string
 
-// The kinds of top-level declarations.
 const (
 	Func   Kind = "func"
 	Method Kind = "method"
@@ -64,7 +62,6 @@ const (
 	API Kind = "api"
 )
 
-// The suffixes of declarations in test files.
 const (
 	// TestSuffix marks a declaration of a _test.go file in the package
 	// itself.
@@ -73,18 +70,14 @@ const (
 	XTestSuffix = "@xtest"
 )
 
-// ID names one top-level declaration.
 type ID string
 
-// ErrID wraps a string that is no declaration ID.
 var ErrID = errors.New("go declaration id")
 
-// New makes an ID.
 func New(dir string, kind Kind, name string) ID {
 	return ID(prefix + dir + "#" + string(kind) + ":" + name)
 }
 
-// Parse checks an ID and splits it.
 func Parse(s string) (dir string, kind Kind, name string, err error) {
 	rest, ok := strings.CutPrefix(s, prefix)
 	if !ok {
@@ -110,28 +103,24 @@ func Parse(s string) (dir string, kind Kind, name string, err error) {
 	return dir, Kind(k), name, nil
 }
 
-// Dir is the ID's package directory.
 func (id ID) Dir() string {
 	dir, _, _, _ := Parse(string(id)) //nolint:dogsled,errcheck // empty for a malformed ID
 
 	return dir
 }
 
-// Kind is the ID's kind, empty for a malformed ID.
 func (id ID) Kind() Kind {
 	_, k, _, _ := Parse(string(id)) //nolint:dogsled,errcheck // as above
 
 	return k
 }
 
-// Name is the ID's name, empty for a malformed ID.
 func (id ID) Name() string {
 	_, _, name, _ := Parse(string(id)) //nolint:dogsled,errcheck // as above
 
 	return name
 }
 
-// Test tells whether the ID names a declaration of a test file.
 func (id ID) Test() bool {
 	return strings.HasSuffix(string(id), TestSuffix) || strings.HasSuffix(string(id), XTestSuffix)
 }

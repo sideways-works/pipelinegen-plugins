@@ -130,7 +130,6 @@ func (r *reader) links(cache string) {
 	})
 }
 
-// ErrNoModFile is a dependency's go.mod that isn't in the module cache.
 var ErrNoModFile = errors.New("not in the module cache")
 
 func requirements(cache string, v module.Version) ([]string, error) {

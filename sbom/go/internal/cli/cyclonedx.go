@@ -146,6 +146,7 @@ func cycloneDX(g *deps.Graph, version string) bom {
 	}
 
 	sum := hex.EncodeToString(h.Sum(nil))
+	// The content's hash shaped as a version 5 UUID, so the same bill always gets the same serial.
 	b.SerialNumber = "urn:uuid:" + sum[0:8] + "-" + sum[8:12] + "-5" + sum[13:16] + "-a" + sum[17:20] + "-" + sum[20:32]
 
 	return b

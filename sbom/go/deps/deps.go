@@ -25,7 +25,6 @@ import (
 	"github.com/sideways-works/pipelinegen-sbom-go/goid"
 )
 
-// Module is one module the repository depends on.
 type Module struct {
 	// ID is its unit: dep:go:<path>.
 	ID   string
@@ -57,12 +56,10 @@ type Link struct {
 	From, To string
 }
 
-// Missing is a module whose requirements can't be read.
 type Missing struct {
 	ID, Reason string
 }
 
-// Graph is what the files say about a repository's dependencies.
 type Graph struct {
 	Modules []Module
 	Tools   []Tool
@@ -75,13 +72,11 @@ type Graph struct {
 	Mains      []Main
 }
 
-// Main is one of the repository's own modules that was read.
 type Main struct {
 	Dir, Path string
 	Requires  []string
 }
 
-// ErrRead wraps a file that can't be read or parsed.
 var ErrRead = errors.New("dependencies")
 
 type mainModule struct {

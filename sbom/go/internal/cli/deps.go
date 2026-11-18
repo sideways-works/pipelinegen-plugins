@@ -24,7 +24,6 @@ const moduleGraphOffAt = 5
 
 const depsGroup = goid.DepNamespace
 
-// The unit kinds of the dependency set.
 const (
 	kindModule    = "module"
 	kindToolchain = "toolchain"
