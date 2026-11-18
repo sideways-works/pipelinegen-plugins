@@ -51,16 +51,15 @@ plugins:
       - name: npm
         kind: sbom
         path: sbom/npm
-        release: {version: vX.Y.Z, sha256: ...}
+        release: {version: v0.4.0, sums: …}
 ```
 
-The checksum is the `npm-sbom-linux-amd64` line of the release's
-`SHA256SUMS`. Or pin the release by the checksum of its `SHA256SUMS`
-itself, `sums: ...` in place of `sha256`: one pin then serves every
-platform, a Mac's binary checked by its own line of the list.
-A new pin selects nothing by itself. List `pipelinegen.yaml`
-under `everything_on`, so that a pin change, like any other change to the
-config, runs every slice.
+`sums` is the checksum of the release's `SHA256SUMS`, so one pin serves
+every platform and each binary is checked by its own line of that list.
+To pin one binary alone, put `sha256:` with its line
+(`npm-sbom-linux-amd64`) in place of `sums`. A new pin selects nothing
+by itself. List `pipelinegen.yaml` under `everything_on`, so that a pin
+change, like any other change to the config, runs every slice.
 
 A lockfile is bound one way only: through this plugin's units, never also
 through `everything_on` or `sample_on`. pipelinegen's check refuses a
@@ -272,49 +271,33 @@ links takes under 10 ms.
 installed copy with its package URL and its integrity as a hex hash, and
 the dependency graph.
 
-## Developing and releasing
-
-The Go version and golangci-lint version are in `.tool-versions`. Before a
-push, run `go test ./...` and `golangci-lint run`. The tests run
-against a small fixture workspace in `npm/testdata` and need no network.
-
-The conformance kit checks the plugin the way pipelinegen calls it, on
-that fixture:
-
-```sh
-go build -trimpath -o npm-sbom ./cmd/npm-sbom
-pipelinegen plugin test ./npm-sbom --tree npm/testdata/workspace
-pipelinegen plugin test ./npm-sbom --tree npm/testdata/pnpm
-```
-
-Releases are built and published with `bazel run //sbom/npm:release`,
-which runs pipelinegen's release command as its [release
-guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
-describes. For a tag `sbom/npm/vX.Y.Z` on `main` it publishes static
-`npm-sbom-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
-`-darwin-arm64`, `plugin.json` (the plugin's own `describe`), `LICENSE`,
-`NOTICE` and `SHA256SUMS`. A published release never changes; a wrong one
-gets a new version.
-
 ## Developing
 
-The tests and the lint run with the Go, golangci-lint and Node that the
-repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
-other commands run in this directory.
+`bazel run //sbom/npm:test` runs the tests and `bazel run
+//sbom/npm:lint` the lint, with the Go, golangci-lint and Node the
+repository pins in `MODULE.bazel`
+([CONTRIBUTING](../../CONTRIBUTING.md)). The tests read the fixture
+workspaces in `npm/testdata` and use no network.
+
+pipelinegen's conformance kit calls the npm-sbom you built the way
+pipelinegen does, on an npm workspace and on a pnpm one. The commands
+below run it from this directory with the pipelinegen that
+`tools/go.mod` pins. The go on your `PATH` must be at least as new as
+`go.mod` asks.
 
 ```sh
-bazel run //sbom/npm:test
-bazel run //sbom/npm:lint
 go build -trimpath -o npm-sbom ./cmd/npm-sbom
-pipelinegen plugin test ./npm-sbom --tree npm/testdata/workspace
-pipelinegen plugin test ./npm-sbom --tree npm/testdata/pnpm
+go -C ../../tools tool pipelinegen plugin test "$PWD/npm-sbom" --tree "$PWD/npm/testdata/workspace"
+go -C ../../tools tool pipelinegen plugin test "$PWD/npm-sbom" --tree "$PWD/npm/testdata/pnpm"
 ```
 
-- Tests read the fixture workspaces in `npm/testdata` and use no
-  network.
-- The last two lines run pipelinegen's conformance kit, which calls the
-  npm-sbom you built the way pipelinegen does, on an npm workspace and on
-  a pnpm one. Take `pipelinegen` from [its
-  releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
-- A change to what npm-sbom lists comes with its docs: the README
-  describes npm-sbom as it is on `main`.
+`bazel run //sbom/npm:release` releases it from a tag `sbom/npm/vX.Y.Z`
+on `main`, as [CONTRIBUTING](../../CONTRIBUTING.md#releases) describes:
+static `npm-sbom-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (its own `describe` answer), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. Its first release here is `v0.4.0`
+([RELEASING](../../RELEASING.md)), and a published release never
+changes.
+
+A change to what npm-sbom lists comes with its docs, so this README
+describes npm-sbom as it is on `main`.
