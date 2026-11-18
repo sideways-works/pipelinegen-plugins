@@ -1,0 +1,1 @@
+{"name": "react", "observe": {"slice": "money", "dirs": ["coverage/_setup/react", "coverage/money/react"]}, "record": {"slice": "money", "parts": 2, "run": ["sh", "-c", "d=coverage/$PIPELINEGEN_SLICE/react; mkdir -p \"$d\"; n=1; while [ -e \"$d/$n\" ]; do n=$((n+1)); done; cp -R \"source/kit-record/part-$PIPELINEGEN_PART\" \"$d/$n\""]}}

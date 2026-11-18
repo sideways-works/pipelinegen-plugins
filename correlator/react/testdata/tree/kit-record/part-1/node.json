@@ -1,0 +1,1 @@
+{"version":1,"scripts":[{"file":"packages/money/src/format.ts","source":"import { RATES } from \"./rates\";\n\nexport function format(cents: number, currency: string): string {\n  return `${((cents / 100) * (RATES[currency] ?? 1)).toFixed(2)} ${currency}`;\n}\n","ran":[[0,181]],"fns":[0,41]}]}

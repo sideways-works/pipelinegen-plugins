@@ -1,0 +1,1 @@
+{"version": 1, "scripts": [{"file": "packages/money/src/rates.ts", "source": "export const RATES: Record<string, number> = { EUR: 1, CHF: 0.95 };\nexport function rate(c: string) {\n  return RATES[c];\n}\n", "ran": [[0, 123]], "fns": [0, 75]}]}

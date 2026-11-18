@@ -1,0 +1,4 @@
+{
+  // shared settings, with a comment as tsconfig files allow
+  "compilerOptions": { "paths": { "@money/*": ["./packages/money/src/*"] } }
+}
