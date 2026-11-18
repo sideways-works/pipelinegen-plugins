@@ -1,6 +1,7 @@
 // Package openapi finds the units of OpenAPI documents, digests them so that
 // only a change in behaviour changes a digest, links them to each other and to
-// the code generated from them, and maps a test's requests back to operations.
+// the Go code a generator writes from them, and maps a test's requests back
+// to operations.
 package openapi
 
 import (
@@ -10,6 +11,12 @@ import (
 	"strings"
 
 	"go.yaml.in/yaml/v3"
+)
+
+var (
+	errEmptyDocument = errors.New("decode: empty document")
+	errTooDeep       = errors.New("decode: nested too deep (an alias loop?)")
+	errNodeKind      = errors.New("decode: unknown node kind")
 )
 
 // decode reads a YAML or JSON document. Mapping keys are always strings: a
@@ -23,7 +30,7 @@ func decode(data []byte) (any, error) {
 	}
 
 	if root.Kind == 0 {
-		return nil, errors.New("decode: empty document")
+		return nil, errEmptyDocument
 	}
 
 	return fromNode(&root, 0)
@@ -35,13 +42,13 @@ const maxDepth = 512
 
 func fromNode(n *yaml.Node, depth int) (any, error) {
 	if depth > maxDepth {
-		return nil, errors.New("decode: nested too deep (an alias loop?)")
+		return nil, errTooDeep
 	}
 
 	switch n.Kind {
 	case yaml.DocumentNode:
 		if len(n.Content) == 0 {
-			return nil, nil
+			return nil, errEmptyDocument
 		}
 
 		return fromNode(n.Content[0], depth+1)
@@ -70,7 +77,7 @@ func fromNode(n *yaml.Node, depth int) (any, error) {
 
 		return v, nil
 	default:
-		return nil, fmt.Errorf("decode: line %d: unknown node kind %d", n.Line, n.Kind)
+		return nil, fmt.Errorf("%w %d on line %d", errNodeKind, n.Kind, n.Line)
 	}
 }
 
@@ -138,7 +145,7 @@ func pointer(root any, ptr string) (any, bool) {
 
 	cur := root
 
-	for _, raw := range strings.Split(strings.TrimPrefix(ptr, "/"), "/") {
+	for raw := range strings.SplitSeq(strings.TrimPrefix(ptr, "/"), "/") {
 		tok := strings.ReplaceAll(strings.ReplaceAll(raw, "~1", "/"), "~0", "~")
 
 		switch c := cur.(type) {
