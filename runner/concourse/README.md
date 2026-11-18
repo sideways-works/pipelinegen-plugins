@@ -228,7 +228,12 @@ repository's own parts from its include file.
   API with the read token, so a private repository's files come too. A
   GitLab release is downloaded from its link without a token, since the
   token is GitHub's. Another git server has no release files to fetch,
-  and the step says so.
+  and the step says so. A release pinned by `sums`, the runner's own
+  included, is checked in two steps: the release's `SHA256SUMS` against
+  the pin, then the file against its line in that list. The list is kept
+  in the job's cache and beside the tool, as `tools/plugins/<name>.SHA256SUMS`,
+  where pipelinegen checks a plugin by it. A release pinned by `sha256` is
+  checked by that alone, as before.
 - Every task that runs pipelinegen, planning and bookkeeping tasks as
   much as a suite's, gets `PIPELINEGEN_PIPELINE_STEP=1`, which tells
   pipelinegen it runs as a pipeline's step: Bazel's output and bazelisk's

@@ -28,6 +28,8 @@ type runnerReleases struct {
 	// request.
 	body   []byte
 	status int
+	// sums is the release's SHA256SUMS.
+	sums []byte
 }
 
 func newRunnerReleases(t *testing.T, body []byte) *runnerReleases {
@@ -51,7 +53,10 @@ func newRunnerReleases(t *testing.T, body []byte) *runnerReleases {
 		switch req.URL.Path {
 		case "/repos/o/pipelinegen-runner-concourse/releases/tags/v1":
 			out = fmt.Appendf(nil, `{"assets": [{"url": "%[1]s/repos/o/pipelinegen-runner-concourse/releases/assets/3", "id": 3, "name": "concourse-runner.sbom"},
-  {"url": "%[1]s/repos/o/pipelinegen-runner-concourse/releases/assets/4", "id": 4, "name": "concourse-runner-linux-amd64"}]}`, r.srv.URL)
+  {"url": "%[1]s/repos/o/pipelinegen-runner-concourse/releases/assets/4", "id": 4, "name": "concourse-runner-linux-amd64"},
+  {"url": "%[1]s/repos/o/pipelinegen-runner-concourse/releases/assets/6", "id": 6, "name": "SHA256SUMS"}]}`, r.srv.URL)
+		case "/repos/o/pipelinegen-runner-concourse/releases/assets/6":
+			out = r.sums
 		case "/repos/o/pipelinegen-runner-concourse/releases/tags/v2":
 			out = []byte(`{"assets": []}`)
 		case "/repos/o/plugins/releases/tags/runner/concourse/v1":
@@ -204,6 +209,77 @@ func TestTheBootstrapFetchesARunnerTaggedInItsDirectory(t *testing.T) {
 	env = cleanEnv(t, runnerPins(rel.srv, "v2", sha256Hex(fakeRunner), "PIPELINEGEN_RUNNER_REPOSITORY=o/plugins", "PIPELINEGEN_RUNNER_PATH=runner/concourse")...)
 	if out, code := bootstrap(t, t.TempDir(), env, "start"); code == 0 || !strings.Contains(out, "release runner/concourse/v2 of o/plugins") {
 		t.Errorf("a release that isn't there: exit %d\n%s", code, out)
+	}
+}
+
+// A runner pinned by sums is checked by its line of the release's
+// SHA256SUMS, once that list matches the pin; the list is kept beside it.
+func TestTheBootstrapChecksARunnerPinnedBySums(t *testing.T) {
+	if _, err := exec.LookPath("curl"); err != nil {
+		t.Skip("no curl")
+	}
+
+	good := sha256Hex(fakeRunner) + "  concourse-runner-linux-amd64\n" + strings.Repeat("0", 64) + " *concourse-runner-darwin-arm64\n"
+	wrongLine := strings.Repeat("2", 64) + "  concourse-runner-linux-amd64\n"
+
+	for _, c := range []struct {
+		name, sums, pin, says string
+	}{
+		{name: "checked", sums: good, pin: sha256Hex(good)},
+		{name: "a list that isn't the pin's", sums: good, pin: strings.Repeat("1", 64),
+			says: "release v1 of o/pipelinegen-runner-concourse: SHA256SUMS doesn't match the pin's sums"},
+		{name: "a file that isn't its line", sums: wrongLine, pin: sha256Hex(wrongLine),
+			says: "release v1 of o/pipelinegen-runner-concourse: concourse-runner-linux-amd64 doesn't match its line in SHA256SUMS"},
+		{name: "a list without the file", sums: "", pin: sha256Hex(""),
+			says: "release v1 of o/pipelinegen-runner-concourse: its SHA256SUMS lists no concourse-runner-linux-amd64"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			rel := newRunnerReleases(t, []byte(fakeRunner))
+			rel.sums = []byte(c.sums)
+			work := t.TempDir()
+			env := cleanEnv(t, runnerPins(rel.srv, "v1", "", "PIPELINEGEN_RUNNER_SUMS="+c.pin)...)
+
+			out, code := bootstrap(t, work, env, "start")
+			if c.says != "" {
+				if code == 0 || !strings.Contains(out, c.says) || exists(filepath.Join(work, "ran")) {
+					t.Errorf("exit %d\n%s", code, out)
+				}
+
+				return
+			}
+
+			if code != 0 || strings.Contains(out, "secret-token-value") {
+				t.Fatalf("exit %d\n%s", code, out)
+			}
+
+			for p, want := range map[string]string{
+				"tools/plugins/concourse": fakeRunner, "tools/plugins/concourse.SHA256SUMS": c.sums,
+				"cache/concourse-runner-release-v1/concourse-runner": fakeRunner, "cache/concourse-runner-release-v1/SHA256SUMS": c.sums,
+			} {
+				if got, err := os.ReadFile(filepath.Join(work, p)); err != nil || string(got) != want {
+					t.Errorf("%s: %q %v", p, got, err)
+				}
+			}
+
+			rel.asked()
+
+			// the runner placed and the list beside it: nothing is fetched
+			if err := os.RemoveAll(filepath.Join(work, "cache")); err != nil {
+				t.Fatal(err)
+			}
+
+			if out, code := bootstrap(t, work, env, "start"); code != 0 || len(rel.asked()) != 0 {
+				t.Errorf("a placed runner: exit %d\n%s", code, out)
+			}
+
+			// a wrong runner beside its list is fetched again
+			writeExec(t, filepath.Join(work, "tools", "plugins", "concourse"), "#!/bin/sh\necho wrong\n")
+
+			if out, code := bootstrap(t, work, env, "start"); code != 0 || readTestFile(t, filepath.Join(work, "tools", "plugins", "concourse")) == nil ||
+				string(readTestFile(t, filepath.Join(work, "tools", "plugins", "concourse"))) != fakeRunner {
+				t.Errorf("a wrong runner: exit %d\n%s", code, out)
+			}
+		})
 	}
 }
 

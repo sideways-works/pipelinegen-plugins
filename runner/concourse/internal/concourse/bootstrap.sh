@@ -56,7 +56,46 @@ fi
     echo "the pipeline pins no runner: its config's plugins have none of kind runner" >&2
     exit 1
   fi
-  ok() { [ -x "$1" ] && echo "$PIPELINEGEN_RUNNER_SHA256  $1" | sha256sum -c - >/dev/null 2>&1; }
+  sum=$PIPELINEGEN_RUNNER_SHA256
+  ok() { [ -x "$1" ] && echo "$sum  $1" | sha256sum -c - >/dev/null 2>&1; }
+  # curl reads its authorization header from awk, which reads the token
+  # from the environment: no argument or variable here holds it
+  auth() { awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'; }
+  # asset downloads the release's file $1 to $2
+  asset() {
+    url=$(auth | curl -fsSL -H @- "${PIPELINEGEN_GITHUB_API:-https://api.github.com}/repos/$repo/releases/tags/$tag" | tr -d '\n' |
+      grep -o "\"url\": *\"[^\"]*/releases/assets/[0-9]*\"[^{}]*\"name\": *\"$1\"" | head -n 1 | sed 's/^"url": *"\([^"]*\)".*/\1/')
+    if [ -z "$url" ]; then
+      echo "release $tag of $repo has no $1" >&2
+      exit 1
+    fi
+    auth | curl -fsSL -H @- -H "Accept: application/octet-stream" -o "$2" "$url"
+  }
+
+  # A pin by sums checks the release's SHA256SUMS, whose line checks the runner.
+  sums=
+  if [ -z "$c" ] && [ -n "${PIPELINEGEN_RUNNER_SUMS:-}" ]; then
+    listed() { echo "$PIPELINEGEN_RUNNER_SUMS  $1" | sha256sum -c - >/dev/null 2>&1; }
+    sums=$runner.SHA256SUMS
+    if ! listed "$sums"; then
+      sums=cache/$p-release-$v/SHA256SUMS
+      if ! listed "$sums"; then
+        mkdir -p "cache/$p-release-$v"
+        asset SHA256SUMS "$sums.tmp"
+        if ! listed "$sums.tmp"; then
+          rm -f "$sums.tmp"
+          echo "release $tag of $repo: SHA256SUMS doesn't match the pin's sums" >&2
+          exit 1
+        fi
+        mv "$sums.tmp" "$sums"
+      fi
+    fi
+    sum=$(sed -n "s/^\([0-9a-fA-F]\{64\}\) [ *]*$p-linux-amd64\$/\1/p" "$sums" | head -n 1)
+    if [ -z "$sum" ]; then
+      echo "release $tag of $repo: its SHA256SUMS lists no $p-linux-amd64" >&2
+      exit 1
+    fi
+  fi
 
   # A commit's build has no checksum: one this build placed is the one it built.
   if [ -x "$runner" ] && { [ -n "$c" ] || ok "$runner"; }; then
@@ -85,20 +124,11 @@ fi
   dir=cache/$p-release-$v
   if ! ok "$dir/$p"; then
     mkdir -p "$dir"
-    # curl reads its authorization header from awk, which reads the token
-    # from the environment: no argument or variable here holds it
-    auth() { awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'; }
-    url=$(auth | curl -fsSL -H @- "${PIPELINEGEN_GITHUB_API:-https://api.github.com}/repos/$repo/releases/tags/$tag" | tr -d '\n' |
-      grep -o "\"url\": *\"[^\"]*/releases/assets/[0-9]*\"[^{}]*\"name\": *\"$p-linux-amd64\"" | head -n 1 | sed 's/^"url": *"\([^"]*\)".*/\1/')
-    if [ -z "$url" ]; then
-      echo "release $tag of $repo has no $p-linux-amd64" >&2
-      exit 1
-    fi
-    auth | curl -fsSL -H @- -H "Accept: application/octet-stream" -o "$dir/$p.tmp" "$url"
+    asset "$p-linux-amd64" "$dir/$p.tmp"
     chmod +x "$dir/$p.tmp"
     if ! ok "$dir/$p.tmp"; then
       rm -f "$dir/$p.tmp"
-      echo "release $tag of $repo: $p-linux-amd64 doesn't match its sha256" >&2
+      echo "release $tag of $repo: $p-linux-amd64 doesn't match ${sums:+its line in SHA256SUMS}${sums:-its sha256}" >&2
       exit 1
     fi
     mv "$dir/$p.tmp" "$dir/$p"
@@ -107,6 +137,10 @@ fi
   if ! ok "$runner"; then
     echo "$runner doesn't match its sha256" >&2
     exit 1
+  fi
+  # pipelinegen checks a plugin pinned by sums by the list beside it
+  if [ -n "$sums" ] && [ "$sums" != "$runner.SHA256SUMS" ]; then
+    cp "$sums" "$runner.SHA256SUMS"
   fi
 )
 

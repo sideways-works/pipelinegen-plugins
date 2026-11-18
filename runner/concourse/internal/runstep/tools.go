@@ -43,6 +43,7 @@ func (t *Task) fetchTools(env []string) int {
 	if code := f.fetch(toolPin{
 		repo: getenv(env, "PIPELINEGEN_TOOL_REPOSITORY"), version: getenv(env, "PIPELINEGEN_TOOL_VERSION"),
 		sum: getenv(env, "PIPELINEGEN_TOOL_SHA256"), commit: getenv(env, "PIPELINEGEN_TOOL_COMMIT"),
+		sums: getenv(env, "PIPELINEGEN_TOOL_SUMS"),
 	}, tool); code != 0 {
 		return code
 	}
@@ -89,6 +90,9 @@ type toolPin struct {
 	// path is the tool's directory in a repository holding several: its
 	// releases are tagged <path>/<version> and its program is named by it.
 	path string
+	// sums, in place of sum, is the checksum of the release's SHA256SUMS,
+	// whose line for the tool's file checks that file.
+	sums string
 }
 
 // program names the tool's files: by its path (driver/go holds go-driver),
@@ -126,8 +130,8 @@ func cloneURL(repo string) string {
 }
 
 // pluginPins reads the plugins' pins, one per line: name, repository,
-// version, sha256, commit and, for a tool in a directory, its path; "-"
-// for an empty field.
+// version, sha256, commit and, where a tool has them, its path and its
+// sums; "-" for an empty field.
 func pluginPins(lines string) []toolPin {
 	var out []toolPin
 
@@ -137,17 +141,17 @@ func pluginPins(lines string) []toolPin {
 			continue
 		}
 
-		for len(f) < 6 {
+		for len(f) < 7 {
 			f = append(f, "")
 		}
 
-		for i := 2; i < 6; i++ {
+		for i := 2; i < 7; i++ {
 			if f[i] == "-" {
 				f[i] = ""
 			}
 		}
 
-		out = append(out, toolPin{name: f[0], repo: f[1], version: f[2], sum: f[3], commit: f[4], path: f[5]})
+		out = append(out, toolPin{name: f[0], repo: f[1], version: f[2], sum: f[3], commit: f[4], path: f[5], sums: f[6]})
 	}
 
 	return out
@@ -272,25 +276,109 @@ func (f *fetcher) fetch(p toolPin, dest string) int {
 	dir := filepath.Join("cache", name+"-release-"+p.version)
 	f.pinned = append(f.pinned, filepath.Base(dir))
 
-	if f.verified(dest, p.sum) {
-		return 0
-	}
-
 	if err := os.MkdirAll(f.t.path(dir), 0o750); err != nil {
 		f.t.sayf("%v", err)
 
 		return 1
 	}
 
-	cached := filepath.Join(dir, name)
-
-	if !f.verified(cached, p.sum) {
-		if code := f.release(p, name, cached); code != 0 {
+	sum := p.sum
+	if p.sums != "" {
+		var code int
+		if sum, code = f.listed(p, name, dir, dest); code != 0 {
 			return code
 		}
 	}
 
-	return f.place(cached, p.sum, dest)
+	if f.verified(dest, sum) {
+		return 0
+	}
+
+	cached := filepath.Join(dir, name)
+
+	if !f.verified(cached, sum) {
+		if code := f.release(p, []string{name + "-linux-amd64", name + ".mjs"}, cached, sum); code != 0 {
+			return code
+		}
+	}
+
+	return f.place(cached, sum, dest)
+}
+
+// sumsFile lists a release's files with their checksums.
+const sumsFile = "SHA256SUMS"
+
+// listed is the checksum a pin by sums gives the tool's file: its line of
+// the release's SHA256SUMS, once that list matches the pin. The list is
+// kept beside the tool, where pipelinegen checks a plugin by it, and in the
+// release's cache entry.
+func (f *fetcher) listed(p toolPin, name, dir, dest string) (string, int) {
+	beside, cached := dest+"."+sumsFile, filepath.Join(dir, sumsFile)
+
+	from := ""
+
+	for _, c := range []string{beside, cached} {
+		if fileSum(f.t.path(c)) == strings.ToLower(p.sums) {
+			from = c
+
+			break
+		}
+	}
+
+	if from == "" {
+		if code := f.release(p, []string{sumsFile}, cached, strings.ToLower(p.sums)); code != 0 {
+			return "", code
+		}
+
+		from = cached
+	}
+
+	data, err := os.ReadFile(f.t.path(from))
+	if err != nil {
+		f.t.sayf("%v", err)
+
+		return "", 1
+	}
+
+	sums := pin.Listed(data)
+
+	sum := ""
+
+	for _, file := range []string{name + "-linux-amd64", name + ".mjs"} {
+		if s := sums[file]; s != "" {
+			sum = s
+
+			break
+		}
+	}
+
+	if sum == "" {
+		f.t.sayf("release %s of %s: its %s lists neither %s-linux-amd64 nor %s.mjs", p.tag(), p.repo, sumsFile, name, name)
+
+		return "", 1
+	}
+
+	if from != beside {
+		if err := os.WriteFile(f.t.path(beside), data, 0o644); err != nil { //nolint:gosec // a list pipelinegen reads
+			f.t.sayf("%v", err)
+
+			return "", 1
+		}
+	}
+
+	return sum, 0
+}
+
+// fileSum is a file's sha256, or nothing when it can't be read.
+func fileSum(p string) string {
+	data, err := os.ReadFile(p) //nolint:gosec // a file of the task's own
+	if err != nil {
+		return ""
+	}
+
+	got := sha256.Sum256(data)
+
+	return hex.EncodeToString(got[:])
 }
 
 type asset struct {
@@ -298,10 +386,11 @@ type asset struct {
 	Name string `json:"name"`
 }
 
-// release downloads the release's file into the cache, from GitHub or
-// GitLab, as pipelinegen fetches a plugin. A release the API couldn't list
-// has no files either.
-func (f *fetcher) release(p toolPin, name, cached string) int {
+// release downloads the first of the release's files it has into the
+// cache, from GitHub or GitLab, as pipelinegen fetches a plugin, and keeps
+// it only when it has the checksum. A release the API couldn't list has no
+// files either.
+func (f *fetcher) release(p toolPin, files []string, cached, sum string) int {
 	repo, err := pin.ParseRepository(p.repo, nil)
 	if err != nil {
 		f.t.sayf("release %s of %s: %v", p.tag(), p.repo, err)
@@ -311,9 +400,9 @@ func (f *fetcher) release(p toolPin, name, cached string) int {
 
 	switch repo.Forge {
 	case pin.GitHub:
-		return f.gitHub(p, repo, name, cached)
+		return f.gitHub(p, repo, files, cached, sum)
 	case pin.GitLab:
-		return f.gitLab(p, repo, name, cached)
+		return f.gitLab(p, repo, files, cached, sum)
 	}
 
 	f.t.sayf("release %s of %s: a plain git server has no release files; the runner fetches them from GitHub and GitLab", p.tag(), p.repo)
@@ -323,7 +412,7 @@ func (f *fetcher) release(p toolPin, name, cached string) int {
 
 // gitHub lists the release through the API with the read token, which
 // reads a private repository's files too.
-func (f *fetcher) gitHub(p toolPin, repo pin.Repo, name, cached string) int {
+func (f *fetcher) gitHub(p toolPin, repo pin.Repo, files []string, cached, sum string) int {
 	var assets struct {
 		Assets []asset `json:"assets"`
 	}
@@ -337,7 +426,7 @@ func (f *fetcher) gitHub(p toolPin, repo pin.Repo, name, cached string) int {
 
 	file, link := "", ""
 
-	for _, want := range []string{name + "-linux-amd64", name + ".mjs"} {
+	for _, want := range files {
 		if i := slices.IndexFunc(assets.Assets, func(a asset) bool { return a.Name == want && a.URL != "" }); i >= 0 {
 			file, link = want, assets.Assets[i].URL
 
@@ -346,7 +435,7 @@ func (f *fetcher) gitHub(p toolPin, repo pin.Repo, name, cached string) int {
 	}
 
 	if link == "" {
-		f.t.sayf("release %s of %s has neither %s-linux-amd64 nor %s.mjs", p.tag(), p.repo, name, name)
+		f.missing(p, files)
 
 		return 1
 	}
@@ -358,15 +447,38 @@ func (f *fetcher) gitHub(p toolPin, repo pin.Repo, name, cached string) int {
 		return 1
 	}
 
-	return f.download(req, p.sum, cached, "release "+p.tag()+" of "+p.repo+": "+file+" doesn't match its sha256")
+	return f.download(req, sum, cached, mismatch(p, file))
+}
+
+// missing says the release has none of the files.
+func (f *fetcher) missing(p toolPin, files []string) {
+	if len(files) == 1 {
+		f.t.sayf("release %s of %s has no %s", p.tag(), p.repo, files[0])
+
+		return
+	}
+
+	f.t.sayf("release %s of %s has neither %s", p.tag(), p.repo, strings.Join(files, " nor "))
+}
+
+func mismatch(p toolPin, file string) string {
+	if file == sumsFile {
+		return "release " + p.tag() + " of " + p.repo + ": " + sumsFile + " doesn't match the pin's sums"
+	}
+
+	if p.sums != "" {
+		return "release " + p.tag() + " of " + p.repo + ": " + file + " doesn't match its line in " + sumsFile
+	}
+
+	return "release " + p.tag() + " of " + p.repo + ": " + file + " doesn't match its sha256"
 }
 
 // gitLab downloads the release's file by its link, with no token: the read
 // token is GitHub's.
-func (f *fetcher) gitLab(p toolPin, repo pin.Repo, name, cached string) int {
+func (f *fetcher) gitLab(p toolPin, repo pin.Repo, files []string, cached, sum string) int {
 	base := repo.Origin + "/" + repo.Project + "/-/releases/" + url.PathEscape(p.tag()) + "/downloads/"
 
-	for _, file := range []string{name + "-linux-amd64", name + ".mjs"} {
+	for _, file := range files {
 		req, err := http.NewRequest(http.MethodGet, base+file, http.NoBody) //nolint:noctx // a task's limit ends it
 		if err != nil {
 			f.t.sayf("%v", err)
@@ -378,10 +490,10 @@ func (f *fetcher) gitLab(p toolPin, repo pin.Repo, name, cached string) int {
 			continue
 		}
 
-		return f.download(req, p.sum, cached, "release "+p.tag()+" of "+p.repo+": "+file+" doesn't match its sha256")
+		return f.download(req, sum, cached, mismatch(p, file))
 	}
 
-	f.t.sayf("release %s of %s has neither %s-linux-amd64 nor %s.mjs", p.tag(), p.repo, name, name)
+	f.missing(p, files)
 
 	return 1
 }

@@ -259,13 +259,15 @@ func TestTheFetchsGoEnv(t *testing.T) {
 
 func TestPluginPins(t *testing.T) {
 	got := pluginPins("go o/go-sbom v1 abc -\n\n  \nts o/ts - - c0ffee\nshort o/short\n" +
-		"gd https://github.com/o/plugins v2 def - driver/go\nrc git@gitlab.com:g/plugins.git - - c0ffee runner/concourse\n")
+		"gd https://github.com/o/plugins v2 def - driver/go\nrc git@gitlab.com:g/plugins.git - - c0ffee runner/concourse\n" +
+		"sm o/sums v5 - - - f00d\n")
 	want := []toolPin{
 		{name: "go", repo: "o/go-sbom", version: "v1", sum: "abc"},
 		{name: "ts", repo: "o/ts", commit: "c0ffee"},
 		{name: "short", repo: "o/short"},
 		{name: "gd", repo: "https://github.com/o/plugins", version: "v2", sum: "def", path: "driver/go"},
 		{name: "rc", repo: "git@gitlab.com:g/plugins.git", commit: "c0ffee", path: "runner/concourse"},
+		{name: "sm", repo: "o/sums", version: "v5", sums: "f00d"},
 	}
 
 	if !slices.Equal(got, want) {

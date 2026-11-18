@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -170,5 +171,118 @@ func TestACommitsBuildStartsInItsDirectory(t *testing.T) {
 
 	if !tk.executable("tools/plugins/go") || !tk.executable("cache/go-driver-commit-c0ffee/go-driver") {
 		t.Error("the build isn't placed")
+	}
+}
+
+// sumsRelease serves one GitHub release, o/plugins driver/go/v2, holding the
+// tool's file and a SHA256SUMS.
+func sumsRelease(t *testing.T, binary, sums string) *releases {
+	t.Helper()
+
+	r := &releases{}
+	r.srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		r.mu.Lock()
+		r.asks = append(r.asks, req.URL.Path)
+		r.mu.Unlock()
+
+		var out string
+
+		switch req.URL.Path {
+		case "/repos/o/plugins/releases/tags/driver/go/v2":
+			out = `{"assets": [{"url": "http://api.test/repos/o/plugins/releases/assets/8", "name": "go-driver-linux-amd64"},
+  {"url": "http://api.test/repos/o/plugins/releases/assets/9", "name": "SHA256SUMS"}]}`
+		case "/repos/o/plugins/releases/assets/8":
+			out = binary
+		case "/repos/o/plugins/releases/assets/9":
+			out = sums
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+
+		if _, err := io.WriteString(w, out); err != nil {
+			t.Error(err)
+		}
+	}))
+	t.Cleanup(r.srv.Close)
+
+	return r
+}
+
+func hexOf(s string) string {
+	sum := sha256.Sum256([]byte(s))
+
+	return hex.EncodeToString(sum[:])
+}
+
+func TestAPinBySumsChecksTheListThenTheFile(t *testing.T) {
+	binary := "#!/bin/sh\necho tool\n"
+	good := hexOf(binary) + "  go-driver-linux-amd64\n" + strings.Repeat("0", 64) + "  go-driver-darwin-arm64\n"
+
+	for _, c := range []struct {
+		name, sums, pin, says string
+	}{
+		{name: "checked", sums: good, pin: hexOf(good)},
+		{name: "a list that isn't the pin's", sums: good, pin: strings.Repeat("1", 64),
+			says: "release driver/go/v2 of o/plugins: SHA256SUMS doesn't match the pin's sums"},
+		{name: "a file that isn't its line", sums: strings.Repeat("2", 64) + "  go-driver-linux-amd64\n", pin: hexOf(strings.Repeat("2", 64) + "  go-driver-linux-amd64\n"),
+			says: "release driver/go/v2 of o/plugins: go-driver-linux-amd64 doesn't match its line in SHA256SUMS"},
+		{name: "a list without the file", sums: "", pin: hexOf(""),
+			says: "release driver/go/v2 of o/plugins: its SHA256SUMS lists neither go-driver-linux-amd64 nor go-driver.mjs"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			r := sumsRelease(t, binary, c.sums)
+
+			tk, out := task(t, "GITHUB_TOKEN=x", "PIPELINEGEN_GITHUB_API=http://api.test")
+			tk.HTTP = r.client()
+
+			f := &fetcher{t: tk, env: tk.Env}
+			for _, d := range []string{"cache", "tools/plugins"} {
+				if err := os.MkdirAll(filepath.Join(tk.Dir, d), 0o750); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			p := pluginPins("go o/plugins v2 - - driver/go " + c.pin + "\n")[0]
+			code := f.fetch(p, "tools/plugins/go")
+
+			if c.says != "" {
+				if code == 0 || !strings.Contains(out.String(), c.says) || tk.exists("tools/plugins/go") {
+					t.Errorf("exit %d\n%s", code, out)
+				}
+
+				return
+			}
+
+			if code != 0 {
+				t.Fatalf("exit %d\n%s", code, out)
+			}
+
+			for p, want := range map[string]string{
+				"tools/plugins/go": binary, "tools/plugins/go.SHA256SUMS": c.sums,
+				"cache/go-driver-release-v2/go-driver": binary, "cache/go-driver-release-v2/SHA256SUMS": c.sums,
+			} {
+				if got := readFile(t, filepath.Join(tk.Dir, p)); got != want {
+					t.Errorf("%s: %q", p, got)
+				}
+			}
+
+			r.asked()
+
+			// the list beside the tool checks it again, with nothing fetched
+			if err := os.RemoveAll(filepath.Join(tk.Dir, "cache")); err != nil {
+				t.Fatal(err)
+			}
+
+			if code := f.fetch(p, "tools/plugins/go"); code != 0 || len(r.asked()) != 0 {
+				t.Errorf("again: exit %d\n%s", code, out)
+			}
+
+			// a wrong file beside it is fetched anew
+			write(t, filepath.Join(tk.Dir, "tools/plugins/go"), "#!/bin/sh\necho wrong\n", 0o700)
+
+			if code := f.fetch(p, "tools/plugins/go"); code != 0 || readFile(t, filepath.Join(tk.Dir, "tools/plugins/go")) != binary {
+				t.Errorf("a wrong file: exit %d\n%s", code, out)
+			}
+		})
 	}
 }

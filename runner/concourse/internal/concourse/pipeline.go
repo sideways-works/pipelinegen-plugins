@@ -476,6 +476,10 @@ func (g *gen) bootstrapEnv() M {
 		"PIPELINEGEN_PRIVATE":          privateModules(g.spec),
 	}
 
+	if pg.Sums != "" {
+		env["PIPELINEGEN_TOOL_SUMS"] = pg.Sums
+	}
+
 	maps.Copy(env, g.tokens(plugin.PurposeRead))
 	maps.Copy(env, g.runnerEnv())
 
@@ -509,6 +513,10 @@ func (g *gen) runnerEnv() M {
 
 	if r.Path != "" {
 		env["PIPELINEGEN_RUNNER_PATH"] = r.Path
+	}
+
+	if r.Sums != "" {
+		env["PIPELINEGEN_RUNNER_SUMS"] = r.Sums
 	}
 
 	return env
@@ -583,15 +591,19 @@ func (g *gen) toolTask(name string, tags []string, inputs []M, outputs []string,
 }
 
 // pluginLines is the bootstrap's input format: one plugin per line, "-" for
-// an empty field, and a path only where a tool has one. Another runner's
+// an empty field, and a path and sums only where a tool has them. Another runner's
 // pipeline holds the runs it owns, so this one fetches no other runner.
 func pluginLines(s plugin.Spec) string {
 	var b strings.Builder
 
 	for _, t := range plugins(s) {
 		fields := []string{t.Name, t.Repository, t.Version, t.SHA256, t.Commit}
-		if t.Path != "" {
+		if t.Path != "" || t.Sums != "" {
 			fields = append(fields, t.Path)
+		}
+
+		if t.Sums != "" {
+			fields = append(fields, t.Sums)
 		}
 
 		for i, f := range fields {
