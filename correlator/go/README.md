@@ -58,20 +58,20 @@ plugins:
       - name: go
         kind: sbom
         path: sbom/go
-        release: {version: vX.Y.Z, sha256: ...}
+        release: {version: v0.4.0, sums: …}
       - name: go-uses
         kind: correlator
         path: correlator/go
-        release: {version: vX.Y.Z, sha256: ...}
+        release: {version: v0.4.0, sums: …}
 ```
 
-The checksum is the `go-correlator-linux-amd64` line of the release's
-`SHA256SUMS`. Or pin the release by the checksum of its `SHA256SUMS`
-itself, `sums: ...` in place of `sha256`: one pin then serves every
-platform, a Mac's binary checked by its own line of the list.
-A new pin selects nothing by itself. List `pipelinegen.yaml`
-under `everything_on`, so that a pin change, like any other change to the
-config, runs every slice.
+`sums` is the checksum of the release's `SHA256SUMS`, so one pin serves
+every platform and each binary is checked by its own line of that list.
+To pin one binary alone, put `sha256:` with its line
+(`go-correlator-linux-amd64`) in place of `sums`. A new pin selects
+nothing by itself. List `pipelinegen.yaml` under `everything_on`, so
+that a pin change, like any other change to the config, runs every
+slice.
 
 For a repository whose tests run in-process with `go test`, that is all.
 A suite that starts long-running binaries (a server that browser tests
@@ -315,10 +315,6 @@ under the same version and the tag `correlator/go/cover/vX.Y.Z`:
 ```sh
 go get github.com/sideways-works/pipelinegen-plugins/correlator/go/cover@vX.Y.Z
 ```
-
-While the repository is private, the go command needs
-`GOPRIVATE=github.com/sideways-works/*` and a GitHub login, as for any
-private module.
 
 The suite sets `stack: true` and the plugin's config sets `cover_dir`.
 pipelinegen runs plugins in a minimal environment without `PIPELINEGEN_*`
@@ -634,8 +630,10 @@ Every plan selected the same slices with either go-sbom but one: `round`'s
 receiver turned into a pointer, where the package still compiles, at levels
 1 to 4 in the `executed` width. The earlier go-sbom held the helper's
 receiver in `type:Order`'s digest and selected every slice that uses
-`Order`; the new one selects the one slice that ran `round`. That is the
-`unexported-methods` narrowing, and it is safe: an unexported method whose
+`Order`; the new one selects the one slice that ran `round`. That is
+go-sbom's `unexported-methods` narrowing (see [its
+narrowings](../../sbom/go/README.md#narrowings)), not one of
+go-correlator's, and it is safe: an unexported method whose
 name no interface, field or method of its package bears, changed in a way
 that still compiles, is observable only by the slices that ran it.
 Reflection and templates see exported methods only, other packages can't
@@ -770,60 +768,44 @@ is no path, the answer holds an empty `path`.
           {"unit": "go:internal/money#const:Rate", "note": "referenced"}]}
 ```
 
-## Developing and releasing
-
-The Go version and golangci-lint version are in `.tool-versions`. Before a
-push, run `go test ./...` and `golangci-lint run` in the root module
-and again in `cover/`, which is a module of its own.
-
-The conformance kit checks the plugin the way pipelinegen calls it, on the
-fixture tree in `graph/testdata` (its `.pipelinegen-kit.json` names the
-slices to bind and the recording in `coverage/` that observe reads):
-
-```sh
-go build -trimpath -o go-correlator ./cmd/go-correlator
-pipelinegen plugin test ./go-correlator --tree graph/testdata
-```
-
-Releases are built and published with
-`bazel run //correlator/go:release`, which runs pipelinegen's release
-command as its [release
-guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
-describes. It publishes static `go-correlator-linux-amd64`,
-`-linux-arm64`, `-darwin-amd64` and `-darwin-arm64`, `plugin.json` (the
-plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`. Each
-release tags the commit `vX.Y.Z` and the `cover` module `cover/vX.Y.Z` on
-the same commit. A published release never changes; a wrong one gets a new
-version.
-
 ## Developing
 
-The tests and the lint run with the Go, golangci-lint and Node that the
-repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
-other commands run in this directory. go-sbom
-([sbom/go](../../sbom/go)), built or taken from a release, runs beside
-it in the conformance kit.
+`bazel run //correlator/go:test` runs the tests and `bazel run
+//correlator/go:lint` the lint, with the Go, golangci-lint and Node the
+repository pins in `MODULE.bazel`
+([CONTRIBUTING](../../CONTRIBUTING.md)). `:test` and `:lint` also run in
+`cover/`, a module of its own that coverage builds of a repository link,
+so `./...` stops at it. It keeps to the standard library. The tests
+type-check fixture trees through the go command and use no network: a
+test that needs modules serves them from a directory.
+
+pipelinegen's conformance kit calls the go-correlator you built the way
+pipelinegen does, on the fixture tree in `graph/testdata`, whose
+`.pipelinegen-kit.json` names the slices to bind and the recording in
+`coverage/` that `observe` reads. With go-sbom
+([sbom/go](../../sbom/go)) beside it as `--sbom`, the kit also checks
+that each link changes only when one of its ends does. The commands
+below build both and run the kit from this directory with the
+pipelinegen that `tools/go.mod` pins. The go on your `PATH` must be at
+least as new as `go.mod` asks.
 
 ```sh
-bazel run //correlator/go:test
-bazel run //correlator/go:lint
 go build -trimpath -o go-correlator ./cmd/go-correlator
-pipelinegen plugin test ./go-correlator --tree graph/testdata --sbom <go-sbom>
+go build -C ../../sbom/go -trimpath -o "$PWD/go-sbom" ./cmd/go-sbom
+go -C ../../tools tool pipelinegen plugin test "$PWD/go-correlator" --tree "$PWD/graph/testdata" --sbom "$PWD/go-sbom"
 ```
 
-- `cover` is a module of its own, which coverage builds of a repository
-  link, so `./...` stops at it and it is tested and linted on its own.
-  It keeps to the standard library.
-- The last line runs pipelinegen's conformance kit, which calls the
-  go-correlator you built the way pipelinegen does, on the fixture tree
-  in `graph/testdata`, whose `.pipelinegen-kit.json` names the slices to
-  bind and the recording in `coverage/` that `observe` reads. With go-sbom
-  beside it as `--sbom`, the kit also checks that each link changes only
-  when one of its ends does. Take `pipelinegen` from
-  [its releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
-- Tests type-check fixture trees through the go command, so the go on
-  your `PATH` must be at least the version in `go.mod`. They use no
-  network: a test that needs modules serves them from a directory.
-- A change to what go-correlator binds comes with its docs: the README
-  describes go-correlator as it is on `main`, and a narrowing says there
-  what it can miss.
+`bazel run //correlator/go:release` releases it from a tag
+`correlator/go/vX.Y.Z` on `main`, as
+[CONTRIBUTING](../../CONTRIBUTING.md#releases) describes: static
+`go-correlator-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (its own `describe` answer), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. The `cover` module is released with it under
+the same version, tagged `correlator/go/cover/vX.Y.Z` on the same
+commit. Its first release here is `v0.4.0`
+([RELEASING](../../RELEASING.md)), and a published release never
+changes.
+
+A change to what go-correlator binds comes with its docs, so this README
+describes go-correlator as it is on `main`, and a narrowing says there
+what it can miss.
