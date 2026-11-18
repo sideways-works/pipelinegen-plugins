@@ -20,5 +20,9 @@ use (
 	./sbom/npm
 	./sbom/openapi
 	./sbom/pg
+	./templates/connector
+	./templates/correlator
+	./templates/driver
+	./templates/sbom
 	./tools
 )

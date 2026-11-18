@@ -1,0 +1,7 @@
+{"driver": {
+  "slices": [
+    {"name": "calc/add_test.sh", "sources": ["calc/add_test.sh"]},
+    {"name": "calc/neg_test.sh", "sources": ["calc/neg_test.sh"]},
+    {"name": "text/upper_test.sh", "sources": ["text/upper_test.sh"]}
+  ]
+}}
