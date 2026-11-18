@@ -38,7 +38,7 @@ type Config struct {
 	OtherRoutes []string `json:"other_routes,omitempty"`
 }
 
-// Document is one contract and the code generated from it.
+// Document is one contract and the Go code a generator wrote from it.
 type Document struct {
 	openapi.Document
 
