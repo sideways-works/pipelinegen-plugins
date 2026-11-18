@@ -10,7 +10,7 @@ import (
 
 	"github.com/sideways-works/pipelinegen-sbom-locale/catalog"
 
-	"github.com/sideways-works/pipelinegen-correlator-locale/observe"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/locale/observe"
 )
 
 var cats = observe.NewCatalogs([]string{"mail/locales/en.json", "mail/locales/de.json"})

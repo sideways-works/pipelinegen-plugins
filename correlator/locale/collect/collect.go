@@ -16,7 +16,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sideways-works/pipelinegen-correlator-locale/observe"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/locale/observe"
 )
 
 var ErrCollect = errors.New("collect")

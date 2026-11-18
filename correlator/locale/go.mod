@@ -1,4 +1,4 @@
-module github.com/sideways-works/pipelinegen-correlator-locale
+module github.com/sideways-works/pipelinegen-plugins/correlator/locale
 
 go 1.27.1
 

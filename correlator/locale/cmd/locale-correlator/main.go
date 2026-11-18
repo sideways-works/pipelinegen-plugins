@@ -12,9 +12,9 @@ import (
 
 	"github.com/sideways-works/pipelinegen-sbom-locale/catalog"
 
-	"github.com/sideways-works/pipelinegen-correlator-locale/collect"
-	"github.com/sideways-works/pipelinegen-correlator-locale/observe"
-	"github.com/sideways-works/pipelinegen-correlator-locale/recorder"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/locale/collect"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/locale/observe"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/locale/recorder"
 )
 
 var Version = "dev"

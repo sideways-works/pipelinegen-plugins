@@ -16,7 +16,7 @@ import (
 
 	"github.com/sideways-works/pipelinegen/plugin"
 
-	"github.com/sideways-works/pipelinegen-correlator-locale/observe"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/locale/observe"
 )
 
 func call(t *testing.T, args []string, req any) (int, []byte, string) {
