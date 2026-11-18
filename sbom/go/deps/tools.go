@@ -14,7 +14,7 @@ import (
 	"golang.org/x/mod/modfile"
 	"golang.org/x/mod/module"
 
-	"github.com/sideways-works/pipelinegen-sbom-go/goid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/goid"
 )
 
 func (r *reader) tools(mains []*mainModule, works []*workspace) {

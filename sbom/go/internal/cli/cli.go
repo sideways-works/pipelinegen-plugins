@@ -12,9 +12,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/sideways-works/pipelinegen-sbom-go/decls"
-	"github.com/sideways-works/pipelinegen-sbom-go/detect"
-	"github.com/sideways-works/pipelinegen-sbom-go/goid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/decls"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/detect"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/goid"
 	"github.com/sideways-works/pipelinegen/plugin"
 )
 

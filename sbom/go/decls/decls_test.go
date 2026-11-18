@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sideways-works/pipelinegen-sbom-go/goid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/goid"
 )
 
 const money = `package money

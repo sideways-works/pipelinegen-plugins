@@ -4,7 +4,7 @@ import (
 	"maps"
 	"testing"
 
-	"github.com/sideways-works/pipelinegen-sbom-go/goid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/goid"
 )
 
 const shop = `package money

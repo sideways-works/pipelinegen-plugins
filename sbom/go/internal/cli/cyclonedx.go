@@ -5,9 +5,9 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/sideways-works/pipelinegen-sbom-go/decls"
-	"github.com/sideways-works/pipelinegen-sbom-go/deps"
-	"github.com/sideways-works/pipelinegen-sbom-go/goid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/decls"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/deps"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/goid"
 )
 
 // The parts of a CycloneDX 1.6 document this plugin writes.

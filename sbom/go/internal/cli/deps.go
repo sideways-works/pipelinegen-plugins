@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sideways-works/pipelinegen-sbom-go/deps"
-	"github.com/sideways-works/pipelinegen-sbom-go/goid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/deps"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/goid"
 	"github.com/sideways-works/pipelinegen/plugin"
 )
 
