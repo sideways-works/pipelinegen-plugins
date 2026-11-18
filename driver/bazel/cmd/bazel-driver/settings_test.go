@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sideways-works/pipelinegen-driver-bazel/internal/driver"
+	"github.com/sideways-works/pipelinegen-plugins/driver/bazel/internal/driver"
 )
 
 // batch, the Bazel and the tests' variables come from the step and the

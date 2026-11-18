@@ -15,10 +15,10 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/sideways-works/pipelinegen-driver-bazel/internal/bazel"
-	"github.com/sideways-works/pipelinegen-driver-bazel/internal/bep"
-	"github.com/sideways-works/pipelinegen-driver-bazel/internal/boundary"
-	"github.com/sideways-works/pipelinegen-driver-bazel/internal/junit"
+	"github.com/sideways-works/pipelinegen-plugins/driver/bazel/internal/bazel"
+	"github.com/sideways-works/pipelinegen-plugins/driver/bazel/internal/bep"
+	"github.com/sideways-works/pipelinegen-plugins/driver/bazel/internal/boundary"
+	"github.com/sideways-works/pipelinegen-plugins/driver/bazel/internal/junit"
 )
 
 // Slice is one slice to run: a test target, or some tests of one.

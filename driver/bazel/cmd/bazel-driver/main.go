@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/sideways-works/pipelinegen-driver-bazel/internal/bazel"
-	"github.com/sideways-works/pipelinegen-driver-bazel/internal/boundary"
-	"github.com/sideways-works/pipelinegen-driver-bazel/internal/driver"
+	"github.com/sideways-works/pipelinegen-plugins/driver/bazel/internal/bazel"
+	"github.com/sideways-works/pipelinegen-plugins/driver/bazel/internal/boundary"
+	"github.com/sideways-works/pipelinegen-plugins/driver/bazel/internal/driver"
 )
 
 var errVerb = errors.New("unknown verb")

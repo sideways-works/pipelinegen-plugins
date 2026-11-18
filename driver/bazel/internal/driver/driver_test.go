@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sideways-works/pipelinegen-driver-bazel/internal/bazel"
+	"github.com/sideways-works/pipelinegen-plugins/driver/bazel/internal/bazel"
 )
 
 // A target in cut is never reached: the file then ends without its last

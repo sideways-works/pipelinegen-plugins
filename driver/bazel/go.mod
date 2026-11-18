@@ -1,4 +1,4 @@
-module github.com/sideways-works/pipelinegen-driver-bazel
+module github.com/sideways-works/pipelinegen-plugins/driver/bazel
 
 go 1.27.1
 
