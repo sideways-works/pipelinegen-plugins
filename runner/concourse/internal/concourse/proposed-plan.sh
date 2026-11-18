@@ -1,7 +1,6 @@
-# A proposed change's first step: it runs the change's code (Bazel reads
-# its build files) and so holds no credential that writes. The prepare
-# command runs in the base's tree, never the change's: a change's own
-# scripts never run here. The plan goes into plan/ for the next step.
+# Runs the change's code (Bazel reads its build files), so it holds no
+# credential that writes; the prepare command runs the base's scripts, never
+# the change's.
 set -eu
 
 prepare_in base

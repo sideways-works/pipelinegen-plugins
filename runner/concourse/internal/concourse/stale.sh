@@ -1,8 +1,5 @@
-# Regenerates the pipeline and fails when it differs from the one set. It
-# prints that fact and the command to set it, never the pipeline or a diff,
-# which would show the values of its variables. A tree whose config the
-# pinned tool can't read at all needs a newer pipeline too: that is stale
-# as well, with the tool's reason on one more line.
+# Never prints the pipeline or a diff, which would show its variables'
+# values. A config the pinned tool can't read means a stale pipeline too.
 set -eu
 
 stale() {
@@ -10,7 +7,6 @@ stale() {
   echo "  pipelinegen pipeline --out pipeline.yml && fly -t <target> set-pipeline -p $PIPELINEGEN_PIPELINE -c pipeline.yml" >&2
 }
 
-# the tool's errors go to a file, read below
 if ! (exec 2>pipeline.err; tools/pipelinegen pipeline --root repo --plugins tools/plugins --gate newest --out pipeline.yml); then
   why=$(sed -n '/^pipelinegen pipeline: config /,$p' pipeline.err | tr '\n\t' '  ' | tr -s ' ' | sed 's/ *$//' | cut -c1-300)
   if [ -z "$why" ]; then

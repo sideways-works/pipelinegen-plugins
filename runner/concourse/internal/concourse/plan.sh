@@ -1,5 +1,4 @@
-# Plans a change of a branch, after the repository's prepare command when
-# it has one, in one step: the branch's code is trusted.
+# One step, unlike a proposed change's plan: a branch's code is trusted.
 set -eu
 
 prepare_in trigger

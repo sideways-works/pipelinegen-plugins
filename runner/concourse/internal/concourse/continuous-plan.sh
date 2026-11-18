@@ -1,12 +1,7 @@
-# Plans a continuous run's commit. First the decision, which plans nothing:
-# a build whose commit isn't the branch's newest, or had its round, closes
-# the hand-off and ends here, without the prepare; one whose commit is the
-# newest waits there while a round of the run is in progress. Only a build
-# that goes on runs the repository's prepare command, then the plan, which
-# decides once more. The decision has the task's whole time limit, the
-# wait's and the plan's; the prepare and the plan have the plan's limit,
-# counted from the decision's end, so what the prepare leaves for the plan
-# need only last that long.
+# The decision plans nothing: a commit that isn't the branch's newest, or had
+# its round, ends here, and the newest waits while a round is in progress. It
+# has the task's whole limit; the prepare and the plan share the plan's limit,
+# counted from the decision's end.
 set -eu
 
 (

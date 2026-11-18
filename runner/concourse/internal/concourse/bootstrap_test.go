@@ -71,10 +71,7 @@ func pinsEnv(t *testing.T, sum string, srv *httptest.Server) []string {
 		"PIPELINEGEN_PLUGINS=go o/go-sbom v1 "+sum+" -\n", "PIPELINEGEN_PRIVATE=")
 }
 
-// A build that broke before its start task had the tools, as one aborted
-// while that task waited for a worker, still ends its suite: the end task
-// fetches them as the start task does. Without its trigger there is no
-// commit to end, and tools that can't be fetched leave it to its statuses.
+// A build aborted while its start task waited for a worker has no tools.
 func TestTheEndFetchesTheToolsTheBuildNeverHad(t *testing.T) {
 	if _, err := exec.LookPath("curl"); err != nil {
 		t.Skip("no curl")

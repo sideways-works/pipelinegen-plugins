@@ -1,8 +1,6 @@
-# prepare_in runs the repository's prepare command in a checkout: it fills
-# the caches the plugins share (in the job's cache, where they stay) and
-# may use the network; the plugins never do. The planner's params and
-# secrets are the prepare command's alone, and the pipeline's token
-# reaches it only when the planner declares it.
+# The prepare command fills the plugins' shared caches and may use the
+# network; the plugins never do. The pipeline's token reaches it only when
+# the planner declares it.
 prepare_in() {
   [ -n "${PIPELINEGEN_PREPARE:-}" ] || return 0
   caches="$PWD/plan-cache/caches"
@@ -25,19 +23,17 @@ prepare_in() {
   )
 }
 
-# without_planner_env drops the prepare command's params and secrets, which
-# the plan never sees.
+# a GITHUB_TOKEN the planner declares is the read token, which the tool reads
+# too
 without_planner_env() {
   for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
     [ "$name" = GITHUB_TOKEN ] || unset "$name"
   done
 }
 
-# handoff writes what the pull request resource's put reads into $2: the
-# version and metadata of the head checked out in $1, its "committed" now
-# this moment with a random fraction of a second, so a head handed on
-# again is a new version. The job puts it only when the plan step's gate
-# opened.
+# handoff <checkout> <dir>: what the pull request resource's put reads. Its
+# "committed" is now, with a random fraction of a second, so a head handed on
+# again is a new version.
 handoff() {
   from="$1/.git/resource"
   to="$2/.git/resource"

@@ -1,7 +1,5 @@
-# The sweep's last step runs none of the changes' code: it writes each plan
-# the second step left, once it is its head's own, and hands off each head
-# whose plan step opened its gate (it wrote the plan) and each planned
-# head whose suites never began. Each hand-off becomes one put.
+# Runs none of the changes' code. Hands off each head whose plan it wrote,
+# and each planned head whose suites never began.
 set -eu
 
 list=""

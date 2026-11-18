@@ -1,9 +1,6 @@
-# The sweep's first step, which runs none of the changes' code: it lists
-# the open heads of a pull request run that the planning job missed (the
-# pull requests' check can order a new head behind the ones already
-# planned), and the planned heads whose suites never began, each once it
-# waited the run's missed_after. The gate opens when there is anything to
-# plan or hand off.
+# Runs none of the changes' code. The planning job misses a head the pull
+# requests' check orders behind ones already planned; the sweep plans it,
+# and hands on planned heads whose suites never began after missed_after.
 set -eu
 
 tools/pipelinegen unplanned --run "$PIPELINEGEN_RUN" --root config --out sweep --cache write-cache

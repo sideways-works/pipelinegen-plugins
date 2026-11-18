@@ -147,9 +147,6 @@ func TestPackagesGoldens(t *testing.T) {
 	}
 }
 
-// Every task that runs pipelinegen installs first, in the shell that then
-// runs the tool, with a download cache: the suite's packages before slice
-// run and prepare, the planner's before the rest.
 func TestEveryToolTaskInstallsFirst(t *testing.T) {
 	spec, pkgs, root := withPackages(t, false)
 
@@ -225,10 +222,6 @@ func TestACachedImageIsFetchedByATask(t *testing.T) {
 	}
 }
 
-// Each cached image has a job that builds it when the registry hasn't got
-// it, on a change of the config: no lock, no serial group, nothing of the
-// repository but the config's version, and the only holder of the var that
-// pushes.
 func TestAJobBuildsEachCachedImage(t *testing.T) {
 	spec, pkgs, root := withPackages(t, true)
 
@@ -313,9 +306,6 @@ func TestReadPackages(t *testing.T) {
 	}
 }
 
-// The wrapped step runs in an image as Concourse runs it: the install
-// first, then the tool with its arguments as they were, and a second run
-// installs nothing.
 func TestTheWrappedStepRunsInImages(t *testing.T) {
 	tool, err := exec.LookPath("docker")
 	if err != nil {

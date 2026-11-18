@@ -119,12 +119,10 @@ func Generate(spec plugin.Spec, root string) (M, error) {
 	return GenerateWith(spec, root, nil)
 }
 
-// GenerateWith is Generate with the plugin's own config block.
 func GenerateWith(spec plugin.Spec, root string, config map[string]any) (M, error) {
 	return GenerateAll(spec, Packages{}, root, config)
 }
 
-// GenerateAll is GenerateWith with the spec's packages and cached images.
 func GenerateAll(spec plugin.Spec, pkgs Packages, root string, config map[string]any) (M, error) {
 	ci, err := readSettings(spec.CI)
 	if err != nil {
@@ -223,7 +221,6 @@ func (g *gen) pipeline(types, resources []any) (M, error) {
 	return p, nil
 }
 
-// Text renders a pipeline as YAML.
 func Text(p M) ([]byte, error) {
 	out, err := yaml.Marshal(p)
 	if err != nil {
@@ -283,7 +280,6 @@ func sweepTimer(run string) string { return "sweep-" + run + "-timer" }
 
 const sweepEvery = "5m"
 
-// SuiteJob names a run's job of a suite.
 func SuiteJob(run, suite string) string { return run + "-" + suite }
 
 func (g *gen) resources() []any {

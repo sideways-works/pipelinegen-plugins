@@ -12,8 +12,7 @@ import (
 
 type trustedSeen struct {
 	tool, repo map[string]string
-	// repoTasks counts the repository's own tasks.
-	repoTasks int
+	repoTasks  int
 }
 
 func trustedIn(t *testing.T, out string) trustedSeen {

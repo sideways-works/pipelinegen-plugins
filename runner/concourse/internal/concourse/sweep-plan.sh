@@ -1,6 +1,5 @@
-# The sweep's second step plans each head to plan, running the changes'
-# code, so it holds no credential that writes; the prepare command runs
-# in the base's tree. Each plan goes into plans/<number>.
+# Runs the changes' code, so it holds no credential that writes; the prepare
+# command runs the base's scripts.
 set -eu
 
 for dir in sweep/plan/*; do

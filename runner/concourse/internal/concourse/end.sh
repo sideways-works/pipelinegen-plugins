@@ -1,14 +1,6 @@
-# The suite job's last task, in its ensure: it runs whatever the build did,
-# aborted and errored builds included. A build that broke before its trigger
-# was there has no commit to report to, and ends here.
-# A build that broke before its start task had the tools, such as one
-# aborted or errored while that task waited for a worker, fetches them here
-# as the start task does, so its suite still ends and a continuous run's
-# next round need not wait for it. Tools that can't be fetched leave the
-# suite to its statuses, which the job's on_error or on_abort posted.
-# It reports the suite from the trigger. A suite's end that could not be
-# recorded (exit 4) fails the job; any other failure here is said and
-# passes, since the suite's own statuses show it.
+# Runs in the job's ensure, on an abort too. A build aborted while its start
+# task waited for a worker never had the tools: fetching them here still ends
+# its suite, so a continuous run's next round need not wait for it.
 set -eu
 if ! test -d trigger; then
   echo "no trigger: the build broke before it could report" >&2
@@ -17,6 +9,7 @@ fi
 if ! test -x tools/pipelinegen; then
   echo "no tools: the build broke before its start task had them; fetching them to end the suite" >&2
   set +e
+  # a subshell, so the bootstrap's own exit and set -e end only it
   (
 #BOOTSTRAP#
   )
@@ -24,10 +17,13 @@ if ! test -x tools/pipelinegen; then
   set -e
   if [ "$rc" -ne 0 ] || ! test -x tools/pipelinegen; then
     echo "the tools could not be fetched (exit $rc): the build broke before it could report" >&2
+    # the job's on_error or on_abort hook already posted its statuses
     exit 0
   fi
 fi
 rc=0
+# only a suite's end that could not be recorded (4) fails the job: the
+# suite's statuses show any other failure
 tools/pipelinegen report suite --root trigger --batches batches || rc=$?
 case "$rc" in
 0) ;;

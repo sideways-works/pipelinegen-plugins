@@ -1,6 +1,3 @@
-# Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-# cache/. Each is a release checked against its sha256, or, before the first
-# release, built from a commit. The cache keeps only what the pins name.
 set -eu
 
 mkdir -p cache tools/plugins
@@ -11,10 +8,8 @@ api=${PIPELINEGEN_GITHUB_API:-https://api.github.com}
 # the module and build caches stay in the job's cache, so a build from a
 # commit starts warm
 export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-# git asks a credential helper for github.com, which reads the token from
-# the environment when git needs it, the way `pipelinegen git-auth` sets it
-# up (pipelinegen isn't fetched yet): these lines name the variable and
-# never hold the token
+# `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+# reads the token from the environment, and no line here holds it
 # git-auth:begin
 export GIT_CONFIG_COUNT=1
 export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -22,9 +17,8 @@ export GIT_CONFIG_VALUE_0='!f() { test "$1" = get && echo username=x-access-toke
 export GIT_TERMINAL_PROMPT=0
 # git-auth:end
 
-# auth writes curl's authorization header, for `curl -H @-`: awk reads the
-# token from the environment, so no argument or variable here holds it. The
-# read token when the tokens are split by purpose, else the one token
+# auth prints curl's authorization header for `curl -H @-`: awk reads the
+# token from the environment, so no argument or variable here holds it
 auth() {
   awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
 }
@@ -73,12 +67,10 @@ asset() {
 # plugin.Kinds lists them; a test holds the two equal
 kinds="sbom correlator runner driver connector"
 
-# program <repository>: the program the repository holds, which names its
-# release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-# repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-# repository's own name. The two spellings of a renamed repository
-# (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-# files, as the tool's plugin.Program names them.
+# program <repository>: the name of its release files, ./cmd/<program> and
+# cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+# pipelinegen-KIND-NAME, so a renamed repository's two spellings
+# (owner/go-sbom, owner/pipelinegen-sbom-go) share them
 program() {
   prog_name=${1##*/}
   for prog_kind in $kinds; do
@@ -91,14 +83,10 @@ program() {
   echo "$prog_name"
 }
 
-# fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-# the program <name> the repository holds, from its release asset
-# <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-# without that asset may be a Node plugin's, whose one asset is the script
-# <name>.mjs, run by its own node shebang. A release is checked against its
-# sha256 in the cache, fetched again when it doesn't match, and checked
-# where it runs; a build from a commit has no checksum and is kept by its
-# commit.
+# fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+# <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+# node shebang), or ./cmd/<name> built at the commit, which has no checksum
+# and is cached by its commit
 fetch() {
   repo=$1 version=$2 sum=$3 commit=$4 dest=$5
   name=$(program "$repo")

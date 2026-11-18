@@ -13,7 +13,6 @@ import (
 // Version is the plugin's version, set by the release build.
 var Version = "dev"
 
-// Serve answers the runner calls.
 func Serve(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	return plugin.Serve(args, stdin, stdout, stderr, map[string]plugin.Handler{
 		plugin.CallDescribe: func([]byte) (any, error) { return describe(), nil },

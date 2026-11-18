@@ -6,7 +6,6 @@ import (
 	"testing"
 )
 
-// The fixture's placement gives the goldens' worker tags.
 func TestWithoutImagesTheOutputStays(t *testing.T) {
 	for name, self := range map[string]bool{"pipeline.golden.yml": false, "pipeline-self-set.golden.yml": true} {
 		spec, root := fixture(t)

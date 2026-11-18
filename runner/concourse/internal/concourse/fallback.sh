@@ -1,11 +1,6 @@
-# Reports a suite whose build broke or was aborted. When the build had got
-# as far as its tools and its trigger, the tool reports the suite itself,
-# its end mark included, so the run's round can end; a suite's end it could
-# not record (exit 4) fails this step. Otherwise, or when the tool could
-# not report, it posts the suite's status and its run's as errored; the end
-# task, which runs after it, fetches missing tools and ends the suite. Without
-# the trigger's checkout the commit is unknown, and there is nothing to
-# post to.
+# With its tools and trigger, a broken or aborted build's suite is ended by
+# the tool, so the run's round can end; otherwise its statuses are posted as
+# errored, and the end task, which runs next, fetches the tools to end it.
 set -eu
 
 if test -x tools/pipelinegen && test -d trigger; then

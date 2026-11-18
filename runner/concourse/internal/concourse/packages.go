@@ -12,34 +12,27 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-// capPackages is the capability to install the spec's packages and to build
-// and use its cached images.
 const capPackages = "packages"
 
-// Packages is what the spec says of packages and cached images: its
-// planner_packages, images and each suite's packages. The runner reads them
-// from the request itself, so it builds with pipelinegen releases that
-// predate them, and a spec without them writes the pipeline it always did.
+// Packages is read from the request itself, not the spec, so the runner
+// builds with pipelinegen releases that predate it.
 type Packages struct {
 	Planner *SpecPackages           `json:"planner_packages,omitempty"`
 	Images  *SpecImages             `json:"images,omitempty"`
 	Suites  map[string]SpecPackages `json:"-"`
 }
 
-// SpecPackages is a set of steps' packages: Install, a POSIX shell script
-// that installs what the image lacks, run as root before the task's own
-// command; and Images, each resource the steps run in that has a cached
-// image, to its key.
 type SpecPackages struct {
-	Names   []string          `json:"names"`
-	Install string            `json:"install"`
-	Images  map[string]string `json:"images,omitempty"`
+	Names []string `json:"names"`
+	// Install is a POSIX shell script, run as root before the task's own command.
+	Install string `json:"install"`
+	// Images maps each resource the steps run in that has a cached image to its key.
+	Images map[string]string `json:"images,omitempty"`
 }
 
-// SpecImages are the registry of the cached images, the vars that push to
-// it and that pull from it, and the images to build.
 type SpecImages struct {
-	Registry        string           `json:"registry"`
+	Registry string `json:"registry"`
+	// Credentials and PullCredentials name the vars holding the push and pull logins.
 	Credentials     string           `json:"credentials,omitempty"`
 	PullCredentials string           `json:"pull_credentials,omitempty"`
 	Builds          []SpecImageBuild `json:"builds,omitempty"`
@@ -55,7 +48,6 @@ type SpecImageBuild struct {
 	Install string   `json:"install"`
 }
 
-// ReadPackages reads the packages of a pipeline request.
 func ReadPackages(request []byte) (Packages, error) {
 	var req struct {
 		Spec struct {
@@ -135,8 +127,6 @@ func (g *gen) cachedKey(suite, image string) string {
 	return ""
 }
 
-// credentials are a registry-image source's login from the var holding
-// it, none without.
 func credentials(v string) M {
 	if v == "" {
 		return M{}
@@ -437,6 +427,7 @@ func (g *gen) install(task M, suite string) {
 	}
 
 	if path.Base(p) == "pipelinegen" {
+		// sh -c's $0 and $@ are the tool and its arguments, run as they were
 		run["path"], run["args"] = "sh", append([]any{"-ec", install + "exec \"$0\" \"$@\"\n", p}, args...)
 	} else {
 		run["args"] = append([]any{args[0], install + script}, args[2:]...)

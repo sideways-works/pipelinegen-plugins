@@ -47,7 +47,7 @@ jobs:
                 PIPELINEGEN_CONCOURSE_URL: https://ci.example
                 PIPELINEGEN_LIMIT: limits.steps=20
                 PIPELINEGEN_PIPELINE: fixture
-                PIPELINEGEN_PIPELINE_SHA256: c70cd8ae40fb9caa444433722f7fa7deb0f64c032101dbdd22986839c384ed75
+                PIPELINEGEN_PIPELINE_SHA256: 82c7450f0d7b38c2bba5ea7e2319bbc2580fe07b6de0f642dfe481a1d9fb15d8
                 PIPELINEGEN_PIPELINE_STEP: "1"
                 PIPELINEGEN_PLUGINS: ""
                 PIPELINEGEN_PRIVATE: ""
@@ -66,9 +66,6 @@ jobs:
                       for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                         [ "$name" = GITHUB_TOKEN ] || unset "$name"
                       done
-                      # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                      # cache/. Each is a release checked against its sha256, or, before the first
-                      # release, built from a commit. The cache keeps only what the pins name.
                       set -eu
 
                       mkdir -p cache tools/plugins
@@ -79,10 +76,8 @@ jobs:
                       # the module and build caches stay in the job's cache, so a build from a
                       # commit starts warm
                       export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                      # git asks a credential helper for github.com, which reads the token from
-                      # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                      # up (pipelinegen isn't fetched yet): these lines name the variable and
-                      # never hold the token
+                      # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                      # reads the token from the environment, and no line here holds it
                       # git-auth:begin
                       export GIT_CONFIG_COUNT=1
                       export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -90,9 +85,8 @@ jobs:
                       export GIT_TERMINAL_PROMPT=0
                       # git-auth:end
 
-                      # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                      # token from the environment, so no argument or variable here holds it. The
-                      # read token when the tokens are split by purpose, else the one token
+                      # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                      # token from the environment, so no argument or variable here holds it
                       auth() {
                         awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                       }
@@ -141,12 +135,10 @@ jobs:
                       # plugin.Kinds lists them; a test holds the two equal
                       kinds="sbom correlator runner driver connector"
 
-                      # program <repository>: the program the repository holds, which names its
-                      # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                      # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                      # repository's own name. The two spellings of a renamed repository
-                      # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                      # files, as the tool's plugin.Program names them.
+                      # program <repository>: the name of its release files, ./cmd/<program> and
+                      # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                      # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                      # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                       program() {
                         prog_name=${1##*/}
                         for prog_kind in $kinds; do
@@ -159,14 +151,10 @@ jobs:
                         echo "$prog_name"
                       }
 
-                      # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                      # the program <name> the repository holds, from its release asset
-                      # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                      # without that asset may be a Node plugin's, whose one asset is the script
-                      # <name>.mjs, run by its own node shebang. A release is checked against its
-                      # sha256 in the cache, fetched again when it doesn't match, and checked
-                      # where it runs; a build from a commit has no checksum and is kept by its
-                      # commit.
+                      # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                      # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                      # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                      # and is cached by its commit
                       fetch() {
                         repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                         name=$(program "$repo")
@@ -248,11 +236,8 @@ jobs:
                       rm -f cache/.pinned
                       [ -z "$dropped" ] || echo "dropped from the job's cache, as no pin names them:$dropped"
                       )
-                      # Regenerates the pipeline and fails when it differs from the one set. It
-                      # prints that fact and the command to set it, never the pipeline or a diff,
-                      # which would show the values of its variables. A tree whose config the
-                      # pinned tool can't read at all needs a newer pipeline too: that is stale
-                      # as well, with the tool's reason on one more line.
+                      # Never prints the pipeline or a diff, which would show its variables'
+                      # values. A config the pinned tool can't read means a stale pipeline too.
                       set -eu
 
                       stale() {
@@ -260,7 +245,6 @@ jobs:
                         echo "  pipelinegen pipeline --out pipeline.yml && fly -t <target> set-pipeline -p $PIPELINEGEN_PIPELINE -c pipeline.yml" >&2
                       }
 
-                      # the tool's errors go to a file, read below
                       if ! (exec 2>pipeline.err; tools/pipelinegen pipeline --root repo --plugins tools/plugins --gate newest --out pipeline.yml); then
                         why=$(sed -n '/^pipelinegen pipeline: config /,$p' pipeline.err | tr '\n\t' '  ' | tr -s ' ' | sed 's/ *$//' | cut -c1-300)
                         if [ -z "$why" ]; then
@@ -343,9 +327,6 @@ jobs:
                       for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                         [ "$name" = GITHUB_TOKEN ] || unset "$name"
                       done
-                      # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                      # cache/. Each is a release checked against its sha256, or, before the first
-                      # release, built from a commit. The cache keeps only what the pins name.
                       set -eu
 
                       mkdir -p cache tools/plugins
@@ -356,10 +337,8 @@ jobs:
                       # the module and build caches stay in the job's cache, so a build from a
                       # commit starts warm
                       export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                      # git asks a credential helper for github.com, which reads the token from
-                      # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                      # up (pipelinegen isn't fetched yet): these lines name the variable and
-                      # never hold the token
+                      # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                      # reads the token from the environment, and no line here holds it
                       # git-auth:begin
                       export GIT_CONFIG_COUNT=1
                       export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -367,9 +346,8 @@ jobs:
                       export GIT_TERMINAL_PROMPT=0
                       # git-auth:end
 
-                      # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                      # token from the environment, so no argument or variable here holds it. The
-                      # read token when the tokens are split by purpose, else the one token
+                      # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                      # token from the environment, so no argument or variable here holds it
                       auth() {
                         awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                       }
@@ -418,12 +396,10 @@ jobs:
                       # plugin.Kinds lists them; a test holds the two equal
                       kinds="sbom correlator runner driver connector"
 
-                      # program <repository>: the program the repository holds, which names its
-                      # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                      # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                      # repository's own name. The two spellings of a renamed repository
-                      # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                      # files, as the tool's plugin.Program names them.
+                      # program <repository>: the name of its release files, ./cmd/<program> and
+                      # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                      # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                      # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                       program() {
                         prog_name=${1##*/}
                         for prog_kind in $kinds; do
@@ -436,14 +412,10 @@ jobs:
                         echo "$prog_name"
                       }
 
-                      # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                      # the program <name> the repository holds, from its release asset
-                      # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                      # without that asset may be a Node plugin's, whose one asset is the script
-                      # <name>.mjs, run by its own node shebang. A release is checked against its
-                      # sha256 in the cache, fetched again when it doesn't match, and checked
-                      # where it runs; a build from a commit has no checksum and is kept by its
-                      # commit.
+                      # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                      # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                      # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                      # and is cached by its commit
                       fetch() {
                         repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                         name=$(program "$repo")
@@ -525,11 +497,9 @@ jobs:
                       rm -f cache/.pinned
                       [ -z "$dropped" ] || echo "dropped from the job's cache, as no pin names them:$dropped"
                       )
-                      # prepare_in runs the repository's prepare command in a checkout: it fills
-                      # the caches the plugins share (in the job's cache, where they stay) and
-                      # may use the network; the plugins never do. The planner's params and
-                      # secrets are the prepare command's alone, and the pipeline's token
-                      # reaches it only when the planner declares it.
+                      # The prepare command fills the plugins' shared caches and may use the
+                      # network; the plugins never do. The pipeline's token reaches it only when
+                      # the planner declares it.
                       prepare_in() {
                         [ -n "${PIPELINEGEN_PREPARE:-}" ] || return 0
                         caches="$PWD/plan-cache/caches"
@@ -552,19 +522,17 @@ jobs:
                         )
                       }
 
-                      # without_planner_env drops the prepare command's params and secrets, which
-                      # the plan never sees.
+                      # a GITHUB_TOKEN the planner declares is the read token, which the tool reads
+                      # too
                       without_planner_env() {
                         for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                           [ "$name" = GITHUB_TOKEN ] || unset "$name"
                         done
                       }
 
-                      # handoff writes what the pull request resource's put reads into $2: the
-                      # version and metadata of the head checked out in $1, its "committed" now
-                      # this moment with a random fraction of a second, so a head handed on
-                      # again is a new version. The job puts it only when the plan step's gate
-                      # opened.
+                      # handoff <checkout> <dir>: what the pull request resource's put reads. Its
+                      # "committed" is now, with a random fraction of a second, so a head handed on
+                      # again is a new version.
                       handoff() {
                         from="$1/.git/resource"
                         to="$2/.git/resource"
@@ -581,8 +549,7 @@ jobs:
                           echo '[]' > "$to/metadata.json"
                         fi
                       }
-                      # Plans a change of a branch, after the repository's prepare command when
-                      # it has one, in one step: the branch's code is trusted.
+                      # One step, unlike a proposed change's plan: a branch's code is trusted.
                       set -eu
 
                       prepare_in trigger
@@ -629,17 +596,9 @@ jobs:
                     - -ec
                     - |
                       export PIPELINEGEN_DEADLINE=$(( $(date +%s) + 1200 ))
-                      # The suite job's last task, in its ensure: it runs whatever the build did,
-                      # aborted and errored builds included. A build that broke before its trigger
-                      # was there has no commit to report to, and ends here.
-                      # A build that broke before its start task had the tools, such as one
-                      # aborted or errored while that task waited for a worker, fetches them here
-                      # as the start task does, so its suite still ends and a continuous run's
-                      # next round need not wait for it. Tools that can't be fetched leave the
-                      # suite to its statuses, which the job's on_error or on_abort posted.
-                      # It reports the suite from the trigger. A suite's end that could not be
-                      # recorded (exit 4) fails the job; any other failure here is said and
-                      # passes, since the suite's own statuses show it.
+                      # Runs in the job's ensure, on an abort too. A build aborted while its start
+                      # task waited for a worker never had the tools: fetching them here still ends
+                      # its suite, so a continuous run's next round need not wait for it.
                       set -eu
                       if ! test -d trigger; then
                         echo "no trigger: the build broke before it could report" >&2
@@ -648,10 +607,8 @@ jobs:
                       if ! test -x tools/pipelinegen; then
                         echo "no tools: the build broke before its start task had them; fetching them to end the suite" >&2
                         set +e
+                        # a subshell, so the bootstrap's own exit and set -e end only it
                         (
-                      # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                      # cache/. Each is a release checked against its sha256, or, before the first
-                      # release, built from a commit. The cache keeps only what the pins name.
                       set -eu
 
                       mkdir -p cache tools/plugins
@@ -662,10 +619,8 @@ jobs:
                       # the module and build caches stay in the job's cache, so a build from a
                       # commit starts warm
                       export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                      # git asks a credential helper for github.com, which reads the token from
-                      # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                      # up (pipelinegen isn't fetched yet): these lines name the variable and
-                      # never hold the token
+                      # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                      # reads the token from the environment, and no line here holds it
                       # git-auth:begin
                       export GIT_CONFIG_COUNT=1
                       export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -673,9 +628,8 @@ jobs:
                       export GIT_TERMINAL_PROMPT=0
                       # git-auth:end
 
-                      # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                      # token from the environment, so no argument or variable here holds it. The
-                      # read token when the tokens are split by purpose, else the one token
+                      # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                      # token from the environment, so no argument or variable here holds it
                       auth() {
                         awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                       }
@@ -724,12 +678,10 @@ jobs:
                       # plugin.Kinds lists them; a test holds the two equal
                       kinds="sbom correlator runner driver connector"
 
-                      # program <repository>: the program the repository holds, which names its
-                      # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                      # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                      # repository's own name. The two spellings of a renamed repository
-                      # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                      # files, as the tool's plugin.Program names them.
+                      # program <repository>: the name of its release files, ./cmd/<program> and
+                      # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                      # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                      # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                       program() {
                         prog_name=${1##*/}
                         for prog_kind in $kinds; do
@@ -742,14 +694,10 @@ jobs:
                         echo "$prog_name"
                       }
 
-                      # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                      # the program <name> the repository holds, from its release asset
-                      # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                      # without that asset may be a Node plugin's, whose one asset is the script
-                      # <name>.mjs, run by its own node shebang. A release is checked against its
-                      # sha256 in the cache, fetched again when it doesn't match, and checked
-                      # where it runs; a build from a commit has no checksum and is kept by its
-                      # commit.
+                      # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                      # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                      # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                      # and is cached by its commit
                       fetch() {
                         repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                         name=$(program "$repo")
@@ -835,10 +783,13 @@ jobs:
                         set -e
                         if [ "$rc" -ne 0 ] || ! test -x tools/pipelinegen; then
                           echo "the tools could not be fetched (exit $rc): the build broke before it could report" >&2
+                          # the job's on_error or on_abort hook already posted its statuses
                           exit 0
                         fi
                       fi
                       rc=0
+                      # only a suite's end that could not be recorded (4) fails the job: the
+                      # suite's statuses show any other failure
                       tools/pipelinegen report suite --root trigger --batches batches || rc=$?
                       case "$rc" in
                       0) ;;
@@ -883,14 +834,9 @@ jobs:
                 args:
                     - -ec
                     - |
-                      # Reports a suite whose build broke or was aborted. When the build had got
-                      # as far as its tools and its trigger, the tool reports the suite itself,
-                      # its end mark included, so the run's round can end; a suite's end it could
-                      # not record (exit 4) fails this step. Otherwise, or when the tool could
-                      # not report, it posts the suite's status and its run's as errored; the end
-                      # task, which runs after it, fetches missing tools and ends the suite. Without
-                      # the trigger's checkout the commit is unknown, and there is nothing to
-                      # post to.
+                      # With its tools and trigger, a broken or aborted build's suite is ended by
+                      # the tool, so the run's round can end; otherwise its statuses are posted as
+                      # errored, and the end task, which runs next, fetches the tools to end it.
                       set -eu
 
                       if test -x tools/pipelinegen && test -d trigger; then
@@ -961,14 +907,9 @@ jobs:
                 args:
                     - -ec
                     - |
-                      # Reports a suite whose build broke or was aborted. When the build had got
-                      # as far as its tools and its trigger, the tool reports the suite itself,
-                      # its end mark included, so the run's round can end; a suite's end it could
-                      # not record (exit 4) fails this step. Otherwise, or when the tool could
-                      # not report, it posts the suite's status and its run's as errored; the end
-                      # task, which runs after it, fetches missing tools and ends the suite. Without
-                      # the trigger's checkout the commit is unknown, and there is nothing to
-                      # post to.
+                      # With its tools and trigger, a broken or aborted build's suite is ended by
+                      # the tool, so the run's round can end; otherwise its statuses are posted as
+                      # errored, and the end task, which runs next, fetches the tools to end it.
                       set -eu
 
                       if test -x tools/pipelinegen && test -d trigger; then
@@ -1054,9 +995,6 @@ jobs:
                       for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                         [ "$name" = GITHUB_TOKEN ] || unset "$name"
                       done
-                      # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                      # cache/. Each is a release checked against its sha256, or, before the first
-                      # release, built from a commit. The cache keeps only what the pins name.
                       set -eu
 
                       mkdir -p cache tools/plugins
@@ -1067,10 +1005,8 @@ jobs:
                       # the module and build caches stay in the job's cache, so a build from a
                       # commit starts warm
                       export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                      # git asks a credential helper for github.com, which reads the token from
-                      # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                      # up (pipelinegen isn't fetched yet): these lines name the variable and
-                      # never hold the token
+                      # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                      # reads the token from the environment, and no line here holds it
                       # git-auth:begin
                       export GIT_CONFIG_COUNT=1
                       export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -1078,9 +1014,8 @@ jobs:
                       export GIT_TERMINAL_PROMPT=0
                       # git-auth:end
 
-                      # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                      # token from the environment, so no argument or variable here holds it. The
-                      # read token when the tokens are split by purpose, else the one token
+                      # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                      # token from the environment, so no argument or variable here holds it
                       auth() {
                         awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                       }
@@ -1129,12 +1064,10 @@ jobs:
                       # plugin.Kinds lists them; a test holds the two equal
                       kinds="sbom correlator runner driver connector"
 
-                      # program <repository>: the program the repository holds, which names its
-                      # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                      # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                      # repository's own name. The two spellings of a renamed repository
-                      # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                      # files, as the tool's plugin.Program names them.
+                      # program <repository>: the name of its release files, ./cmd/<program> and
+                      # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                      # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                      # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                       program() {
                         prog_name=${1##*/}
                         for prog_kind in $kinds; do
@@ -1147,14 +1080,10 @@ jobs:
                         echo "$prog_name"
                       }
 
-                      # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                      # the program <name> the repository holds, from its release asset
-                      # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                      # without that asset may be a Node plugin's, whose one asset is the script
-                      # <name>.mjs, run by its own node shebang. A release is checked against its
-                      # sha256 in the cache, fetched again when it doesn't match, and checked
-                      # where it runs; a build from a commit has no checksum and is kept by its
-                      # commit.
+                      # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                      # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                      # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                      # and is cached by its commit
                       fetch() {
                         repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                         name=$(program "$repo")
@@ -1236,10 +1165,7 @@ jobs:
                       rm -f cache/.pinned
                       [ -z "$dropped" ] || echo "dropped from the job's cache, as no pin names them:$dropped"
                       )
-                      # The suite job's first task, after the bootstrap: the tree under test and
-                      # the gates, then, when the plan selected anything of the suite, the
-                      # batches. With the gate shut there are no batches. Nothing here starts
-                      # Bazel.
+                      # Nothing here starts Bazel.
                       set -eu
 
                       tools/pipelinegen tree --run "$PIPELINEGEN_RUN" --suite "$PIPELINEGEN_SUITE" --trigger trigger --out source --gate gate
@@ -1345,17 +1271,9 @@ jobs:
                     - -ec
                     - |
                       export PIPELINEGEN_DEADLINE=$(( $(date +%s) + 1200 ))
-                      # The suite job's last task, in its ensure: it runs whatever the build did,
-                      # aborted and errored builds included. A build that broke before its trigger
-                      # was there has no commit to report to, and ends here.
-                      # A build that broke before its start task had the tools, such as one
-                      # aborted or errored while that task waited for a worker, fetches them here
-                      # as the start task does, so its suite still ends and a continuous run's
-                      # next round need not wait for it. Tools that can't be fetched leave the
-                      # suite to its statuses, which the job's on_error or on_abort posted.
-                      # It reports the suite from the trigger. A suite's end that could not be
-                      # recorded (exit 4) fails the job; any other failure here is said and
-                      # passes, since the suite's own statuses show it.
+                      # Runs in the job's ensure, on an abort too. A build aborted while its start
+                      # task waited for a worker never had the tools: fetching them here still ends
+                      # its suite, so a continuous run's next round need not wait for it.
                       set -eu
                       if ! test -d trigger; then
                         echo "no trigger: the build broke before it could report" >&2
@@ -1364,10 +1282,8 @@ jobs:
                       if ! test -x tools/pipelinegen; then
                         echo "no tools: the build broke before its start task had them; fetching them to end the suite" >&2
                         set +e
+                        # a subshell, so the bootstrap's own exit and set -e end only it
                         (
-                      # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                      # cache/. Each is a release checked against its sha256, or, before the first
-                      # release, built from a commit. The cache keeps only what the pins name.
                       set -eu
 
                       mkdir -p cache tools/plugins
@@ -1378,10 +1294,8 @@ jobs:
                       # the module and build caches stay in the job's cache, so a build from a
                       # commit starts warm
                       export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                      # git asks a credential helper for github.com, which reads the token from
-                      # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                      # up (pipelinegen isn't fetched yet): these lines name the variable and
-                      # never hold the token
+                      # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                      # reads the token from the environment, and no line here holds it
                       # git-auth:begin
                       export GIT_CONFIG_COUNT=1
                       export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -1389,9 +1303,8 @@ jobs:
                       export GIT_TERMINAL_PROMPT=0
                       # git-auth:end
 
-                      # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                      # token from the environment, so no argument or variable here holds it. The
-                      # read token when the tokens are split by purpose, else the one token
+                      # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                      # token from the environment, so no argument or variable here holds it
                       auth() {
                         awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                       }
@@ -1440,12 +1353,10 @@ jobs:
                       # plugin.Kinds lists them; a test holds the two equal
                       kinds="sbom correlator runner driver connector"
 
-                      # program <repository>: the program the repository holds, which names its
-                      # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                      # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                      # repository's own name. The two spellings of a renamed repository
-                      # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                      # files, as the tool's plugin.Program names them.
+                      # program <repository>: the name of its release files, ./cmd/<program> and
+                      # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                      # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                      # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                       program() {
                         prog_name=${1##*/}
                         for prog_kind in $kinds; do
@@ -1458,14 +1369,10 @@ jobs:
                         echo "$prog_name"
                       }
 
-                      # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                      # the program <name> the repository holds, from its release asset
-                      # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                      # without that asset may be a Node plugin's, whose one asset is the script
-                      # <name>.mjs, run by its own node shebang. A release is checked against its
-                      # sha256 in the cache, fetched again when it doesn't match, and checked
-                      # where it runs; a build from a commit has no checksum and is kept by its
-                      # commit.
+                      # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                      # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                      # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                      # and is cached by its commit
                       fetch() {
                         repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                         name=$(program "$repo")
@@ -1551,10 +1458,13 @@ jobs:
                         set -e
                         if [ "$rc" -ne 0 ] || ! test -x tools/pipelinegen; then
                           echo "the tools could not be fetched (exit $rc): the build broke before it could report" >&2
+                          # the job's on_error or on_abort hook already posted its statuses
                           exit 0
                         fi
                       fi
                       rc=0
+                      # only a suite's end that could not be recorded (4) fails the job: the
+                      # suite's statuses show any other failure
                       tools/pipelinegen report suite --root trigger --batches batches || rc=$?
                       case "$rc" in
                       0) ;;
@@ -1601,14 +1511,9 @@ jobs:
                 args:
                     - -ec
                     - |
-                      # Reports a suite whose build broke or was aborted. When the build had got
-                      # as far as its tools and its trigger, the tool reports the suite itself,
-                      # its end mark included, so the run's round can end; a suite's end it could
-                      # not record (exit 4) fails this step. Otherwise, or when the tool could
-                      # not report, it posts the suite's status and its run's as errored; the end
-                      # task, which runs after it, fetches missing tools and ends the suite. Without
-                      # the trigger's checkout the commit is unknown, and there is nothing to
-                      # post to.
+                      # With its tools and trigger, a broken or aborted build's suite is ended by
+                      # the tool, so the run's round can end; otherwise its statuses are posted as
+                      # errored, and the end task, which runs next, fetches the tools to end it.
                       set -eu
 
                       if test -x tools/pipelinegen && test -d trigger; then
@@ -1681,14 +1586,9 @@ jobs:
                 args:
                     - -ec
                     - |
-                      # Reports a suite whose build broke or was aborted. When the build had got
-                      # as far as its tools and its trigger, the tool reports the suite itself,
-                      # its end mark included, so the run's round can end; a suite's end it could
-                      # not record (exit 4) fails this step. Otherwise, or when the tool could
-                      # not report, it posts the suite's status and its run's as errored; the end
-                      # task, which runs after it, fetches missing tools and ends the suite. Without
-                      # the trigger's checkout the commit is unknown, and there is nothing to
-                      # post to.
+                      # With its tools and trigger, a broken or aborted build's suite is ended by
+                      # the tool, so the run's round can end; otherwise its statuses are posted as
+                      # errored, and the end task, which runs next, fetches the tools to end it.
                       set -eu
 
                       if test -x tools/pipelinegen && test -d trigger; then
@@ -1780,9 +1680,6 @@ jobs:
                       for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                         [ "$name" = GITHUB_TOKEN ] || unset "$name"
                       done
-                      # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                      # cache/. Each is a release checked against its sha256, or, before the first
-                      # release, built from a commit. The cache keeps only what the pins name.
                       set -eu
 
                       mkdir -p cache tools/plugins
@@ -1793,10 +1690,8 @@ jobs:
                       # the module and build caches stay in the job's cache, so a build from a
                       # commit starts warm
                       export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                      # git asks a credential helper for github.com, which reads the token from
-                      # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                      # up (pipelinegen isn't fetched yet): these lines name the variable and
-                      # never hold the token
+                      # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                      # reads the token from the environment, and no line here holds it
                       # git-auth:begin
                       export GIT_CONFIG_COUNT=1
                       export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -1804,9 +1699,8 @@ jobs:
                       export GIT_TERMINAL_PROMPT=0
                       # git-auth:end
 
-                      # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                      # token from the environment, so no argument or variable here holds it. The
-                      # read token when the tokens are split by purpose, else the one token
+                      # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                      # token from the environment, so no argument or variable here holds it
                       auth() {
                         awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                       }
@@ -1855,12 +1749,10 @@ jobs:
                       # plugin.Kinds lists them; a test holds the two equal
                       kinds="sbom correlator runner driver connector"
 
-                      # program <repository>: the program the repository holds, which names its
-                      # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                      # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                      # repository's own name. The two spellings of a renamed repository
-                      # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                      # files, as the tool's plugin.Program names them.
+                      # program <repository>: the name of its release files, ./cmd/<program> and
+                      # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                      # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                      # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                       program() {
                         prog_name=${1##*/}
                         for prog_kind in $kinds; do
@@ -1873,14 +1765,10 @@ jobs:
                         echo "$prog_name"
                       }
 
-                      # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                      # the program <name> the repository holds, from its release asset
-                      # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                      # without that asset may be a Node plugin's, whose one asset is the script
-                      # <name>.mjs, run by its own node shebang. A release is checked against its
-                      # sha256 in the cache, fetched again when it doesn't match, and checked
-                      # where it runs; a build from a commit has no checksum and is kept by its
-                      # commit.
+                      # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                      # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                      # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                      # and is cached by its commit
                       fetch() {
                         repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                         name=$(program "$repo")
@@ -1962,10 +1850,7 @@ jobs:
                       rm -f cache/.pinned
                       [ -z "$dropped" ] || echo "dropped from the job's cache, as no pin names them:$dropped"
                       )
-                      # The suite job's first task, after the bootstrap: the tree under test and
-                      # the gates, then, when the plan selected anything of the suite, the
-                      # batches. With the gate shut there are no batches. Nothing here starts
-                      # Bazel.
+                      # Nothing here starts Bazel.
                       set -eu
 
                       tools/pipelinegen tree --run "$PIPELINEGEN_RUN" --suite "$PIPELINEGEN_SUITE" --trigger trigger --out source --gate gate
@@ -2202,9 +2087,6 @@ jobs:
                       for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                         [ "$name" = GITHUB_TOKEN ] || unset "$name"
                       done
-                      # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                      # cache/. Each is a release checked against its sha256, or, before the first
-                      # release, built from a commit. The cache keeps only what the pins name.
                       set -eu
 
                       mkdir -p cache tools/plugins
@@ -2215,10 +2097,8 @@ jobs:
                       # the module and build caches stay in the job's cache, so a build from a
                       # commit starts warm
                       export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                      # git asks a credential helper for github.com, which reads the token from
-                      # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                      # up (pipelinegen isn't fetched yet): these lines name the variable and
-                      # never hold the token
+                      # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                      # reads the token from the environment, and no line here holds it
                       # git-auth:begin
                       export GIT_CONFIG_COUNT=1
                       export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -2226,9 +2106,8 @@ jobs:
                       export GIT_TERMINAL_PROMPT=0
                       # git-auth:end
 
-                      # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                      # token from the environment, so no argument or variable here holds it. The
-                      # read token when the tokens are split by purpose, else the one token
+                      # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                      # token from the environment, so no argument or variable here holds it
                       auth() {
                         awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                       }
@@ -2277,12 +2156,10 @@ jobs:
                       # plugin.Kinds lists them; a test holds the two equal
                       kinds="sbom correlator runner driver connector"
 
-                      # program <repository>: the program the repository holds, which names its
-                      # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                      # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                      # repository's own name. The two spellings of a renamed repository
-                      # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                      # files, as the tool's plugin.Program names them.
+                      # program <repository>: the name of its release files, ./cmd/<program> and
+                      # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                      # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                      # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                       program() {
                         prog_name=${1##*/}
                         for prog_kind in $kinds; do
@@ -2295,14 +2172,10 @@ jobs:
                         echo "$prog_name"
                       }
 
-                      # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                      # the program <name> the repository holds, from its release asset
-                      # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                      # without that asset may be a Node plugin's, whose one asset is the script
-                      # <name>.mjs, run by its own node shebang. A release is checked against its
-                      # sha256 in the cache, fetched again when it doesn't match, and checked
-                      # where it runs; a build from a commit has no checksum and is kept by its
-                      # commit.
+                      # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                      # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                      # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                      # and is cached by its commit
                       fetch() {
                         repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                         name=$(program "$repo")
@@ -2384,11 +2257,9 @@ jobs:
                       rm -f cache/.pinned
                       [ -z "$dropped" ] || echo "dropped from the job's cache, as no pin names them:$dropped"
                       )
-                      # prepare_in runs the repository's prepare command in a checkout: it fills
-                      # the caches the plugins share (in the job's cache, where they stay) and
-                      # may use the network; the plugins never do. The planner's params and
-                      # secrets are the prepare command's alone, and the pipeline's token
-                      # reaches it only when the planner declares it.
+                      # The prepare command fills the plugins' shared caches and may use the
+                      # network; the plugins never do. The pipeline's token reaches it only when
+                      # the planner declares it.
                       prepare_in() {
                         [ -n "${PIPELINEGEN_PREPARE:-}" ] || return 0
                         caches="$PWD/plan-cache/caches"
@@ -2411,19 +2282,17 @@ jobs:
                         )
                       }
 
-                      # without_planner_env drops the prepare command's params and secrets, which
-                      # the plan never sees.
+                      # a GITHUB_TOKEN the planner declares is the read token, which the tool reads
+                      # too
                       without_planner_env() {
                         for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                           [ "$name" = GITHUB_TOKEN ] || unset "$name"
                         done
                       }
 
-                      # handoff writes what the pull request resource's put reads into $2: the
-                      # version and metadata of the head checked out in $1, its "committed" now
-                      # this moment with a random fraction of a second, so a head handed on
-                      # again is a new version. The job puts it only when the plan step's gate
-                      # opened.
+                      # handoff <checkout> <dir>: what the pull request resource's put reads. Its
+                      # "committed" is now, with a random fraction of a second, so a head handed on
+                      # again is a new version.
                       handoff() {
                         from="$1/.git/resource"
                         to="$2/.git/resource"
@@ -2440,8 +2309,7 @@ jobs:
                           echo '[]' > "$to/metadata.json"
                         fi
                       }
-                      # Plans a change of a branch, after the repository's prepare command when
-                      # it has one, in one step: the branch's code is trusted.
+                      # One step, unlike a proposed change's plan: a branch's code is trusted.
                       set -eu
 
                       prepare_in trigger
@@ -2488,17 +2356,9 @@ jobs:
                     - -ec
                     - |
                       export PIPELINEGEN_DEADLINE=$(( $(date +%s) + 1200 ))
-                      # The suite job's last task, in its ensure: it runs whatever the build did,
-                      # aborted and errored builds included. A build that broke before its trigger
-                      # was there has no commit to report to, and ends here.
-                      # A build that broke before its start task had the tools, such as one
-                      # aborted or errored while that task waited for a worker, fetches them here
-                      # as the start task does, so its suite still ends and a continuous run's
-                      # next round need not wait for it. Tools that can't be fetched leave the
-                      # suite to its statuses, which the job's on_error or on_abort posted.
-                      # It reports the suite from the trigger. A suite's end that could not be
-                      # recorded (exit 4) fails the job; any other failure here is said and
-                      # passes, since the suite's own statuses show it.
+                      # Runs in the job's ensure, on an abort too. A build aborted while its start
+                      # task waited for a worker never had the tools: fetching them here still ends
+                      # its suite, so a continuous run's next round need not wait for it.
                       set -eu
                       if ! test -d trigger; then
                         echo "no trigger: the build broke before it could report" >&2
@@ -2507,10 +2367,8 @@ jobs:
                       if ! test -x tools/pipelinegen; then
                         echo "no tools: the build broke before its start task had them; fetching them to end the suite" >&2
                         set +e
+                        # a subshell, so the bootstrap's own exit and set -e end only it
                         (
-                      # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                      # cache/. Each is a release checked against its sha256, or, before the first
-                      # release, built from a commit. The cache keeps only what the pins name.
                       set -eu
 
                       mkdir -p cache tools/plugins
@@ -2521,10 +2379,8 @@ jobs:
                       # the module and build caches stay in the job's cache, so a build from a
                       # commit starts warm
                       export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                      # git asks a credential helper for github.com, which reads the token from
-                      # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                      # up (pipelinegen isn't fetched yet): these lines name the variable and
-                      # never hold the token
+                      # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                      # reads the token from the environment, and no line here holds it
                       # git-auth:begin
                       export GIT_CONFIG_COUNT=1
                       export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -2532,9 +2388,8 @@ jobs:
                       export GIT_TERMINAL_PROMPT=0
                       # git-auth:end
 
-                      # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                      # token from the environment, so no argument or variable here holds it. The
-                      # read token when the tokens are split by purpose, else the one token
+                      # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                      # token from the environment, so no argument or variable here holds it
                       auth() {
                         awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                       }
@@ -2583,12 +2438,10 @@ jobs:
                       # plugin.Kinds lists them; a test holds the two equal
                       kinds="sbom correlator runner driver connector"
 
-                      # program <repository>: the program the repository holds, which names its
-                      # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                      # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                      # repository's own name. The two spellings of a renamed repository
-                      # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                      # files, as the tool's plugin.Program names them.
+                      # program <repository>: the name of its release files, ./cmd/<program> and
+                      # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                      # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                      # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                       program() {
                         prog_name=${1##*/}
                         for prog_kind in $kinds; do
@@ -2601,14 +2454,10 @@ jobs:
                         echo "$prog_name"
                       }
 
-                      # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                      # the program <name> the repository holds, from its release asset
-                      # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                      # without that asset may be a Node plugin's, whose one asset is the script
-                      # <name>.mjs, run by its own node shebang. A release is checked against its
-                      # sha256 in the cache, fetched again when it doesn't match, and checked
-                      # where it runs; a build from a commit has no checksum and is kept by its
-                      # commit.
+                      # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                      # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                      # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                      # and is cached by its commit
                       fetch() {
                         repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                         name=$(program "$repo")
@@ -2694,10 +2543,13 @@ jobs:
                         set -e
                         if [ "$rc" -ne 0 ] || ! test -x tools/pipelinegen; then
                           echo "the tools could not be fetched (exit $rc): the build broke before it could report" >&2
+                          # the job's on_error or on_abort hook already posted its statuses
                           exit 0
                         fi
                       fi
                       rc=0
+                      # only a suite's end that could not be recorded (4) fails the job: the
+                      # suite's statuses show any other failure
                       tools/pipelinegen report suite --root trigger --batches batches || rc=$?
                       case "$rc" in
                       0) ;;
@@ -2742,14 +2594,9 @@ jobs:
                 args:
                     - -ec
                     - |
-                      # Reports a suite whose build broke or was aborted. When the build had got
-                      # as far as its tools and its trigger, the tool reports the suite itself,
-                      # its end mark included, so the run's round can end; a suite's end it could
-                      # not record (exit 4) fails this step. Otherwise, or when the tool could
-                      # not report, it posts the suite's status and its run's as errored; the end
-                      # task, which runs after it, fetches missing tools and ends the suite. Without
-                      # the trigger's checkout the commit is unknown, and there is nothing to
-                      # post to.
+                      # With its tools and trigger, a broken or aborted build's suite is ended by
+                      # the tool, so the run's round can end; otherwise its statuses are posted as
+                      # errored, and the end task, which runs next, fetches the tools to end it.
                       set -eu
 
                       if test -x tools/pipelinegen && test -d trigger; then
@@ -2820,14 +2667,9 @@ jobs:
                 args:
                     - -ec
                     - |
-                      # Reports a suite whose build broke or was aborted. When the build had got
-                      # as far as its tools and its trigger, the tool reports the suite itself,
-                      # its end mark included, so the run's round can end; a suite's end it could
-                      # not record (exit 4) fails this step. Otherwise, or when the tool could
-                      # not report, it posts the suite's status and its run's as errored; the end
-                      # task, which runs after it, fetches missing tools and ends the suite. Without
-                      # the trigger's checkout the commit is unknown, and there is nothing to
-                      # post to.
+                      # With its tools and trigger, a broken or aborted build's suite is ended by
+                      # the tool, so the run's round can end; otherwise its statuses are posted as
+                      # errored, and the end task, which runs next, fetches the tools to end it.
                       set -eu
 
                       if test -x tools/pipelinegen && test -d trigger; then
@@ -2913,9 +2755,6 @@ jobs:
                       for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                         [ "$name" = GITHUB_TOKEN ] || unset "$name"
                       done
-                      # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                      # cache/. Each is a release checked against its sha256, or, before the first
-                      # release, built from a commit. The cache keeps only what the pins name.
                       set -eu
 
                       mkdir -p cache tools/plugins
@@ -2926,10 +2765,8 @@ jobs:
                       # the module and build caches stay in the job's cache, so a build from a
                       # commit starts warm
                       export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                      # git asks a credential helper for github.com, which reads the token from
-                      # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                      # up (pipelinegen isn't fetched yet): these lines name the variable and
-                      # never hold the token
+                      # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                      # reads the token from the environment, and no line here holds it
                       # git-auth:begin
                       export GIT_CONFIG_COUNT=1
                       export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -2937,9 +2774,8 @@ jobs:
                       export GIT_TERMINAL_PROMPT=0
                       # git-auth:end
 
-                      # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                      # token from the environment, so no argument or variable here holds it. The
-                      # read token when the tokens are split by purpose, else the one token
+                      # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                      # token from the environment, so no argument or variable here holds it
                       auth() {
                         awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                       }
@@ -2988,12 +2824,10 @@ jobs:
                       # plugin.Kinds lists them; a test holds the two equal
                       kinds="sbom correlator runner driver connector"
 
-                      # program <repository>: the program the repository holds, which names its
-                      # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                      # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                      # repository's own name. The two spellings of a renamed repository
-                      # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                      # files, as the tool's plugin.Program names them.
+                      # program <repository>: the name of its release files, ./cmd/<program> and
+                      # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                      # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                      # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                       program() {
                         prog_name=${1##*/}
                         for prog_kind in $kinds; do
@@ -3006,14 +2840,10 @@ jobs:
                         echo "$prog_name"
                       }
 
-                      # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                      # the program <name> the repository holds, from its release asset
-                      # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                      # without that asset may be a Node plugin's, whose one asset is the script
-                      # <name>.mjs, run by its own node shebang. A release is checked against its
-                      # sha256 in the cache, fetched again when it doesn't match, and checked
-                      # where it runs; a build from a commit has no checksum and is kept by its
-                      # commit.
+                      # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                      # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                      # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                      # and is cached by its commit
                       fetch() {
                         repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                         name=$(program "$repo")
@@ -3095,10 +2925,7 @@ jobs:
                       rm -f cache/.pinned
                       [ -z "$dropped" ] || echo "dropped from the job's cache, as no pin names them:$dropped"
                       )
-                      # The suite job's first task, after the bootstrap: the tree under test and
-                      # the gates, then, when the plan selected anything of the suite, the
-                      # batches. With the gate shut there are no batches. Nothing here starts
-                      # Bazel.
+                      # Nothing here starts Bazel.
                       set -eu
 
                       tools/pipelinegen tree --run "$PIPELINEGEN_RUN" --suite "$PIPELINEGEN_SUITE" --trigger trigger --out source --gate gate
@@ -3204,17 +3031,9 @@ jobs:
                     - -ec
                     - |
                       export PIPELINEGEN_DEADLINE=$(( $(date +%s) + 1200 ))
-                      # The suite job's last task, in its ensure: it runs whatever the build did,
-                      # aborted and errored builds included. A build that broke before its trigger
-                      # was there has no commit to report to, and ends here.
-                      # A build that broke before its start task had the tools, such as one
-                      # aborted or errored while that task waited for a worker, fetches them here
-                      # as the start task does, so its suite still ends and a continuous run's
-                      # next round need not wait for it. Tools that can't be fetched leave the
-                      # suite to its statuses, which the job's on_error or on_abort posted.
-                      # It reports the suite from the trigger. A suite's end that could not be
-                      # recorded (exit 4) fails the job; any other failure here is said and
-                      # passes, since the suite's own statuses show it.
+                      # Runs in the job's ensure, on an abort too. A build aborted while its start
+                      # task waited for a worker never had the tools: fetching them here still ends
+                      # its suite, so a continuous run's next round need not wait for it.
                       set -eu
                       if ! test -d trigger; then
                         echo "no trigger: the build broke before it could report" >&2
@@ -3223,10 +3042,8 @@ jobs:
                       if ! test -x tools/pipelinegen; then
                         echo "no tools: the build broke before its start task had them; fetching them to end the suite" >&2
                         set +e
+                        # a subshell, so the bootstrap's own exit and set -e end only it
                         (
-                      # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                      # cache/. Each is a release checked against its sha256, or, before the first
-                      # release, built from a commit. The cache keeps only what the pins name.
                       set -eu
 
                       mkdir -p cache tools/plugins
@@ -3237,10 +3054,8 @@ jobs:
                       # the module and build caches stay in the job's cache, so a build from a
                       # commit starts warm
                       export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                      # git asks a credential helper for github.com, which reads the token from
-                      # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                      # up (pipelinegen isn't fetched yet): these lines name the variable and
-                      # never hold the token
+                      # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                      # reads the token from the environment, and no line here holds it
                       # git-auth:begin
                       export GIT_CONFIG_COUNT=1
                       export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -3248,9 +3063,8 @@ jobs:
                       export GIT_TERMINAL_PROMPT=0
                       # git-auth:end
 
-                      # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                      # token from the environment, so no argument or variable here holds it. The
-                      # read token when the tokens are split by purpose, else the one token
+                      # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                      # token from the environment, so no argument or variable here holds it
                       auth() {
                         awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                       }
@@ -3299,12 +3113,10 @@ jobs:
                       # plugin.Kinds lists them; a test holds the two equal
                       kinds="sbom correlator runner driver connector"
 
-                      # program <repository>: the program the repository holds, which names its
-                      # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                      # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                      # repository's own name. The two spellings of a renamed repository
-                      # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                      # files, as the tool's plugin.Program names them.
+                      # program <repository>: the name of its release files, ./cmd/<program> and
+                      # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                      # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                      # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                       program() {
                         prog_name=${1##*/}
                         for prog_kind in $kinds; do
@@ -3317,14 +3129,10 @@ jobs:
                         echo "$prog_name"
                       }
 
-                      # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                      # the program <name> the repository holds, from its release asset
-                      # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                      # without that asset may be a Node plugin's, whose one asset is the script
-                      # <name>.mjs, run by its own node shebang. A release is checked against its
-                      # sha256 in the cache, fetched again when it doesn't match, and checked
-                      # where it runs; a build from a commit has no checksum and is kept by its
-                      # commit.
+                      # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                      # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                      # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                      # and is cached by its commit
                       fetch() {
                         repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                         name=$(program "$repo")
@@ -3410,10 +3218,13 @@ jobs:
                         set -e
                         if [ "$rc" -ne 0 ] || ! test -x tools/pipelinegen; then
                           echo "the tools could not be fetched (exit $rc): the build broke before it could report" >&2
+                          # the job's on_error or on_abort hook already posted its statuses
                           exit 0
                         fi
                       fi
                       rc=0
+                      # only a suite's end that could not be recorded (4) fails the job: the
+                      # suite's statuses show any other failure
                       tools/pipelinegen report suite --root trigger --batches batches || rc=$?
                       case "$rc" in
                       0) ;;
@@ -3460,14 +3271,9 @@ jobs:
                 args:
                     - -ec
                     - |
-                      # Reports a suite whose build broke or was aborted. When the build had got
-                      # as far as its tools and its trigger, the tool reports the suite itself,
-                      # its end mark included, so the run's round can end; a suite's end it could
-                      # not record (exit 4) fails this step. Otherwise, or when the tool could
-                      # not report, it posts the suite's status and its run's as errored; the end
-                      # task, which runs after it, fetches missing tools and ends the suite. Without
-                      # the trigger's checkout the commit is unknown, and there is nothing to
-                      # post to.
+                      # With its tools and trigger, a broken or aborted build's suite is ended by
+                      # the tool, so the run's round can end; otherwise its statuses are posted as
+                      # errored, and the end task, which runs next, fetches the tools to end it.
                       set -eu
 
                       if test -x tools/pipelinegen && test -d trigger; then
@@ -3540,14 +3346,9 @@ jobs:
                 args:
                     - -ec
                     - |
-                      # Reports a suite whose build broke or was aborted. When the build had got
-                      # as far as its tools and its trigger, the tool reports the suite itself,
-                      # its end mark included, so the run's round can end; a suite's end it could
-                      # not record (exit 4) fails this step. Otherwise, or when the tool could
-                      # not report, it posts the suite's status and its run's as errored; the end
-                      # task, which runs after it, fetches missing tools and ends the suite. Without
-                      # the trigger's checkout the commit is unknown, and there is nothing to
-                      # post to.
+                      # With its tools and trigger, a broken or aborted build's suite is ended by
+                      # the tool, so the run's round can end; otherwise its statuses are posted as
+                      # errored, and the end task, which runs next, fetches the tools to end it.
                       set -eu
 
                       if test -x tools/pipelinegen && test -d trigger; then
@@ -3639,9 +3440,6 @@ jobs:
                       for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                         [ "$name" = GITHUB_TOKEN ] || unset "$name"
                       done
-                      # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                      # cache/. Each is a release checked against its sha256, or, before the first
-                      # release, built from a commit. The cache keeps only what the pins name.
                       set -eu
 
                       mkdir -p cache tools/plugins
@@ -3652,10 +3450,8 @@ jobs:
                       # the module and build caches stay in the job's cache, so a build from a
                       # commit starts warm
                       export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                      # git asks a credential helper for github.com, which reads the token from
-                      # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                      # up (pipelinegen isn't fetched yet): these lines name the variable and
-                      # never hold the token
+                      # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                      # reads the token from the environment, and no line here holds it
                       # git-auth:begin
                       export GIT_CONFIG_COUNT=1
                       export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -3663,9 +3459,8 @@ jobs:
                       export GIT_TERMINAL_PROMPT=0
                       # git-auth:end
 
-                      # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                      # token from the environment, so no argument or variable here holds it. The
-                      # read token when the tokens are split by purpose, else the one token
+                      # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                      # token from the environment, so no argument or variable here holds it
                       auth() {
                         awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                       }
@@ -3714,12 +3509,10 @@ jobs:
                       # plugin.Kinds lists them; a test holds the two equal
                       kinds="sbom correlator runner driver connector"
 
-                      # program <repository>: the program the repository holds, which names its
-                      # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                      # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                      # repository's own name. The two spellings of a renamed repository
-                      # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                      # files, as the tool's plugin.Program names them.
+                      # program <repository>: the name of its release files, ./cmd/<program> and
+                      # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                      # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                      # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                       program() {
                         prog_name=${1##*/}
                         for prog_kind in $kinds; do
@@ -3732,14 +3525,10 @@ jobs:
                         echo "$prog_name"
                       }
 
-                      # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                      # the program <name> the repository holds, from its release asset
-                      # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                      # without that asset may be a Node plugin's, whose one asset is the script
-                      # <name>.mjs, run by its own node shebang. A release is checked against its
-                      # sha256 in the cache, fetched again when it doesn't match, and checked
-                      # where it runs; a build from a commit has no checksum and is kept by its
-                      # commit.
+                      # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                      # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                      # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                      # and is cached by its commit
                       fetch() {
                         repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                         name=$(program "$repo")
@@ -3821,10 +3610,7 @@ jobs:
                       rm -f cache/.pinned
                       [ -z "$dropped" ] || echo "dropped from the job's cache, as no pin names them:$dropped"
                       )
-                      # The suite job's first task, after the bootstrap: the tree under test and
-                      # the gates, then, when the plan selected anything of the suite, the
-                      # batches. With the gate shut there are no batches. Nothing here starts
-                      # Bazel.
+                      # Nothing here starts Bazel.
                       set -eu
 
                       tools/pipelinegen tree --run "$PIPELINEGEN_RUN" --suite "$PIPELINEGEN_SUITE" --trigger trigger --out source --gate gate
@@ -4058,9 +3844,6 @@ jobs:
                       for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                         [ "$name" = GITHUB_TOKEN ] || unset "$name"
                       done
-                      # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                      # cache/. Each is a release checked against its sha256, or, before the first
-                      # release, built from a commit. The cache keeps only what the pins name.
                       set -eu
 
                       mkdir -p cache tools/plugins
@@ -4071,10 +3854,8 @@ jobs:
                       # the module and build caches stay in the job's cache, so a build from a
                       # commit starts warm
                       export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                      # git asks a credential helper for github.com, which reads the token from
-                      # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                      # up (pipelinegen isn't fetched yet): these lines name the variable and
-                      # never hold the token
+                      # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                      # reads the token from the environment, and no line here holds it
                       # git-auth:begin
                       export GIT_CONFIG_COUNT=1
                       export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -4082,9 +3863,8 @@ jobs:
                       export GIT_TERMINAL_PROMPT=0
                       # git-auth:end
 
-                      # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                      # token from the environment, so no argument or variable here holds it. The
-                      # read token when the tokens are split by purpose, else the one token
+                      # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                      # token from the environment, so no argument or variable here holds it
                       auth() {
                         awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                       }
@@ -4133,12 +3913,10 @@ jobs:
                       # plugin.Kinds lists them; a test holds the two equal
                       kinds="sbom correlator runner driver connector"
 
-                      # program <repository>: the program the repository holds, which names its
-                      # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                      # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                      # repository's own name. The two spellings of a renamed repository
-                      # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                      # files, as the tool's plugin.Program names them.
+                      # program <repository>: the name of its release files, ./cmd/<program> and
+                      # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                      # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                      # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                       program() {
                         prog_name=${1##*/}
                         for prog_kind in $kinds; do
@@ -4151,14 +3929,10 @@ jobs:
                         echo "$prog_name"
                       }
 
-                      # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                      # the program <name> the repository holds, from its release asset
-                      # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                      # without that asset may be a Node plugin's, whose one asset is the script
-                      # <name>.mjs, run by its own node shebang. A release is checked against its
-                      # sha256 in the cache, fetched again when it doesn't match, and checked
-                      # where it runs; a build from a commit has no checksum and is kept by its
-                      # commit.
+                      # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                      # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                      # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                      # and is cached by its commit
                       fetch() {
                         repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                         name=$(program "$repo")
@@ -4240,10 +4014,9 @@ jobs:
                       rm -f cache/.pinned
                       [ -z "$dropped" ] || echo "dropped from the job's cache, as no pin names them:$dropped"
                       )
-                      # A proposed change's planning build begins here, in a step that runs none
-                      # of the change's code: it records that the build plans its head, so the
-                      # run's sweep leaves the head to this build for the plan's limit instead of
-                      # planning it beside a slow plan. A store it can't write only warns.
+                      # Runs none of the change's code. The record makes the sweep leave the head
+                      # to this build for the plan's limit instead of planning it beside a slow
+                      # plan.
                       set -eu
 
                       exec tools/pipelinegen plan --begin --run "$PIPELINEGEN_RUN" --trigger trigger --root trigger --cache write-cache
@@ -4294,9 +4067,6 @@ jobs:
                       for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                         [ "$name" = GITHUB_TOKEN ] || unset "$name"
                       done
-                      # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                      # cache/. Each is a release checked against its sha256, or, before the first
-                      # release, built from a commit. The cache keeps only what the pins name.
                       set -eu
 
                       mkdir -p cache tools/plugins
@@ -4307,10 +4077,8 @@ jobs:
                       # the module and build caches stay in the job's cache, so a build from a
                       # commit starts warm
                       export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                      # git asks a credential helper for github.com, which reads the token from
-                      # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                      # up (pipelinegen isn't fetched yet): these lines name the variable and
-                      # never hold the token
+                      # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                      # reads the token from the environment, and no line here holds it
                       # git-auth:begin
                       export GIT_CONFIG_COUNT=1
                       export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -4318,9 +4086,8 @@ jobs:
                       export GIT_TERMINAL_PROMPT=0
                       # git-auth:end
 
-                      # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                      # token from the environment, so no argument or variable here holds it. The
-                      # read token when the tokens are split by purpose, else the one token
+                      # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                      # token from the environment, so no argument or variable here holds it
                       auth() {
                         awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                       }
@@ -4369,12 +4136,10 @@ jobs:
                       # plugin.Kinds lists them; a test holds the two equal
                       kinds="sbom correlator runner driver connector"
 
-                      # program <repository>: the program the repository holds, which names its
-                      # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                      # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                      # repository's own name. The two spellings of a renamed repository
-                      # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                      # files, as the tool's plugin.Program names them.
+                      # program <repository>: the name of its release files, ./cmd/<program> and
+                      # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                      # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                      # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                       program() {
                         prog_name=${1##*/}
                         for prog_kind in $kinds; do
@@ -4387,14 +4152,10 @@ jobs:
                         echo "$prog_name"
                       }
 
-                      # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                      # the program <name> the repository holds, from its release asset
-                      # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                      # without that asset may be a Node plugin's, whose one asset is the script
-                      # <name>.mjs, run by its own node shebang. A release is checked against its
-                      # sha256 in the cache, fetched again when it doesn't match, and checked
-                      # where it runs; a build from a commit has no checksum and is kept by its
-                      # commit.
+                      # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                      # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                      # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                      # and is cached by its commit
                       fetch() {
                         repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                         name=$(program "$repo")
@@ -4476,11 +4237,9 @@ jobs:
                       rm -f cache/.pinned
                       [ -z "$dropped" ] || echo "dropped from the job's cache, as no pin names them:$dropped"
                       )
-                      # prepare_in runs the repository's prepare command in a checkout: it fills
-                      # the caches the plugins share (in the job's cache, where they stay) and
-                      # may use the network; the plugins never do. The planner's params and
-                      # secrets are the prepare command's alone, and the pipeline's token
-                      # reaches it only when the planner declares it.
+                      # The prepare command fills the plugins' shared caches and may use the
+                      # network; the plugins never do. The pipeline's token reaches it only when
+                      # the planner declares it.
                       prepare_in() {
                         [ -n "${PIPELINEGEN_PREPARE:-}" ] || return 0
                         caches="$PWD/plan-cache/caches"
@@ -4503,19 +4262,17 @@ jobs:
                         )
                       }
 
-                      # without_planner_env drops the prepare command's params and secrets, which
-                      # the plan never sees.
+                      # a GITHUB_TOKEN the planner declares is the read token, which the tool reads
+                      # too
                       without_planner_env() {
                         for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                           [ "$name" = GITHUB_TOKEN ] || unset "$name"
                         done
                       }
 
-                      # handoff writes what the pull request resource's put reads into $2: the
-                      # version and metadata of the head checked out in $1, its "committed" now
-                      # this moment with a random fraction of a second, so a head handed on
-                      # again is a new version. The job puts it only when the plan step's gate
-                      # opened.
+                      # handoff <checkout> <dir>: what the pull request resource's put reads. Its
+                      # "committed" is now, with a random fraction of a second, so a head handed on
+                      # again is a new version.
                       handoff() {
                         from="$1/.git/resource"
                         to="$2/.git/resource"
@@ -4532,10 +4289,9 @@ jobs:
                           echo '[]' > "$to/metadata.json"
                         fi
                       }
-                      # A proposed change's first step: it runs the change's code (Bazel reads
-                      # its build files) and so holds no credential that writes. The prepare
-                      # command runs in the base's tree, never the change's: a change's own
-                      # scripts never run here. The plan goes into plan/ for the next step.
+                      # Runs the change's code (Bazel reads its build files), so it holds no
+                      # credential that writes; the prepare command runs the base's scripts, never
+                      # the change's.
                       set -eu
 
                       prepare_in base
@@ -4586,9 +4342,6 @@ jobs:
                       for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                         [ "$name" = GITHUB_TOKEN ] || unset "$name"
                       done
-                      # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                      # cache/. Each is a release checked against its sha256, or, before the first
-                      # release, built from a commit. The cache keeps only what the pins name.
                       set -eu
 
                       mkdir -p cache tools/plugins
@@ -4599,10 +4352,8 @@ jobs:
                       # the module and build caches stay in the job's cache, so a build from a
                       # commit starts warm
                       export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                      # git asks a credential helper for github.com, which reads the token from
-                      # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                      # up (pipelinegen isn't fetched yet): these lines name the variable and
-                      # never hold the token
+                      # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                      # reads the token from the environment, and no line here holds it
                       # git-auth:begin
                       export GIT_CONFIG_COUNT=1
                       export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -4610,9 +4361,8 @@ jobs:
                       export GIT_TERMINAL_PROMPT=0
                       # git-auth:end
 
-                      # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                      # token from the environment, so no argument or variable here holds it. The
-                      # read token when the tokens are split by purpose, else the one token
+                      # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                      # token from the environment, so no argument or variable here holds it
                       auth() {
                         awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                       }
@@ -4661,12 +4411,10 @@ jobs:
                       # plugin.Kinds lists them; a test holds the two equal
                       kinds="sbom correlator runner driver connector"
 
-                      # program <repository>: the program the repository holds, which names its
-                      # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                      # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                      # repository's own name. The two spellings of a renamed repository
-                      # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                      # files, as the tool's plugin.Program names them.
+                      # program <repository>: the name of its release files, ./cmd/<program> and
+                      # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                      # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                      # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                       program() {
                         prog_name=${1##*/}
                         for prog_kind in $kinds; do
@@ -4679,14 +4427,10 @@ jobs:
                         echo "$prog_name"
                       }
 
-                      # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                      # the program <name> the repository holds, from its release asset
-                      # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                      # without that asset may be a Node plugin's, whose one asset is the script
-                      # <name>.mjs, run by its own node shebang. A release is checked against its
-                      # sha256 in the cache, fetched again when it doesn't match, and checked
-                      # where it runs; a build from a commit has no checksum and is kept by its
-                      # commit.
+                      # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                      # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                      # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                      # and is cached by its commit
                       fetch() {
                         repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                         name=$(program "$repo")
@@ -4768,11 +4512,9 @@ jobs:
                       rm -f cache/.pinned
                       [ -z "$dropped" ] || echo "dropped from the job's cache, as no pin names them:$dropped"
                       )
-                      # prepare_in runs the repository's prepare command in a checkout: it fills
-                      # the caches the plugins share (in the job's cache, where they stay) and
-                      # may use the network; the plugins never do. The planner's params and
-                      # secrets are the prepare command's alone, and the pipeline's token
-                      # reaches it only when the planner declares it.
+                      # The prepare command fills the plugins' shared caches and may use the
+                      # network; the plugins never do. The pipeline's token reaches it only when
+                      # the planner declares it.
                       prepare_in() {
                         [ -n "${PIPELINEGEN_PREPARE:-}" ] || return 0
                         caches="$PWD/plan-cache/caches"
@@ -4795,19 +4537,17 @@ jobs:
                         )
                       }
 
-                      # without_planner_env drops the prepare command's params and secrets, which
-                      # the plan never sees.
+                      # a GITHUB_TOKEN the planner declares is the read token, which the tool reads
+                      # too
                       without_planner_env() {
                         for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                           [ "$name" = GITHUB_TOKEN ] || unset "$name"
                         done
                       }
 
-                      # handoff writes what the pull request resource's put reads into $2: the
-                      # version and metadata of the head checked out in $1, its "committed" now
-                      # this moment with a random fraction of a second, so a head handed on
-                      # again is a new version. The job puts it only when the plan step's gate
-                      # opened.
+                      # handoff <checkout> <dir>: what the pull request resource's put reads. Its
+                      # "committed" is now, with a random fraction of a second, so a head handed on
+                      # again is a new version.
                       handoff() {
                         from="$1/.git/resource"
                         to="$2/.git/resource"
@@ -4824,12 +4564,9 @@ jobs:
                           echo '[]' > "$to/metadata.json"
                         fi
                       }
-                      # A proposed change's second step: it runs none of the change's code. It
-                      # writes the plan the first step left once it is the change's own, and
-                      # shows the run. The hand-off, written first, is put only when the step
-                      # opens its gate: when it wrote the plan, or found the head planned and
-                      # stalled as the sweep would hand it on again; never for a head whose
-                      # suites began or are on their way.
+                      # Runs none of the change's code. The hand-off is put only when the gate
+                      # opens: the plan was written, or the head was planned and stalled; never
+                      # for a head whose suites began or are on their way.
                       set -eu
 
                       handoff trigger handoff
@@ -4916,9 +4653,6 @@ jobs:
                       for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                         [ "$name" = GITHUB_TOKEN ] || unset "$name"
                       done
-                      # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                      # cache/. Each is a release checked against its sha256, or, before the first
-                      # release, built from a commit. The cache keeps only what the pins name.
                       set -eu
 
                       mkdir -p cache tools/plugins
@@ -4929,10 +4663,8 @@ jobs:
                       # the module and build caches stay in the job's cache, so a build from a
                       # commit starts warm
                       export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                      # git asks a credential helper for github.com, which reads the token from
-                      # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                      # up (pipelinegen isn't fetched yet): these lines name the variable and
-                      # never hold the token
+                      # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                      # reads the token from the environment, and no line here holds it
                       # git-auth:begin
                       export GIT_CONFIG_COUNT=1
                       export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -4940,9 +4672,8 @@ jobs:
                       export GIT_TERMINAL_PROMPT=0
                       # git-auth:end
 
-                      # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                      # token from the environment, so no argument or variable here holds it. The
-                      # read token when the tokens are split by purpose, else the one token
+                      # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                      # token from the environment, so no argument or variable here holds it
                       auth() {
                         awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                       }
@@ -4991,12 +4722,10 @@ jobs:
                       # plugin.Kinds lists them; a test holds the two equal
                       kinds="sbom correlator runner driver connector"
 
-                      # program <repository>: the program the repository holds, which names its
-                      # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                      # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                      # repository's own name. The two spellings of a renamed repository
-                      # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                      # files, as the tool's plugin.Program names them.
+                      # program <repository>: the name of its release files, ./cmd/<program> and
+                      # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                      # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                      # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                       program() {
                         prog_name=${1##*/}
                         for prog_kind in $kinds; do
@@ -5009,14 +4738,10 @@ jobs:
                         echo "$prog_name"
                       }
 
-                      # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                      # the program <name> the repository holds, from its release asset
-                      # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                      # without that asset may be a Node plugin's, whose one asset is the script
-                      # <name>.mjs, run by its own node shebang. A release is checked against its
-                      # sha256 in the cache, fetched again when it doesn't match, and checked
-                      # where it runs; a build from a commit has no checksum and is kept by its
-                      # commit.
+                      # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                      # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                      # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                      # and is cached by its commit
                       fetch() {
                         repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                         name=$(program "$repo")
@@ -5098,11 +4823,9 @@ jobs:
                       rm -f cache/.pinned
                       [ -z "$dropped" ] || echo "dropped from the job's cache, as no pin names them:$dropped"
                       )
-                      # prepare_in runs the repository's prepare command in a checkout: it fills
-                      # the caches the plugins share (in the job's cache, where they stay) and
-                      # may use the network; the plugins never do. The planner's params and
-                      # secrets are the prepare command's alone, and the pipeline's token
-                      # reaches it only when the planner declares it.
+                      # The prepare command fills the plugins' shared caches and may use the
+                      # network; the plugins never do. The pipeline's token reaches it only when
+                      # the planner declares it.
                       prepare_in() {
                         [ -n "${PIPELINEGEN_PREPARE:-}" ] || return 0
                         caches="$PWD/plan-cache/caches"
@@ -5125,19 +4848,17 @@ jobs:
                         )
                       }
 
-                      # without_planner_env drops the prepare command's params and secrets, which
-                      # the plan never sees.
+                      # a GITHUB_TOKEN the planner declares is the read token, which the tool reads
+                      # too
                       without_planner_env() {
                         for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                           [ "$name" = GITHUB_TOKEN ] || unset "$name"
                         done
                       }
 
-                      # handoff writes what the pull request resource's put reads into $2: the
-                      # version and metadata of the head checked out in $1, its "committed" now
-                      # this moment with a random fraction of a second, so a head handed on
-                      # again is a new version. The job puts it only when the plan step's gate
-                      # opened.
+                      # handoff <checkout> <dir>: what the pull request resource's put reads. Its
+                      # "committed" is now, with a random fraction of a second, so a head handed on
+                      # again is a new version.
                       handoff() {
                         from="$1/.git/resource"
                         to="$2/.git/resource"
@@ -5154,12 +4875,9 @@ jobs:
                           echo '[]' > "$to/metadata.json"
                         fi
                       }
-                      # The sweep's first step, which runs none of the changes' code: it lists
-                      # the open heads of a pull request run that the planning job missed (the
-                      # pull requests' check can order a new head behind the ones already
-                      # planned), and the planned heads whose suites never began, each once it
-                      # waited the run's missed_after. The gate opens when there is anything to
-                      # plan or hand off.
+                      # Runs none of the changes' code. The planning job misses a head the pull
+                      # requests' check orders behind ones already planned; the sweep plans it,
+                      # and hands on planned heads whose suites never began after missed_after.
                       set -eu
 
                       tools/pipelinegen unplanned --run "$PIPELINEGEN_RUN" --root config --out sweep --cache write-cache
@@ -5222,9 +4940,6 @@ jobs:
                               for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                                 [ "$name" = GITHUB_TOKEN ] || unset "$name"
                               done
-                              # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                              # cache/. Each is a release checked against its sha256, or, before the first
-                              # release, built from a commit. The cache keeps only what the pins name.
                               set -eu
 
                               mkdir -p cache tools/plugins
@@ -5235,10 +4950,8 @@ jobs:
                               # the module and build caches stay in the job's cache, so a build from a
                               # commit starts warm
                               export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                              # git asks a credential helper for github.com, which reads the token from
-                              # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                              # up (pipelinegen isn't fetched yet): these lines name the variable and
-                              # never hold the token
+                              # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                              # reads the token from the environment, and no line here holds it
                               # git-auth:begin
                               export GIT_CONFIG_COUNT=1
                               export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -5246,9 +4959,8 @@ jobs:
                               export GIT_TERMINAL_PROMPT=0
                               # git-auth:end
 
-                              # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                              # token from the environment, so no argument or variable here holds it. The
-                              # read token when the tokens are split by purpose, else the one token
+                              # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                              # token from the environment, so no argument or variable here holds it
                               auth() {
                                 awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                               }
@@ -5297,12 +5009,10 @@ jobs:
                               # plugin.Kinds lists them; a test holds the two equal
                               kinds="sbom correlator runner driver connector"
 
-                              # program <repository>: the program the repository holds, which names its
-                              # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                              # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                              # repository's own name. The two spellings of a renamed repository
-                              # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                              # files, as the tool's plugin.Program names them.
+                              # program <repository>: the name of its release files, ./cmd/<program> and
+                              # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                              # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                              # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                               program() {
                                 prog_name=${1##*/}
                                 for prog_kind in $kinds; do
@@ -5315,14 +5025,10 @@ jobs:
                                 echo "$prog_name"
                               }
 
-                              # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                              # the program <name> the repository holds, from its release asset
-                              # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                              # without that asset may be a Node plugin's, whose one asset is the script
-                              # <name>.mjs, run by its own node shebang. A release is checked against its
-                              # sha256 in the cache, fetched again when it doesn't match, and checked
-                              # where it runs; a build from a commit has no checksum and is kept by its
-                              # commit.
+                              # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                              # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                              # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                              # and is cached by its commit
                               fetch() {
                                 repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                                 name=$(program "$repo")
@@ -5404,11 +5110,9 @@ jobs:
                               rm -f cache/.pinned
                               [ -z "$dropped" ] || echo "dropped from the job's cache, as no pin names them:$dropped"
                               )
-                              # prepare_in runs the repository's prepare command in a checkout: it fills
-                              # the caches the plugins share (in the job's cache, where they stay) and
-                              # may use the network; the plugins never do. The planner's params and
-                              # secrets are the prepare command's alone, and the pipeline's token
-                              # reaches it only when the planner declares it.
+                              # The prepare command fills the plugins' shared caches and may use the
+                              # network; the plugins never do. The pipeline's token reaches it only when
+                              # the planner declares it.
                               prepare_in() {
                                 [ -n "${PIPELINEGEN_PREPARE:-}" ] || return 0
                                 caches="$PWD/plan-cache/caches"
@@ -5431,19 +5135,17 @@ jobs:
                                 )
                               }
 
-                              # without_planner_env drops the prepare command's params and secrets, which
-                              # the plan never sees.
+                              # a GITHUB_TOKEN the planner declares is the read token, which the tool reads
+                              # too
                               without_planner_env() {
                                 for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                                   [ "$name" = GITHUB_TOKEN ] || unset "$name"
                                 done
                               }
 
-                              # handoff writes what the pull request resource's put reads into $2: the
-                              # version and metadata of the head checked out in $1, its "committed" now
-                              # this moment with a random fraction of a second, so a head handed on
-                              # again is a new version. The job puts it only when the plan step's gate
-                              # opened.
+                              # handoff <checkout> <dir>: what the pull request resource's put reads. Its
+                              # "committed" is now, with a random fraction of a second, so a head handed on
+                              # again is a new version.
                               handoff() {
                                 from="$1/.git/resource"
                                 to="$2/.git/resource"
@@ -5460,9 +5162,8 @@ jobs:
                                   echo '[]' > "$to/metadata.json"
                                 fi
                               }
-                              # The sweep's second step plans each head to plan, running the changes'
-                              # code, so it holds no credential that writes; the prepare command runs
-                              # in the base's tree. Each plan goes into plans/<number>.
+                              # Runs the changes' code, so it holds no credential that writes; the prepare
+                              # command runs the base's scripts.
                               set -eu
 
                               for dir in sweep/plan/*; do
@@ -5519,9 +5220,6 @@ jobs:
                               for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                                 [ "$name" = GITHUB_TOKEN ] || unset "$name"
                               done
-                              # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                              # cache/. Each is a release checked against its sha256, or, before the first
-                              # release, built from a commit. The cache keeps only what the pins name.
                               set -eu
 
                               mkdir -p cache tools/plugins
@@ -5532,10 +5230,8 @@ jobs:
                               # the module and build caches stay in the job's cache, so a build from a
                               # commit starts warm
                               export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                              # git asks a credential helper for github.com, which reads the token from
-                              # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                              # up (pipelinegen isn't fetched yet): these lines name the variable and
-                              # never hold the token
+                              # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                              # reads the token from the environment, and no line here holds it
                               # git-auth:begin
                               export GIT_CONFIG_COUNT=1
                               export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -5543,9 +5239,8 @@ jobs:
                               export GIT_TERMINAL_PROMPT=0
                               # git-auth:end
 
-                              # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                              # token from the environment, so no argument or variable here holds it. The
-                              # read token when the tokens are split by purpose, else the one token
+                              # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                              # token from the environment, so no argument or variable here holds it
                               auth() {
                                 awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                               }
@@ -5594,12 +5289,10 @@ jobs:
                               # plugin.Kinds lists them; a test holds the two equal
                               kinds="sbom correlator runner driver connector"
 
-                              # program <repository>: the program the repository holds, which names its
-                              # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                              # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                              # repository's own name. The two spellings of a renamed repository
-                              # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                              # files, as the tool's plugin.Program names them.
+                              # program <repository>: the name of its release files, ./cmd/<program> and
+                              # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                              # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                              # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                               program() {
                                 prog_name=${1##*/}
                                 for prog_kind in $kinds; do
@@ -5612,14 +5305,10 @@ jobs:
                                 echo "$prog_name"
                               }
 
-                              # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                              # the program <name> the repository holds, from its release asset
-                              # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                              # without that asset may be a Node plugin's, whose one asset is the script
-                              # <name>.mjs, run by its own node shebang. A release is checked against its
-                              # sha256 in the cache, fetched again when it doesn't match, and checked
-                              # where it runs; a build from a commit has no checksum and is kept by its
-                              # commit.
+                              # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                              # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                              # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                              # and is cached by its commit
                               fetch() {
                                 repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                                 name=$(program "$repo")
@@ -5701,11 +5390,9 @@ jobs:
                               rm -f cache/.pinned
                               [ -z "$dropped" ] || echo "dropped from the job's cache, as no pin names them:$dropped"
                               )
-                              # prepare_in runs the repository's prepare command in a checkout: it fills
-                              # the caches the plugins share (in the job's cache, where they stay) and
-                              # may use the network; the plugins never do. The planner's params and
-                              # secrets are the prepare command's alone, and the pipeline's token
-                              # reaches it only when the planner declares it.
+                              # The prepare command fills the plugins' shared caches and may use the
+                              # network; the plugins never do. The pipeline's token reaches it only when
+                              # the planner declares it.
                               prepare_in() {
                                 [ -n "${PIPELINEGEN_PREPARE:-}" ] || return 0
                                 caches="$PWD/plan-cache/caches"
@@ -5728,19 +5415,17 @@ jobs:
                                 )
                               }
 
-                              # without_planner_env drops the prepare command's params and secrets, which
-                              # the plan never sees.
+                              # a GITHUB_TOKEN the planner declares is the read token, which the tool reads
+                              # too
                               without_planner_env() {
                                 for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                                   [ "$name" = GITHUB_TOKEN ] || unset "$name"
                                 done
                               }
 
-                              # handoff writes what the pull request resource's put reads into $2: the
-                              # version and metadata of the head checked out in $1, its "committed" now
-                              # this moment with a random fraction of a second, so a head handed on
-                              # again is a new version. The job puts it only when the plan step's gate
-                              # opened.
+                              # handoff <checkout> <dir>: what the pull request resource's put reads. Its
+                              # "committed" is now, with a random fraction of a second, so a head handed on
+                              # again is a new version.
                               handoff() {
                                 from="$1/.git/resource"
                                 to="$2/.git/resource"
@@ -5757,10 +5442,8 @@ jobs:
                                   echo '[]' > "$to/metadata.json"
                                 fi
                               }
-                              # The sweep's last step runs none of the changes' code: it writes each plan
-                              # the second step left, once it is its head's own, and hands off each head
-                              # whose plan step opened its gate (it wrote the plan) and each planned
-                              # head whose suites never began. Each hand-off becomes one put.
+                              # Runs none of the changes' code. Hands off each head whose plan it wrote,
+                              # and each planned head whose suites never began.
                               set -eu
 
                               list=""
@@ -5845,17 +5528,9 @@ jobs:
                     - -ec
                     - |
                       export PIPELINEGEN_DEADLINE=$(( $(date +%s) + 1200 ))
-                      # The suite job's last task, in its ensure: it runs whatever the build did,
-                      # aborted and errored builds included. A build that broke before its trigger
-                      # was there has no commit to report to, and ends here.
-                      # A build that broke before its start task had the tools, such as one
-                      # aborted or errored while that task waited for a worker, fetches them here
-                      # as the start task does, so its suite still ends and a continuous run's
-                      # next round need not wait for it. Tools that can't be fetched leave the
-                      # suite to its statuses, which the job's on_error or on_abort posted.
-                      # It reports the suite from the trigger. A suite's end that could not be
-                      # recorded (exit 4) fails the job; any other failure here is said and
-                      # passes, since the suite's own statuses show it.
+                      # Runs in the job's ensure, on an abort too. A build aborted while its start
+                      # task waited for a worker never had the tools: fetching them here still ends
+                      # its suite, so a continuous run's next round need not wait for it.
                       set -eu
                       if ! test -d trigger; then
                         echo "no trigger: the build broke before it could report" >&2
@@ -5864,10 +5539,8 @@ jobs:
                       if ! test -x tools/pipelinegen; then
                         echo "no tools: the build broke before its start task had them; fetching them to end the suite" >&2
                         set +e
+                        # a subshell, so the bootstrap's own exit and set -e end only it
                         (
-                      # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                      # cache/. Each is a release checked against its sha256, or, before the first
-                      # release, built from a commit. The cache keeps only what the pins name.
                       set -eu
 
                       mkdir -p cache tools/plugins
@@ -5878,10 +5551,8 @@ jobs:
                       # the module and build caches stay in the job's cache, so a build from a
                       # commit starts warm
                       export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                      # git asks a credential helper for github.com, which reads the token from
-                      # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                      # up (pipelinegen isn't fetched yet): these lines name the variable and
-                      # never hold the token
+                      # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                      # reads the token from the environment, and no line here holds it
                       # git-auth:begin
                       export GIT_CONFIG_COUNT=1
                       export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -5889,9 +5560,8 @@ jobs:
                       export GIT_TERMINAL_PROMPT=0
                       # git-auth:end
 
-                      # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                      # token from the environment, so no argument or variable here holds it. The
-                      # read token when the tokens are split by purpose, else the one token
+                      # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                      # token from the environment, so no argument or variable here holds it
                       auth() {
                         awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                       }
@@ -5940,12 +5610,10 @@ jobs:
                       # plugin.Kinds lists them; a test holds the two equal
                       kinds="sbom correlator runner driver connector"
 
-                      # program <repository>: the program the repository holds, which names its
-                      # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                      # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                      # repository's own name. The two spellings of a renamed repository
-                      # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                      # files, as the tool's plugin.Program names them.
+                      # program <repository>: the name of its release files, ./cmd/<program> and
+                      # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                      # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                      # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                       program() {
                         prog_name=${1##*/}
                         for prog_kind in $kinds; do
@@ -5958,14 +5626,10 @@ jobs:
                         echo "$prog_name"
                       }
 
-                      # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                      # the program <name> the repository holds, from its release asset
-                      # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                      # without that asset may be a Node plugin's, whose one asset is the script
-                      # <name>.mjs, run by its own node shebang. A release is checked against its
-                      # sha256 in the cache, fetched again when it doesn't match, and checked
-                      # where it runs; a build from a commit has no checksum and is kept by its
-                      # commit.
+                      # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                      # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                      # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                      # and is cached by its commit
                       fetch() {
                         repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                         name=$(program "$repo")
@@ -6051,10 +5715,13 @@ jobs:
                         set -e
                         if [ "$rc" -ne 0 ] || ! test -x tools/pipelinegen; then
                           echo "the tools could not be fetched (exit $rc): the build broke before it could report" >&2
+                          # the job's on_error or on_abort hook already posted its statuses
                           exit 0
                         fi
                       fi
                       rc=0
+                      # only a suite's end that could not be recorded (4) fails the job: the
+                      # suite's statuses show any other failure
                       tools/pipelinegen report suite --root trigger --batches batches || rc=$?
                       case "$rc" in
                       0) ;;
@@ -6099,14 +5766,9 @@ jobs:
                 args:
                     - -ec
                     - |
-                      # Reports a suite whose build broke or was aborted. When the build had got
-                      # as far as its tools and its trigger, the tool reports the suite itself,
-                      # its end mark included, so the run's round can end; a suite's end it could
-                      # not record (exit 4) fails this step. Otherwise, or when the tool could
-                      # not report, it posts the suite's status and its run's as errored; the end
-                      # task, which runs after it, fetches missing tools and ends the suite. Without
-                      # the trigger's checkout the commit is unknown, and there is nothing to
-                      # post to.
+                      # With its tools and trigger, a broken or aborted build's suite is ended by
+                      # the tool, so the run's round can end; otherwise its statuses are posted as
+                      # errored, and the end task, which runs next, fetches the tools to end it.
                       set -eu
 
                       if test -x tools/pipelinegen && test -d trigger; then
@@ -6177,14 +5839,9 @@ jobs:
                 args:
                     - -ec
                     - |
-                      # Reports a suite whose build broke or was aborted. When the build had got
-                      # as far as its tools and its trigger, the tool reports the suite itself,
-                      # its end mark included, so the run's round can end; a suite's end it could
-                      # not record (exit 4) fails this step. Otherwise, or when the tool could
-                      # not report, it posts the suite's status and its run's as errored; the end
-                      # task, which runs after it, fetches missing tools and ends the suite. Without
-                      # the trigger's checkout the commit is unknown, and there is nothing to
-                      # post to.
+                      # With its tools and trigger, a broken or aborted build's suite is ended by
+                      # the tool, so the run's round can end; otherwise its statuses are posted as
+                      # errored, and the end task, which runs next, fetches the tools to end it.
                       set -eu
 
                       if test -x tools/pipelinegen && test -d trigger; then
@@ -6270,9 +5927,6 @@ jobs:
                       for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                         [ "$name" = GITHUB_TOKEN ] || unset "$name"
                       done
-                      # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                      # cache/. Each is a release checked against its sha256, or, before the first
-                      # release, built from a commit. The cache keeps only what the pins name.
                       set -eu
 
                       mkdir -p cache tools/plugins
@@ -6283,10 +5937,8 @@ jobs:
                       # the module and build caches stay in the job's cache, so a build from a
                       # commit starts warm
                       export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                      # git asks a credential helper for github.com, which reads the token from
-                      # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                      # up (pipelinegen isn't fetched yet): these lines name the variable and
-                      # never hold the token
+                      # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                      # reads the token from the environment, and no line here holds it
                       # git-auth:begin
                       export GIT_CONFIG_COUNT=1
                       export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -6294,9 +5946,8 @@ jobs:
                       export GIT_TERMINAL_PROMPT=0
                       # git-auth:end
 
-                      # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                      # token from the environment, so no argument or variable here holds it. The
-                      # read token when the tokens are split by purpose, else the one token
+                      # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                      # token from the environment, so no argument or variable here holds it
                       auth() {
                         awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                       }
@@ -6345,12 +5996,10 @@ jobs:
                       # plugin.Kinds lists them; a test holds the two equal
                       kinds="sbom correlator runner driver connector"
 
-                      # program <repository>: the program the repository holds, which names its
-                      # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                      # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                      # repository's own name. The two spellings of a renamed repository
-                      # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                      # files, as the tool's plugin.Program names them.
+                      # program <repository>: the name of its release files, ./cmd/<program> and
+                      # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                      # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                      # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                       program() {
                         prog_name=${1##*/}
                         for prog_kind in $kinds; do
@@ -6363,14 +6012,10 @@ jobs:
                         echo "$prog_name"
                       }
 
-                      # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                      # the program <name> the repository holds, from its release asset
-                      # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                      # without that asset may be a Node plugin's, whose one asset is the script
-                      # <name>.mjs, run by its own node shebang. A release is checked against its
-                      # sha256 in the cache, fetched again when it doesn't match, and checked
-                      # where it runs; a build from a commit has no checksum and is kept by its
-                      # commit.
+                      # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                      # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                      # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                      # and is cached by its commit
                       fetch() {
                         repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                         name=$(program "$repo")
@@ -6452,10 +6097,7 @@ jobs:
                       rm -f cache/.pinned
                       [ -z "$dropped" ] || echo "dropped from the job's cache, as no pin names them:$dropped"
                       )
-                      # The suite job's first task, after the bootstrap: the tree under test and
-                      # the gates, then, when the plan selected anything of the suite, the
-                      # batches. With the gate shut there are no batches. Nothing here starts
-                      # Bazel.
+                      # Nothing here starts Bazel.
                       set -eu
 
                       tools/pipelinegen tree --run "$PIPELINEGEN_RUN" --suite "$PIPELINEGEN_SUITE" --trigger trigger --out source --gate gate
@@ -6561,17 +6203,9 @@ jobs:
                     - -ec
                     - |
                       export PIPELINEGEN_DEADLINE=$(( $(date +%s) + 1200 ))
-                      # The suite job's last task, in its ensure: it runs whatever the build did,
-                      # aborted and errored builds included. A build that broke before its trigger
-                      # was there has no commit to report to, and ends here.
-                      # A build that broke before its start task had the tools, such as one
-                      # aborted or errored while that task waited for a worker, fetches them here
-                      # as the start task does, so its suite still ends and a continuous run's
-                      # next round need not wait for it. Tools that can't be fetched leave the
-                      # suite to its statuses, which the job's on_error or on_abort posted.
-                      # It reports the suite from the trigger. A suite's end that could not be
-                      # recorded (exit 4) fails the job; any other failure here is said and
-                      # passes, since the suite's own statuses show it.
+                      # Runs in the job's ensure, on an abort too. A build aborted while its start
+                      # task waited for a worker never had the tools: fetching them here still ends
+                      # its suite, so a continuous run's next round need not wait for it.
                       set -eu
                       if ! test -d trigger; then
                         echo "no trigger: the build broke before it could report" >&2
@@ -6580,10 +6214,8 @@ jobs:
                       if ! test -x tools/pipelinegen; then
                         echo "no tools: the build broke before its start task had them; fetching them to end the suite" >&2
                         set +e
+                        # a subshell, so the bootstrap's own exit and set -e end only it
                         (
-                      # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                      # cache/. Each is a release checked against its sha256, or, before the first
-                      # release, built from a commit. The cache keeps only what the pins name.
                       set -eu
 
                       mkdir -p cache tools/plugins
@@ -6594,10 +6226,8 @@ jobs:
                       # the module and build caches stay in the job's cache, so a build from a
                       # commit starts warm
                       export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                      # git asks a credential helper for github.com, which reads the token from
-                      # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                      # up (pipelinegen isn't fetched yet): these lines name the variable and
-                      # never hold the token
+                      # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                      # reads the token from the environment, and no line here holds it
                       # git-auth:begin
                       export GIT_CONFIG_COUNT=1
                       export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -6605,9 +6235,8 @@ jobs:
                       export GIT_TERMINAL_PROMPT=0
                       # git-auth:end
 
-                      # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                      # token from the environment, so no argument or variable here holds it. The
-                      # read token when the tokens are split by purpose, else the one token
+                      # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                      # token from the environment, so no argument or variable here holds it
                       auth() {
                         awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                       }
@@ -6656,12 +6285,10 @@ jobs:
                       # plugin.Kinds lists them; a test holds the two equal
                       kinds="sbom correlator runner driver connector"
 
-                      # program <repository>: the program the repository holds, which names its
-                      # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                      # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                      # repository's own name. The two spellings of a renamed repository
-                      # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                      # files, as the tool's plugin.Program names them.
+                      # program <repository>: the name of its release files, ./cmd/<program> and
+                      # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                      # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                      # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                       program() {
                         prog_name=${1##*/}
                         for prog_kind in $kinds; do
@@ -6674,14 +6301,10 @@ jobs:
                         echo "$prog_name"
                       }
 
-                      # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                      # the program <name> the repository holds, from its release asset
-                      # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                      # without that asset may be a Node plugin's, whose one asset is the script
-                      # <name>.mjs, run by its own node shebang. A release is checked against its
-                      # sha256 in the cache, fetched again when it doesn't match, and checked
-                      # where it runs; a build from a commit has no checksum and is kept by its
-                      # commit.
+                      # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                      # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                      # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                      # and is cached by its commit
                       fetch() {
                         repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                         name=$(program "$repo")
@@ -6767,10 +6390,13 @@ jobs:
                         set -e
                         if [ "$rc" -ne 0 ] || ! test -x tools/pipelinegen; then
                           echo "the tools could not be fetched (exit $rc): the build broke before it could report" >&2
+                          # the job's on_error or on_abort hook already posted its statuses
                           exit 0
                         fi
                       fi
                       rc=0
+                      # only a suite's end that could not be recorded (4) fails the job: the
+                      # suite's statuses show any other failure
                       tools/pipelinegen report suite --root trigger --batches batches || rc=$?
                       case "$rc" in
                       0) ;;
@@ -6817,14 +6443,9 @@ jobs:
                 args:
                     - -ec
                     - |
-                      # Reports a suite whose build broke or was aborted. When the build had got
-                      # as far as its tools and its trigger, the tool reports the suite itself,
-                      # its end mark included, so the run's round can end; a suite's end it could
-                      # not record (exit 4) fails this step. Otherwise, or when the tool could
-                      # not report, it posts the suite's status and its run's as errored; the end
-                      # task, which runs after it, fetches missing tools and ends the suite. Without
-                      # the trigger's checkout the commit is unknown, and there is nothing to
-                      # post to.
+                      # With its tools and trigger, a broken or aborted build's suite is ended by
+                      # the tool, so the run's round can end; otherwise its statuses are posted as
+                      # errored, and the end task, which runs next, fetches the tools to end it.
                       set -eu
 
                       if test -x tools/pipelinegen && test -d trigger; then
@@ -6897,14 +6518,9 @@ jobs:
                 args:
                     - -ec
                     - |
-                      # Reports a suite whose build broke or was aborted. When the build had got
-                      # as far as its tools and its trigger, the tool reports the suite itself,
-                      # its end mark included, so the run's round can end; a suite's end it could
-                      # not record (exit 4) fails this step. Otherwise, or when the tool could
-                      # not report, it posts the suite's status and its run's as errored; the end
-                      # task, which runs after it, fetches missing tools and ends the suite. Without
-                      # the trigger's checkout the commit is unknown, and there is nothing to
-                      # post to.
+                      # With its tools and trigger, a broken or aborted build's suite is ended by
+                      # the tool, so the run's round can end; otherwise its statuses are posted as
+                      # errored, and the end task, which runs next, fetches the tools to end it.
                       set -eu
 
                       if test -x tools/pipelinegen && test -d trigger; then
@@ -6996,9 +6612,6 @@ jobs:
                       for name in ${PIPELINEGEN_PLANNER_ENV:-}; do
                         [ "$name" = GITHUB_TOKEN ] || unset "$name"
                       done
-                      # Fetches pipelinegen, bazelisk and the plugins into tools/, keeping them in
-                      # cache/. Each is a release checked against its sha256, or, before the first
-                      # release, built from a commit. The cache keeps only what the pins name.
                       set -eu
 
                       mkdir -p cache tools/plugins
@@ -7009,10 +6622,8 @@ jobs:
                       # the module and build caches stay in the job's cache, so a build from a
                       # commit starts warm
                       export GOMODCACHE="$PWD/cache/gomodcache" GOCACHE="$PWD/cache/gocache"
-                      # git asks a credential helper for github.com, which reads the token from
-                      # the environment when git needs it, the way `pipelinegen git-auth` sets it
-                      # up (pipelinegen isn't fetched yet): these lines name the variable and
-                      # never hold the token
+                      # `pipelinegen git-auth`'s setup, as the tool isn't fetched yet: the helper
+                      # reads the token from the environment, and no line here holds it
                       # git-auth:begin
                       export GIT_CONFIG_COUNT=1
                       export GIT_CONFIG_KEY_0='credential.https://github.com.helper'
@@ -7020,9 +6631,8 @@ jobs:
                       export GIT_TERMINAL_PROMPT=0
                       # git-auth:end
 
-                      # auth writes curl's authorization header, for `curl -H @-`: awk reads the
-                      # token from the environment, so no argument or variable here holds it. The
-                      # read token when the tokens are split by purpose, else the one token
+                      # auth prints curl's authorization header for `curl -H @-`: awk reads the
+                      # token from the environment, so no argument or variable here holds it
                       auth() {
                         awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'
                       }
@@ -7071,12 +6681,10 @@ jobs:
                       # plugin.Kinds lists them; a test holds the two equal
                       kinds="sbom correlator runner driver connector"
 
-                      # program <repository>: the program the repository holds, which names its
-                      # release files, its ./cmd/<program> and its cache entries: NAME-KIND for a
-                      # repository pipelinegen-KIND-NAME, KIND a plugin kind, else the
-                      # repository's own name. The two spellings of a renamed repository
-                      # (owner/go-sbom, owner/pipelinegen-sbom-go) so fetch and keep the same
-                      # files, as the tool's plugin.Program names them.
+                      # program <repository>: the name of its release files, ./cmd/<program> and
+                      # cache entries, as the tool's plugin.Program gives it: NAME-KIND for
+                      # pipelinegen-KIND-NAME, so a renamed repository's two spellings
+                      # (owner/go-sbom, owner/pipelinegen-sbom-go) share them
                       program() {
                         prog_name=${1##*/}
                         for prog_kind in $kinds; do
@@ -7089,14 +6697,10 @@ jobs:
                         echo "$prog_name"
                       }
 
-                      # fetch <repository> <version> <sha256> <commit> <dest>: the executable of
-                      # the program <name> the repository holds, from its release asset
-                      # <name>-linux-amd64 or built from ./cmd/<name> at the commit. A release
-                      # without that asset may be a Node plugin's, whose one asset is the script
-                      # <name>.mjs, run by its own node shebang. A release is checked against its
-                      # sha256 in the cache, fetched again when it doesn't match, and checked
-                      # where it runs; a build from a commit has no checksum and is kept by its
-                      # commit.
+                      # fetch <repository> <version> <sha256> <commit> <dest>: a release asset
+                      # <name>-linux-amd64, else a Node plugin's one asset <name>.mjs (run by its
+                      # node shebang), or ./cmd/<name> built at the commit, which has no checksum
+                      # and is cached by its commit
                       fetch() {
                         repo=$1 version=$2 sum=$3 commit=$4 dest=$5
                         name=$(program "$repo")
@@ -7178,10 +6782,7 @@ jobs:
                       rm -f cache/.pinned
                       [ -z "$dropped" ] || echo "dropped from the job's cache, as no pin names them:$dropped"
                       )
-                      # The suite job's first task, after the bootstrap: the tree under test and
-                      # the gates, then, when the plan selected anything of the suite, the
-                      # batches. With the gate shut there are no batches. Nothing here starts
-                      # Bazel.
+                      # Nothing here starts Bazel.
                       set -eu
 
                       tools/pipelinegen tree --run "$PIPELINEGEN_RUN" --suite "$PIPELINEGEN_SUITE" --trigger trigger --out source --gate gate
