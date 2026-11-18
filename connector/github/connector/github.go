@@ -103,6 +103,7 @@ func webHost(remote string) string {
 	return ""
 }
 
+// Identify claims a remote on github.com, or on the host of a configured API.
 func Identify(c Config, remote string) plugin.Identity {
 	repo, ok := Repository(remote)
 	host := webHost(remote)
