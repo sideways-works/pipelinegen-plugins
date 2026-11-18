@@ -11,7 +11,6 @@ import (
 	"strings"
 )
 
-// Namespace is the prefix of every unit id this package makes.
 const Namespace = "api"
 
 // Unit kinds besides the components' own (schema, parameter, response and
@@ -33,14 +32,12 @@ const (
 // other.
 const LinkUses = "uses"
 
-// ErrInvalid marks a document that isn't well formed.
 var ErrInvalid = errors.New("invalid document")
 
 // ErrCannotTell marks a document whose units can't be read from the commit
 // (a remote ref, a missing file, a cycle of path items).
 var ErrCannotTell = errors.New("cannot tell from the tree")
 
-// A Unit is something a change can touch and a test can depend on.
 type Unit struct {
 	ID     string `json:"id"`
 	Group  string `json:"group"`
@@ -66,7 +63,6 @@ type Link struct {
 	While string `json:"while,omitempty"`
 }
 
-// Narrowings this package's units and links belong to.
 const (
 	// NarrowDocText leaves documentation out of the units' digests; while
 	// it is off, each unit links to its documentation unit.
@@ -84,12 +80,10 @@ const LinkChanges = "changes"
 // and examples, bound only while the doc-text narrowing is off.
 const KindDocs = "docs"
 
-// DocsID is the id of a unit's documentation unit.
 func DocsID(id string) string {
 	return Namespace + ":docs:" + strings.TrimPrefix(id, Namespace+":")
 }
 
-// An Operation is one method on one path of a document.
 type Operation struct {
 	ID          string // the unit id, api:<prefix><operationId>
 	OperationID string // as written, or derived from the method and path
@@ -103,7 +97,6 @@ type Operation struct {
 	GoName string
 }
 
-// A Document is one contract the repository serves.
 type Document struct {
 	Path string `json:"path"`
 	// Prefix goes before every operationId of this document in unit ids,
@@ -111,13 +104,11 @@ type Document struct {
 	Prefix string `json:"prefix,omitempty"`
 }
 
-// Options are the parts of the config that change digests.
 type Options struct {
 	// KeepDocs keeps documentation in the digests, for tests that assert on it.
 	KeepDocs bool `json:"keep_docs,omitempty"`
 }
 
-// Model is what a tree's documents hold.
 type Model struct {
 	Units      []Unit
 	Links      []Link
@@ -645,7 +636,6 @@ func (m *Model) DocumentUnits(file string) []string { return m.byDoc[file] }
 // operation of it depends on.
 func (m *Model) TopUnits(file string) []string { return m.top[file] }
 
-// OperationsOf lists the operations a document's paths and webhooks hold.
 func (m *Model) OperationsOf(file string) []Operation {
 	var ops []Operation
 

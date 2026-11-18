@@ -131,7 +131,6 @@ func merge(out map[string]any, v *yaml.Node, depth int) error {
 	return nil
 }
 
-// pointer resolves a JSON pointer ("/components/schemas/Pet") in a value.
 func pointer(root any, ptr string) (any, bool) {
 	if ptr == "" {
 		return root, true
@@ -166,7 +165,7 @@ func pointer(root any, ptr string) (any, bool) {
 }
 
 func index(tok string, n int) (int, bool) {
-	if tok == "" || len(tok) > 9 {
+	if tok == "" || len(tok) > 9 { // nine digits never overflow an int
 		return 0, false
 	}
 
@@ -187,8 +186,6 @@ func escape(tok string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(tok, "~", "~0"), "/", "~1")
 }
 
-// asMap, asList and asString read a node of the expected shape, or its zero
-// value.
 func asMap(v any) map[string]any {
 	m, ok := v.(map[string]any)
 	if !ok {

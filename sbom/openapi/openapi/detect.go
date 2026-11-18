@@ -10,7 +10,6 @@ import (
 	"strings"
 )
 
-// Roles a detected file can have.
 const (
 	// RoleContract is an OpenAPI document: its top level has openapi (or
 	// swagger) and paths.
@@ -19,10 +18,8 @@ const (
 	RoleFragment = "fragment"
 )
 
-// CandidatePatterns are the paths worth reading to detect contracts.
 var CandidatePatterns = []string{"**/*.yaml", "**/*.yml", "**/*.json"}
 
-// A Detection is one file this package claims.
 type Detection struct {
 	Path string `json:"path"`
 	Role string `json:"role"`

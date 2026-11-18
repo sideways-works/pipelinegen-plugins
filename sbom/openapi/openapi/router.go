@@ -64,7 +64,6 @@ func split(p string) []string {
 	return strings.Split(strings.Trim(p, "/"), "/")
 }
 
-// Match returns the operation a request reaches, if any.
 func (r *Router) Match(method, raw string) (string, bool) {
 	p := raw
 	if u, err := url.Parse(raw); err == nil {
