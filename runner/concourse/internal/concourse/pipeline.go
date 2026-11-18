@@ -1252,7 +1252,7 @@ func (g *gen) prepareSteps(run, suite string) []any {
 		"outputs":  names("prepared", "work"),
 		"caches":   caches("cache"),
 		"params":   params,
-		"run":      M{"path": "tools/pipelinegen", "args": []string{"slice", "prepare", "--root", "source"}},
+		"run":      M{"path": "tools/pipelinegen", "args": []string{"slice", "prepare", "--root", "source", "--tools", "tools"}},
 	}
 
 	return []any{timeout(withImage(privileged(withTags(M{"task": "prepare", "config": cfg}, g.suiteTags(run, suite)), s.Privileged), g.taskImage(suite, image)), g.suiteMinutes(run, suite))}
@@ -1272,8 +1272,9 @@ func (g *gen) drivenBatch(run, suite string) M {
 	})
 	g.forTool(params)
 
+	// the bootstrap's tools come first on the drivers' PATH
 	inputs := names("source", "batches", "tools")
-	args := []string{"slice", "run", "--root", "source"}
+	args := []string{"slice", "run", "--root", "source", "--tools", "tools"}
 
 	if s.Steps.Prepare {
 		inputs = append(inputs, M{"name": "prepared"})

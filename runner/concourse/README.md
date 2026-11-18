@@ -615,6 +615,14 @@ gets the params, `secrets.prepare`, `PIPELINEGEN_RUN`, `PIPELINEGEN_SUITE`
 and `PIPELINEGEN_RECORD`, the same as its batches'; a whole-suite check the
 params, `secrets.whole`, those three and `PIPELINEGEN_JOB_URL`.
 
+A suite run by drivers (`steps`) has no task file. Its batch task runs
+`tools/pipelinegen slice run --root source --tools tools` in the suite's
+image and its prepare task `slice prepare --root source --tools tools`;
+both get `source` and `tools`, the batch `batches` and the prepare's
+`prepared` too. `--tools tools` puts the tools directory, with pipelinegen
+and bazelisk, first on the `PATH` of the drivers and of the tests they
+start.
+
 ### Secrets
 
 The pipeline needs one GitHub token, as a Concourse variable that the

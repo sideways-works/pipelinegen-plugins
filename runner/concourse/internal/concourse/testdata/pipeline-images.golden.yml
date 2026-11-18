@@ -51,7 +51,7 @@ jobs:
                 PIPELINEGEN_LIMIT: limits.steps=20
                 PIPELINEGEN_PACKAGE_CACHE: pkgcache
                 PIPELINEGEN_PIPELINE: fixture
-                PIPELINEGEN_PIPELINE_SHA256: 8e927933529855f78d2c22dece4e162ca4a7cd8aafcf79a2f21a7b7965feac14
+                PIPELINEGEN_PIPELINE_SHA256: 44d07d8d2c121b16eb972f62da4f141cb1df5612cc11fce58732d565f0643e9c
                 PIPELINEGEN_PIPELINE_STEP: "1"
                 PIPELINEGEN_PLUGINS: ""
                 PIPELINEGEN_PRIVATE: ""
@@ -1686,6 +1686,8 @@ jobs:
                             - prepare
                             - --root
                             - source
+                            - --tools
+                            - tools
                         path: sh
                   image: builder
                   task: prepare
@@ -1794,6 +1796,8 @@ jobs:
                                 - run
                                 - --root
                                 - source
+                                - --tools
+                                - tools
                                 - --prepared
                                 - prepared
                             path: sh
@@ -4826,6 +4830,8 @@ jobs:
                             - prepare
                             - --root
                             - source
+                            - --tools
+                            - tools
                         path: sh
                   image: builder
                   task: prepare
@@ -4934,6 +4940,8 @@ jobs:
                                 - run
                                 - --root
                                 - source
+                                - --tools
+                                - tools
                                 - --prepared
                                 - prepared
                             path: sh
@@ -9152,6 +9160,8 @@ jobs:
                             - prepare
                             - --root
                             - source
+                            - --tools
+                            - tools
                         path: sh
                   image: builder
                   task: prepare
@@ -9260,6 +9270,8 @@ jobs:
                                 - run
                                 - --root
                                 - source
+                                - --tools
+                                - tools
                                 - --prepared
                                 - prepared
                             path: sh

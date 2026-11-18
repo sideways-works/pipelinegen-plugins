@@ -55,8 +55,8 @@ func TestASuiteRunByDriversRunsTheToolsOwnTasks(t *testing.T) {
 		image string
 		args  []string
 	}{
-		"batch":   {"golang", []string{"slice", "run", "--root", "source", "--prepared", "prepared"}},
-		"prepare": {"builder", []string{"slice", "prepare", "--root", "source"}},
+		"batch":   {"golang", []string{"slice", "run", "--root", "source", "--tools", "tools", "--prepared", "prepared"}},
+		"prepare": {"builder", []string{"slice", "prepare", "--root", "source", "--tools", "tools"}},
 	} {
 		task, ok := found[name]
 		if !ok {
