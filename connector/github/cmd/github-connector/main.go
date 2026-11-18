@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/sideways-works/pipelinegen-connector-github/connector"
+	"github.com/sideways-works/pipelinegen-plugins/connector/github/connector"
 	"github.com/sideways-works/pipelinegen/plugin"
 )
 

@@ -1,4 +1,4 @@
-module github.com/sideways-works/pipelinegen-connector-github
+module github.com/sideways-works/pipelinegen-plugins/connector/github
 
 go 1.27.1
 
