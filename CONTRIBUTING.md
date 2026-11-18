@@ -113,9 +113,9 @@ bazel run //:release -- build OUT
 To cut a release: run the plugin's checks, run `notice` and commit what
 changed, tag the commit `<kind>/<name>/vX.Y.Z` (and each nested module's
 tag), build, push the tags, publish. A candidate is tagged
-`<kind>/<name>/vX.Y.Z-rc.N` in the same way and published as a prerelease that is never
-marked the latest. A pushed tag never moves; a wrong release gets a new
-version.
+`<kind>/<name>/vX.Y.Z-rc.N` in the same way and published as a
+prerelease that is never marked the latest. A pushed tag never moves; a
+wrong release gets a new version.
 
 A build is reproducible from its commit, so building the same tag twice,
 anywhere, gives the same files. The Go programs record the module path
