@@ -1,10 +1,10 @@
 # Contributing to the pipelinegen plugins
 
-Thank you for wanting to help. This page says how to set up a working
-copy, what every change has to pass, how commits are written and how a
-plugin is released. What each plugin does is in its own README, which
-also says what its tests need and how to run its conformance kit. The
-protocol the plugins speak is in pipelinegen's book:
+Thank you for wanting to help. Below: setting up a working copy, what
+every change has to pass, how to write commits, and how a plugin is
+released. Each plugin's README says what it does, what its tests need
+and how to run its conformance kit. The protocol the plugins speak is in
+pipelinegen's book:
 [plugins](https://github.com/sideways-works/pipelinegen/blob/main/docs/plugins.md)
 and [writing plugins](https://github.com/sideways-works/pipelinegen/tree/main/docs/writing-plugins).
 
@@ -12,17 +12,17 @@ and [writing plugins](https://github.com/sideways-works/pipelinegen/tree/main/do
 
 Open an issue with the plugin, what you ran, what you expected and what
 happened, and the version the plugin reports (`echo '{"protocol": 1}' |
-go-sbom describe`, with the plugin's program). For a wrong answer, the
-smallest tree that shows it and the request you sent say most of what we
-need. A security problem goes through the private route in
-[SECURITY.md](SECURITY.md), never an issue.
+go-sbom describe`, with the plugin's program). For a wrong answer, send
+the smallest tree that shows it and the request you sent. Report a
+security problem privately as [SECURITY.md](SECURITY.md) describes, never
+in an issue.
 
 ## A working copy
 
 You need git and [Bazel](https://bazel.build) (bazelisk, which reads
 `.bazelversion`). Bazel fetches the Go SDK, golangci-lint, Node and gh at
-the versions and checksums `MODULE.bazel` pins, and every target runs
-with them, whatever else your `PATH` holds.
+the versions and checksums `MODULE.bazel` pins, and every target uses
+those, whatever else is on your `PATH`.
 
 ```sh
 git clone https://github.com/sideways-works/pipelinegen-plugins.git
@@ -30,11 +30,10 @@ cd pipelinegen-plugins
 bazel run //tools:hooks           # the commit-msg hook below
 ```
 
-`go.work` puts every Go module in one workspace for an editor, and
-nothing else uses it: each target builds, tests and lints a module on
-its own (`GOWORK=off`), as its release does, and a Go plugin that uses
-another's library takes a released version of it, never the copy beside
-it. The root's `package.json` makes the Node plugins one npm workspace
+`go.work` puts every Go module in one workspace for an editor. Nothing
+else uses it: each target builds, tests and lints a module on its own
+(`GOWORK=off`), as its release does, and a Go plugin that uses another's
+library takes a released version of it, never the copy beside it. The root's `package.json` makes the Node plugins one npm workspace
 (see [Releases](#releases)).
 
 ## What every change passes
@@ -107,27 +106,28 @@ bazel run //:release -- build OUT
   only when it holds exactly this build.
 - `check` builds the tag afresh and fails unless every file of its
   published release, a Node plugin's `.mjs` included, is byte for byte that
-  build: a released file holds the code of its tag.
+  build. So a released file holds the code of its tag.
 - `patch` tags `main`'s head (and each nested module), pushes the tags,
   builds, publishes and checks the release by download; run it again after
   a failure and it picks up where it stopped.
-- `tagged` is a release job's form: the plugin's version tag on `HEAD`,
-  once one of the commit statuses named passed on it.
+- `tagged` is the form a release job uses: it takes the plugin's
+  version tag on `HEAD`, once one of the named commit statuses passed on
+  it.
 - `//:release -- build OUT` builds every plugin whose newest tag is on
   `HEAD`, each into `OUT/<kind>/<name>`.
 
-`PIPELINEGEN_SOURCE=<dir>` in the environment builds the release command
-and pipelinegen from a checkout of pipelinegen instead, to try a version
-not yet released.
+To try a pipelinegen that isn't released yet, set
+`PIPELINEGEN_SOURCE=<dir>` in the environment: the release command and
+pipelinegen are then built from that checkout of pipelinegen.
 
 A candidate is tagged `<kind>/<name>/vX.Y.Z-rc.N` in the same way and
 published as a prerelease that is never marked the latest. A pushed tag
 never moves; a wrong release gets a new version.
 
 The Node plugins are one npm workspace, the root's `package.json`, with
-one lockfile: `npm ci` anywhere in it installs every plugin's packages at
+one lockfile. `npm ci` anywhere in it installs every plugin's packages at
 the root, and correlator/react takes ts-sbom from sbom/ts of the same
-commit. A release still bundles each command into one `.mjs` of its own.
+commit. A release still bundles each command into its own `.mjs`.
 
 ## Licence
 

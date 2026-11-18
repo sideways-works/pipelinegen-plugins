@@ -1,12 +1,12 @@
 # pipelinegen plugins
 
-The plugins of [pipelinegen](https://github.com/sideways-works/pipelinegen),
-which runs only the test slices a change can break, in one repository:
-the sbom plugins that say what exists, the correlators that say who uses
-it, the drivers that run a suite's tests, the runner that writes the CI
-pipeline and the connectors that talk to a git host. Each plugin is its
-own Go module or Node package, with its own README, its own releases and
-its own history, and a template per kind starts a new one.
+This repository holds the plugins of
+[pipelinegen](https://github.com/sideways-works/pipelinegen), which runs
+only the test slices a change can break. The sbom plugins say what
+exists and the correlators say who uses it. The drivers run a suite's
+tests, the runner writes the CI pipeline, and the connectors talk to a
+git host. Each plugin is a Go module or Node package with its own README,
+releases and history. To start a new one, copy the template of its kind.
 
 | Plugin | Program | What it does |
 |---|---|---|
@@ -44,15 +44,15 @@ go.work             every module at once, for an editor; builds, tests and relea
 package.json        the Node plugins' npm workspace, with one lockfile
 ```
 
-Every plugin builds, tests and releases on its own: no plugin imports
+Every plugin builds, tests and releases on its own, and none imports
 another's code from this checkout. A plugin that uses another's library
 (a correlator spelling its sbom's ids) requires a released version of it,
-as any other module.
+like any other module.
 
 ## Everyday commands
 
-The commands run with the tools `MODULE.bazel` pins and need only
-[Bazel](https://bazel.build) (bazelisk reads `.bazelversion`):
+The commands use the tools `MODULE.bazel` pins, so the only thing you
+install is [Bazel](https://bazel.build) (bazelisk reads `.bazelversion`):
 
 ```sh
 bazel run //driver/go:test        # one plugin's tests: go test in each of its modules, or npm test
@@ -64,15 +64,15 @@ bazel run //:templates            # every template built and run through pipelin
 bazel run //tools:hooks           # installs the commit-msg hook in your checkout
 ```
 
-A run never stops at the first plugin that fails: it runs them all and
-names the ones that failed at the end. Each plugin's README says what its
-tests need beyond that, and how to run its conformance kit by hand.
+A run goes on past a plugin that fails, runs them all, and names the
+failed ones at the end. Each plugin's README says what else its tests
+need and how to run its conformance kit by hand.
 
 ## Using a plugin
 
-A repository pins each plugin it uses in its `pipelinegen.yaml`, by
-release and checksum. The plugins of this repository are pinned under one
-entry, each by its directory and its release:
+A repository pins each plugin it uses in its `pipelinegen.yaml` by
+release and checksum. The plugins of this repository share one entry,
+and each is pinned by its directory and its release:
 
 ```yaml
 plugins:
@@ -82,22 +82,22 @@ plugins:
       - {name: go-sbom, kind: sbom, path: sbom/go, release: {version: v0.4.0, sha256: ...}}
 ```
 
-`version` is the plugin's own version: the release tagged
-`driver/go/v0.4.0` here. The checksum is the line of the release's
+`version` is the plugin's own version; here that is the release tagged
+`driver/go/v0.4.0`. The checksum is the line of the release's
 `SHA256SUMS` for the platform's program (`go-driver-linux-amd64`), or,
-as `sums`, the checksum of `SHA256SUMS` itself. A plugin's README shows
-its settings.
+as `sums`, the checksum of `SHA256SUMS` itself. Each plugin's settings
+are in its README.
 
 ## Releases
 
 Each plugin is released on its own, from a tag `<kind>/<name>/vX.Y.Z` on
 `main`, and a nested module released with it (`correlator/go/cover`) gets
-`<kind>/<name>/<sub>/vX.Y.Z` on the same commit. A release holds what it
-held before the plugins moved here: the programs, named as before
-(`go-driver-linux-amd64`, `react-correlator.mjs`), `plugin.json`,
-`LICENSE`, `NOTICE` and `SHA256SUMS`. The first release of every plugin
-here is `v0.4.0`. [CONTRIBUTING](CONTRIBUTING.md#releases) says how one is
-cut, and [RELEASING](RELEASING.md) in which order.
+`<kind>/<name>/<sub>/vX.Y.Z` on the same commit. A release has the same
+contents as before the plugins moved here: the programs under their old
+names (`go-driver-linux-amd64`, `react-correlator.mjs`), `plugin.json`,
+`LICENSE`, `NOTICE` and `SHA256SUMS`. Every plugin's first release here
+is `v0.4.0`. [CONTRIBUTING](CONTRIBUTING.md#releases) says how a release
+is cut, and [RELEASING](RELEASING.md) in which order.
 
 ## Adding a plugin
 
@@ -115,20 +115,20 @@ cut, and [RELEASING](RELEASING.md) in which order.
    (the root's), and the `NOTICE` that
    `bazel run //<kind>/<name>:release -- notice` writes.
 
-Its `:test` and `:lint` are then slices of this repository's own CI
+Its `:test` and `:lint` then become slices of this repository's own CI
 ([pipelinegen.yaml](pipelinegen.yaml)), in its kind's suite and the lint
-suite, and run when its files change. `//:lint` fails while
-`tools/units.bzl` misses it, and `pipelinegen check`, part of it, fails
-while a file of the repository is in no slice.
+suite, and run when its files change. `//:lint` fails until
+`tools/units.bzl` lists it, and `pipelinegen check`, which `//:lint`
+runs, fails while any file of the repository is in no slice.
 
 A Node plugin is a package with `test`, `lint` and `build` scripts whose
 build writes `dist/<program>.mjs`, `.node-version` naming the Node
 `MODULE.bazel` pins, and a place in the root `package.json`'s
-`workspaces`; [correlator/react](correlator/react) and [sbom/ts](sbom/ts)
-are two.
+`workspaces`. [correlator/react](correlator/react) and [sbom/ts](sbom/ts)
+are two of them.
 
 ## Licence
 
-The plugins are Sideways Works' and licensed under the
+The plugins belong to Sideways Works and are licensed under the
 [Apache License 2.0](LICENSE). See [NOTICE](NOTICE), [AUTHORS](AUTHORS),
 [CONTRIBUTING](CONTRIBUTING.md) and [SECURITY](SECURITY.md).

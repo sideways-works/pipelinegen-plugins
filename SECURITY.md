@@ -11,17 +11,19 @@ how it can be used, and how to reproduce it.
 
 ## What counts
 
-Each plugin runs where pipelinegen calls it: the sbom plugins and the
-correlators while a pipeline plans or records, the drivers in a suite's
-batch tasks, the runner when the pipeline is made, the connectors for each
-exchange with a git host. Reports we particularly want, by plugin:
+Each plugin runs where pipelinegen calls it. The sbom plugins and the
+correlators run while a pipeline plans or records, the drivers in a
+suite's batch tasks, the runner when the pipeline is made, and the
+connectors for each exchange with a git host. Each section below says
+where a plugin runs and what it touches, then lists the reports we most
+want for it.
 
 ### connector/git
 
-git-connector runs in CI, in the steps of a pipeline that pipelinegen generates,
-and picks the proposed changes of a plain git server among its branches. It holds no token and sends nothing: pipelinegen sends the
-requests it asks for, with the tokens, and checks each one first. Reports
-we particularly want:
+git-connector runs in CI, in the steps of a pipeline that pipelinegen
+generates, and picks the proposed changes of a plain git server among its
+branches. It holds no token and sends nothing: pipelinegen checks each
+request it asks for, then sends it with the tokens.
 
 - a change that isn't one of the branches pipelinegen listed, or not at
   the commit it listed, or a branch the config's patterns don't name,
@@ -33,10 +35,10 @@ we particularly want:
 
 ### connector/github
 
-github-connector runs in CI, in the steps of a pipeline that pipelinegen generates,
-and lists a repository's pull requests, sets commit statuses and keeps a comment. It holds no token and sends nothing: pipelinegen sends the
-requests it asks for, with the tokens, and checks each one first. Reports
-we particularly want:
+github-connector runs in CI, in the steps of a pipeline that pipelinegen
+generates. It lists a repository's pull requests, sets commit statuses
+and keeps a comment. It holds no token and sends nothing: pipelinegen
+checks each request it asks for, then sends it with the tokens.
 
 - a pull request from a fork, or from a repository the connector can't
   tell, reported as coming from the repository itself: its code would run
@@ -54,7 +56,7 @@ that run a repository's tests, on the code of the repository under test,
 a pull request's included. It type-checks that code through the go
 command with `GOPROXY=off` and `GOTOOLCHAIN=local`, and never runs it.
 Its `cover` module is linked into the repository's own binaries, in
-coverage builds only. Reports we particularly want:
+coverage builds only.
 
 - a tree that makes go-correlator run the tree's code, or any program
   other than the go command, or makes it or the go command it starts
@@ -74,8 +76,7 @@ coverage builds only. Reports we particularly want:
 
 gorm-correlator runs in CI, in pipelinegen's planning job, on the code
 of the repository under test, a pull request's included. It type-checks
-that code through the go command and never runs it. Reports we
-particularly want:
+that code through the go command and never runs it.
 
 - a tree that makes gorm-correlator run the tree's code, or any program
   other than the go command, or makes either reach the network;
@@ -93,7 +94,7 @@ locale-correlator runs in CI, in the jobs that run a repository's tests.
 Its recorders run inside those tests: `gorecord` in the repository's Go
 programs, built with its tag, and the JavaScript recorders in the tests'
 Node and browser. Its protocol calls read what the recorders wrote, and
-start nothing. Reports we particularly want:
+start nothing.
 
 - a way for a recorder to send what it records, or anything else,
   anywhere but the directory or log pipelinegen names, or to change what
@@ -111,8 +112,7 @@ start nothing. Reports we particularly want:
 oapi-codegen-correlator runs in CI, in pipelinegen's planning job and in
 the jobs that run a repository's tests, on the code, the contract and
 the request logs of the repository under test, a pull request's
-included. It reads those files and never runs them. Reports we
-particularly want:
+included. It reads those files and never runs them.
 
 - a tree or a request log that makes oapi-codegen-correlator run code,
   start a process or reach the network;
@@ -131,7 +131,7 @@ that run a repository's browser tests, on the code of the repository under
 test, a pull request's included. Its command parses that code and the
 recordings and builds a test run left, and never runs them. Its Playwright
 fixture runs inside the repository's tests and writes each spec file's
-coverage. Reports we particularly want:
+coverage.
 
 - a tree, a build or a recording that makes the command run code of the
   repository's, start a process or reach the network;
@@ -149,7 +149,7 @@ coverage. Reports we particularly want:
 
 sql-correlator runs in CI, in the jobs that run a repository's tests, on
 the statement log the tests' PostgreSQL server writes. It reads that log
-and never connects to a database. Reports we particularly want:
+and never connects to a database.
 
 - a statement log that makes sql-correlator run code, start a process or
   reach the network;
@@ -165,8 +165,7 @@ and never connects to a database. Reports we particularly want:
 
 bazel-driver runs in CI, in the batch tasks of a pipeline that pipelinegen
 generates, and runs the test targets of the repository under test, a pull
-request's included, with Bazel. Running those tests is its job. Reports we
-particularly want:
+request's included, with Bazel. Running those tests is its job.
 
 - a token or other secret from the request reaching an answer, a message
   or a log line of the driver's own;
@@ -181,8 +180,7 @@ particularly want:
 go-driver runs in CI, in the batch tasks of a pipeline that pipelinegen
 generates, and runs the tests of the repository under test, a pull
 request's included, with `go test`. Running that code is its job; the
-tests run with whatever the batch's environment holds. Reports we
-particularly want:
+tests run with whatever the batch's environment holds.
 
 - a token or other secret from the request reaching an answer, a message
   or a log line of the driver's own;
@@ -196,8 +194,7 @@ particularly want:
 playwright-driver runs in CI, in the batch tasks of a pipeline that
 pipelinegen generates, and runs the Playwright tests of the repository
 under test, a pull request's included, after installing the project's
-packages with `npm ci`. Running that code is its job. Reports we
-particularly want:
+packages with `npm ci`. Running that code is its job.
 
 - a token or other secret from the request reaching an answer, a message
   or a log line of the driver's own;
@@ -210,7 +207,7 @@ particularly want:
 ### driver/shell
 
 shell-driver runs a suite's scripts in CI, on the tree under test, with
-the environment pipelinegen gives it. Reports we particularly want:
+the environment pipelinegen gives it.
 
 - a token or other secret of the tool's reaching a script's environment
   without the suite declaring it, or reaching a log or a result;
@@ -224,7 +221,7 @@ the environment pipelinegen gives it. Reports we particularly want:
 concourse-runner writes the Concourse pipeline that tests a repository's
 pull requests and branches. That pipeline holds a GitHub token that can
 write to the repository, and it runs the code of every pull request it
-tests. Reports we particularly want:
+tests.
 
 - a way for a pull request, especially one from a fork, to get the token
   or a secret the repository didn't declare for its tasks, or to run its
@@ -241,8 +238,7 @@ tests. Reports we particularly want:
 
 go-sbom runs in CI, in pipelinegen's planning job, on the files of the
 repository under test, a pull request's included. It only reads files: it
-never runs the go command and never touches the network. Reports we
-particularly want:
+never runs the go command and never touches the network.
 
 - a tree or a module cache that makes go-sbom run code, start a process
   or reach the network;
@@ -259,7 +255,6 @@ particularly want:
 locale-sbom runs in CI, in pipelinegen's planning job, on the message
 catalogs of the repository under test, a pull request's included. It
 reads files and answers JSON: it starts nothing and connects to nothing.
-Reports we particularly want:
 
 - a catalog that makes locale-sbom run code, start a process or reach
   the network;
@@ -276,7 +271,7 @@ Reports we particularly want:
 npm-sbom runs in CI, in pipelinegen's planning job, on the files of the
 repository under test, a pull request's included. It only reads
 lockfiles and manifests: it installs nothing, runs no package script and
-never touches the network. Reports we particularly want:
+never touches the network.
 
 - a lockfile or manifest that makes npm-sbom run code, start a process
   or reach the network;
@@ -292,7 +287,7 @@ never touches the network. Reports we particularly want:
 
 openapi-sbom runs in CI, in pipelinegen's planning job, on the contracts
 of the repository under test, a pull request's included. It only reads
-files and never touches the network. Reports we particularly want:
+files and never touches the network.
 
 - a contract that makes openapi-sbom run code, start a process or reach
   the network;
@@ -310,7 +305,7 @@ pg-sbom runs in CI, in pipelinegen's planning job, on the migration
 files of the repository under test, a pull request's included. It parses
 them with PostgreSQL's parser, compiled to WebAssembly and run
 in-process, and never runs them: it starts no database and connects to
-nothing. Reports we particularly want:
+nothing.
 
 - a migration that makes pg-sbom run code outside its WebAssembly
   sandbox, start a process or reach the network;
@@ -326,7 +321,7 @@ nothing. Reports we particularly want:
 
 ts-sbom runs in CI, in pipelinegen's planning job, on the files of the
 repository under test, a pull request's included. It parses those files
-and never runs them. Reports we particularly want:
+and never runs them.
 
 - a tree that makes ts-sbom run code of the repository's, start a process
   or reach the network;

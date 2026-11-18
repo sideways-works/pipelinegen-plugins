@@ -2,24 +2,26 @@
 
 Each plugin is released on its own, from a tag `<kind>/<name>/vX.Y.Z` on
 `main`, by its `:release` target ([CONTRIBUTING](CONTRIBUTING.md#releases)
-has its forms). This page says the order the plugins are released in,
-since some require others' modules, and what the first releases from this
-repository are.
+has its forms). Some plugins require others' modules, so the plugins
+are released in a set order. Below are that order and the first releases
+from this repository.
 
 ## Before the first release
 
 `:release` runs pipelinegen's release command at the version
-`tools/go.mod` requires, and that command releases a module in a
-directory of a repository from pipelinegen's first release that has it.
-Until then, `PIPELINEGEN_SOURCE=<a pipelinegen checkout that has it>` in
-the environment of `bazel run` builds the command from that checkout.
-Move `tools/go.mod` to that release first.
+`tools/go.mod` requires. The command can release a module that sits in a
+directory of a repository only from the first pipelinegen release that
+has this. Until that release exists, set
+`PIPELINEGEN_SOURCE=<a pipelinegen checkout that has it>` in the
+environment of `bazel run` to build the command from that checkout. Once
+it exists, move `tools/go.mod` to it before the first release.
 
 Every plugin requires pipelinegen v0.3.1 or later. runner/concourse
 builds and passes its tests with v0.3.1, but its conformance kit needs a
-pipelinegen whose kit runs the runner's own step program (v0.3.1's kit
-looks for the tool's calls in the task scripts, which the runner no
-longer writes); move its `go.mod` to that release before its own.
+pipelinegen whose kit runs the runner's own step program. v0.3.1's kit
+looks for the tool's calls in the task scripts, and the runner no longer
+writes those. Move its `go.mod` to that pipelinegen release before
+releasing runner/concourse.
 
 ## The first releases: v0.4.0
 
@@ -27,7 +29,7 @@ Every plugin's first release here is `v0.4.0`
 (`driver/go/v0.4.0`, `correlator/go/v0.4.0` with
 `correlator/go/cover/v0.4.0`, `correlator/locale/v0.4.0` with
 `correlator/locale/gorecord/v0.4.0`), whatever its last version was in
-its own repository. The commits those releases were cut from hold
+its own repository. The commits those older releases were cut from hold
 `go.mod` files with the old module paths, so none of them is tagged here.
 
 ## What requires what
@@ -67,8 +69,8 @@ plugin requires none of the others.
    pin, `go.mod` or lockfile names an old repository is it deleted: a
    deleted repository's name stops redirecting.
 
-For each release: run the plugin's checks, run `notice` and commit what
-changed, then `bazel run //<kind>/<name>:release -- patch v0.4.0 <out>`,
+For each release, run the plugin's checks, run `notice` and commit what
+changed, then run `bazel run //<kind>/<name>:release -- patch v0.4.0 <out>`,
 which tags `main`'s head (and a nested module's tag), builds, publishes
 and checks the release by download. `bazel run //<kind>/<name>:release
 -- check v0.4.0` checks a published release against a fresh build of its
