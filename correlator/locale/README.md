@@ -9,8 +9,9 @@ it tried, and every lookup a Go program's catalog code made. It answers
 them as [locale-sbom](../../sbom/locale)'s
 units, so a change to one key runs the tests that rendered it.
 
-Like every plugin it is a pure program: it reads the files the recorders
-left behind and answers JSON. The recorders run inside the tests.
+Like every plugin, it is a pure program that reads the files the
+recorders left behind and answers in JSON. The recorders themselves run
+inside the tests.
 
 ```mermaid
 flowchart LR
@@ -36,7 +37,7 @@ i18next asks its store for every form it tries, in order, until one holds
 a value: `key_male_one`, `key_male`, `key_one`, `key_zero`, `key`, in each
 language of the fallback chain and each namespace of `fallbackNS`, and
 again for every `$t(...)` it nests. Recording each probe records exactly
-what the rendered text depends on: a miss is an id that a later commit may
+what the rendered text depends on. A miss is an id that a later commit may
 add, and adding it selects the slice, since the miss would then hit. Keys
 built at run time (`` t(`countries.${c}`) ``) are recorded as the concrete
 keys they were.
@@ -45,9 +46,9 @@ The catalog's own unit says that a recorder ran for the catalog in this
 slice, and locale-sbom names it as the anchor of each claim of the
 catalog's files. pipelinegen replaces a slice's paths to a changed
 catalog file (a label naming it, a filegroup or other rule holding it,
-`extra_deps`, an owner's `data`) by the keys the slice recorded only for
-a slice whose list holds this unit: a slice whose processes loaded the
-catalog without a recorder holds none, and keeps its paths.
+`extra_deps`, an owner's `data`) with the keys the slice recorded, but
+only when the slice's list holds this unit. A slice whose processes loaded
+the catalog without a recorder holds none and keeps its paths.
 
 ## Which tests see a change
 
@@ -63,12 +64,12 @@ catalog without a recorder holds none, and keeps its paths.
 
 `TestWhichTestsSeeAChange` holds a test per row, with the probes i18next
 26.4.3 makes for each (`TestRowProbesAreI18nexts` checks them against a
-real run). The rows a key's absence decides were also planned by
-pipelinegen itself, `affected` on a small repository whose slices' only
-path to the catalog is their recording: a key added where a probe missed
-selected that slice alone, a key added that nothing reads selected none, a
-reformatted file none, a changed English value the slice that fell back to
-it.
+real run). pipelinegen itself also planned the rows that a key's absence
+decides, with `affected` on a small repository whose slices reach the
+catalog only through their recording. A key added where a probe missed
+selected that slice alone, a key added that nothing reads selected none,
+a reformatted file selected none, and a changed English value selected
+the slice that fell back to it.
 
 ## The recorders
 
@@ -109,16 +110,18 @@ func probe(string, string) {}
 The pair of build-tagged files leaves one file of the product package out
 of every build. go-correlator up to v0.1.8-rc.3 then binds the whole
 package from its group, so any change to any of its declarations selects
-every slice whose binary links it; it was seen on a copy of an adopter's
-mail package (a change to one function's body selected a test that never
-ran it, through the package's group). Use the pair with a go-correlator
+every slice whose binary links it. A copy of an adopter's mail package
+showed this: a change to one function's body selected a test that never
+ran it, through the package's group. Use the pair with a go-correlator
 release that binds only a left-out file's own declarations from the
-group. The other shape, the tagged pair inside gorecord with the product
-calling it under `if gorecord.Enabled`, leaves no file of the product
+group.
+
+The other shape puts the tagged pair inside gorecord, and the product
+calls it under `if gorecord.Enabled`. That leaves no file of the product
 package out, and inlining removes the calls (a release binary held no
-symbol of it), but the release binary's module graph then lists gorecord
-(`go version -m`, `go list -deps`), which a check that refuses hook
-modules in a release would flag.
+symbol of it). The release binary's module graph then lists gorecord,
+though (`go version -m`, `go list -deps`), and a check that refuses hook
+modules in a release would flag that.
 
 Call `Load` where the catalog is loaded, at start: a stack's log needs its
 header before the first slice. With `PIPELINEGEN_LOCALE_KEYS_DIR` naming
@@ -128,7 +131,7 @@ stack shares, each process appends every lookup, and `collect` cuts the log
 per slice (the plugin's config `log`). Each record is one write of a whole
 line before the call returns.
 
-It was proven in a copy of an adopter's tree through a `replace` to a
+It was tested in a copy of an adopter's tree, through a `replace` to a
 local copy. A release binary links none of it: `go tool nm <binary> | grep
 -c gorecord` gave 0 for a binary built without the tag and 13 with it, and
 `go version -m` lists the module only for the latter.
@@ -151,9 +154,9 @@ if (import.meta.env.VITE_PIPELINEGEN_LOCALES)
 
 Put it before `init`: the hook wraps the store `init` assigns. It assumes
 the app adds each file `<catalog>/<lang>/<ns>.json` as its language and
-namespace, as an app that loads the files by their names does; a file
-transformed before it is added (a language's prefixes marked) keeps its
-keys, which is what counts.
+namespace, as an app that loads the files by their names does. A file
+transformed before it is added (a language's prefixes marked) still keeps
+its keys, and the keys are what count.
 
 A production build must hold neither the function's name nor the flag's.
 This check fails a build that does; run it over each app's built assets:
@@ -163,9 +166,9 @@ found=$(grep -rlE '__pipelinegenLocales|VITE_PIPELINEGEN_LOCALES' apps/*/dist ||
 [ -z "$found" ] || { echo "a production build holds the locale recorder's hook: $found" >&2; exit 1; }
 ```
 
-Proven with Vite 8.3.4 on `testdata/vite` (`check-build.sh`): the build
-without the flag passed, the one with `VITE_PIPELINEGEN_LOCALES=1` failed,
-naming its chunk.
+Tested with Vite 8.3.4 on `testdata/vite` (`check-build.sh`): the build
+without the flag passed, and the one with `VITE_PIPELINEGEN_LOCALES=1`
+failed, naming its chunk.
 
 Playwright: wrap the repository's `test` and give the fixture the apps'
 origins:
@@ -177,9 +180,9 @@ const test = withLocaleKeys(base, { out: process.env.E2E_LOCALE_OUT, root: proce
 The init script defines the hook in every page before the app's code runs,
 and sends each new record to the test process as it happens, so a
 navigation loses nothing. After each test the fixture writes one file into
-`<out>/<spec file>/`. A top-level document or frame whose address matches
-`expect` and that never called the hook by its load event makes the spec
-can't tell: the app was built without the flag.
+`<out>/<spec file>/`. When a top-level document or frame whose address
+matches `expect` hasn't called the hook by its load event, the app was
+built without the flag, and the spec can't tell.
 
 vitest: `setupFiles: ["<dir>/vitest-setup.mjs"]`, recording when
 `PIPELINEGEN_LOCALE_KEYS_OUT` names the coverage directory. It wraps the
@@ -187,12 +190,13 @@ store class of each copy of i18next the tests import, so a test's own
 instance needs no change. A bundle is named by the catalog file whose
 content it is (a test that imports `locales/en/home.json` and hands it to
 i18next looks up keys of that file). A build step may change a catalog's
-values as it imports it (soft hyphens put into long words): a bundle with
-exactly one file's keys, or with the keys of several files of which its
-own language and namespace name one, is that file's. A bundle that matches
-no file but shares keys with one (a copy with a key added, two files
-merged) makes the test file can't tell. A probe in a language the test loaded no bundle
-for binds nothing, since no catalog file can change what it renders.
+values as it imports it (soft hyphens put into long words). A bundle with
+exactly one file's keys is that file's, and so is a bundle with the keys
+of several files when its own language and namespace name one of them.
+When a bundle matches no file but shares keys with one (a copy with a key
+added, two files merged), the test file can't tell. A probe in a language
+the test loaded no bundle for binds nothing, since no catalog file can
+change what it renders.
 
 ## Can't tell (exit 3)
 
@@ -206,7 +210,7 @@ it is recorded again:
 - a vitest bundle that matches no catalog file but shares keys with one;
 - a record naming a catalog that holds no file the plugin claims, or one
   outside the tree;
-- in locale-sbom, a catalog file that is no JSON.
+- in locale-sbom, a catalog file that isn't JSON.
 
 A line that isn't JSON exits 1: the slice errors and its list stays.
 
@@ -255,14 +259,14 @@ render catalog text.
 ## Calls
 
 `detect` claims the same files as locale-sbom, so `observe` gets them in
-`claimed` and checks the catalogs a recording names. `collect`: at the
-setup's end and each slice's end it moves the recorders' files
+`claimed` and checks the catalogs a recording names. At the setup's end
+and at each slice's end, `collect` moves the recorders' files
 (`locale-keys.*.jsonl`) from the slice's coverage directory into its own
 and adds its own file. A slice's later parts write into the slice's one
 directory as the first did, and `collect` takes from there into the
 directory the core names for each part. With `log`, and only in a suite
 that runs a stack, `slice-start` marks the log's end and `slice-end` cuts
-what came since, whole lines only; a suite without a stack never reads
+what came since, whole lines only. A suite without a stack never reads
 the log, so one entry serves both kinds of suite. `observe` reads the
 setup's directory and the slice's parts, numbered parts included.
 
@@ -293,8 +297,8 @@ How it was tested:
   of its own texts recording nothing;
 - the Playwright fixture with @playwright/test 1.63.0 and one headless
   Chromium, routed pages, no server: the German page's probes with English
-  fallback across two navigations, and a page built without the flag
-  making its spec can't tell;
+  fallback across two navigations, and a page built without the flag,
+  whose spec can't tell;
 - the conformance kit on `testdata/kit` with pipelinegen built from main,
   both record modes (a slice's own files, and a stack with a shared log);
 - a golden `observe` answer and a determinism test.
@@ -353,7 +357,7 @@ pipelinegen plugin test ./locale-correlator --tree testdata/kit
   skipped, and without `LOCALE_BROWSER=1` the one that starts a browser
   is; run them before a change to the recorders. The README names the
   versions they were tested with.
-- The last line is pipelinegen's conformance kit. It calls the
+- The last line runs pipelinegen's conformance kit, which calls the
   locale-correlator you built the way pipelinegen does, on the fixture
   tree in `testdata/kit`. `PIPELINEGEN=<pipelinegen> go test
   ./cmd/locale-correlator -run TestKit` runs the same kit from the
