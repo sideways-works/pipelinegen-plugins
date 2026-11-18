@@ -1,4 +1,4 @@
-module github.com/sideways-works/pipelinegen-sbom-npm
+module github.com/sideways-works/pipelinegen-plugins/sbom/npm
 
 go 1.27.1
 

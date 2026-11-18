@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/sideways-works/pipelinegen-sbom-npm/npm"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/npm/npm"
 )
 
 // Exit codes the protocol defines.
