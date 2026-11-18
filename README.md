@@ -39,7 +39,9 @@ templates/<kind>/   a minimal plugin of each kind that passes pipelinegen's conf
 tools/              the launcher every bazel run target runs, and the commit-msg hook
 pipelinegen.yaml    this repository's own CI: a suite per kind, each plugin's tests a slice
 MODULE.bazel        the pinned Go SDK, golangci-lint, Node and gh, by checksum per platform
+go.mod              the root module: no package, it names the repository for release versions
 go.work             every module at once, for an editor; builds, tests and releases leave it off
+package.json        the Node plugins' npm workspace, with one lockfile
 ```
 
 Every plugin builds, tests and releases on its own: no plugin imports
@@ -55,7 +57,7 @@ The commands run with the tools `MODULE.bazel` pins and need only
 ```sh
 bazel run //driver/go:test        # one plugin's tests: go test in each of its modules, or npm test
 bazel run //driver/go:lint        # its lint: golangci-lint with .golangci.yml, or the package's lint script
-bazel run //driver/go:release -- build OUT v0.2.1   # its release, built twice and compared (CONTRIBUTING)
+bazel run //driver/go:release -- build OUT v0.4.0   # its release, built twice and compared (CONTRIBUTING)
 bazel run //:test                 # every plugin's, template's and the tools' tests
 bazel run //:lint                 # every lint, the tool versions, pipelinegen check and the commit subjects
 bazel run //:templates            # every template built and run through pipelinegen's conformance kit
@@ -76,12 +78,12 @@ entry, each by its directory and its release:
 plugins:
   - repository: https://github.com/sideways-works/pipelinegen-plugins
     with:
-      - {name: go, kind: driver, path: driver/go, release: {version: v0.2.1, sha256: ...}}
-      - {name: go-sbom, kind: sbom, path: sbom/go, release: {version: v0.2.1, sha256: ...}}
+      - {name: go, kind: driver, path: driver/go, release: {version: v0.4.0, sha256: ...}}
+      - {name: go-sbom, kind: sbom, path: sbom/go, release: {version: v0.4.0, sha256: ...}}
 ```
 
 `version` is the plugin's own version: the release tagged
-`driver/go/v0.2.1` here. The checksum is the line of the release's
+`driver/go/v0.4.0` here. The checksum is the line of the release's
 `SHA256SUMS` for the platform's program (`go-driver-linux-amd64`), or,
 as `sums`, the checksum of `SHA256SUMS` itself. A plugin's README shows
 its settings.
@@ -93,8 +95,9 @@ Each plugin is released on its own, from a tag `<kind>/<name>/vX.Y.Z` on
 `<kind>/<name>/<sub>/vX.Y.Z` on the same commit. A release holds what it
 held before the plugins moved here: the programs, named as before
 (`go-driver-linux-amd64`, `react-correlator.mjs`), `plugin.json`,
-`LICENSE`, `NOTICE` and `SHA256SUMS`. [CONTRIBUTING](CONTRIBUTING.md#releases)
-says how one is cut.
+`LICENSE`, `NOTICE` and `SHA256SUMS`. The first release of every plugin
+here is `v0.4.0`. [CONTRIBUTING](CONTRIBUTING.md#releases) says how one is
+cut, and [RELEASING](RELEASING.md) in which order.
 
 ## Adding a plugin
 
@@ -119,9 +122,10 @@ suite, and run when its files change. `//:lint` fails while
 while a file of the repository is in no slice.
 
 A Node plugin is a package with `test`, `lint` and `build` scripts whose
-build writes `dist/<program>.mjs`, and `.node-version` naming the Node
-`MODULE.bazel` pins; [correlator/react](correlator/react) and
-[sbom/ts](sbom/ts) are two.
+build writes `dist/<program>.mjs`, `.node-version` naming the Node
+`MODULE.bazel` pins, and a place in the root `package.json`'s
+`workspaces`; [correlator/react](correlator/react) and [sbom/ts](sbom/ts)
+are two.
 
 ## Licence
 
