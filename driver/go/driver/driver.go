@@ -35,8 +35,11 @@ type Settings struct {
 	// CoverTags are added to Tags for a recording only.
 	CoverTags []string `json:"cover_tags"`
 	Flags     []string `json:"flags"`
-	Race      bool     `json:"race"`
-	Module    string   `json:"module"`
+	// Race runs every test under the race detector; off by default, since a file that needs it
+	// says so with "//ci:race".
+	Race bool `json:"race"`
+	// Module defaults to the tree's root.
+	Module string `json:"module"`
 	// MustRun maps a test file to a pattern of its top-level tests that must
 	// run: a matching test that skips fails the file, and so does a file with
 	// no matching test.
