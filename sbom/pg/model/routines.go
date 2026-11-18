@@ -7,8 +7,8 @@ import (
 	pg "github.com/pganalyze/pg_query_go/v6"
 	pgquery "github.com/wasilibs/go-pgquery"
 
-	"github.com/sideways-works/pipelinegen-sbom-pg/pgid"
-	"github.com/sideways-works/pipelinegen-sbom-pg/sqlref"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/pg/pgid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/pg/sqlref"
 )
 
 func (m *Model) createFunction(s *pg.CreateFunctionStmt, text, fp string) {

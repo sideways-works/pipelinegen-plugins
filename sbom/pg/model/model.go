@@ -11,8 +11,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sideways-works/pipelinegen-sbom-pg/pgid"
-	"github.com/sideways-works/pipelinegen-sbom-pg/sqlref"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/pg/pgid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/pg/sqlref"
 )
 
 type Unit struct {

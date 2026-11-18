@@ -8,8 +8,8 @@ import (
 	pg "github.com/pganalyze/pg_query_go/v6"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/sideways-works/pipelinegen-sbom-pg/pgid"
-	"github.com/sideways-works/pipelinegen-sbom-pg/sqlref"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/pg/pgid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/pg/sqlref"
 )
 
 // maxIdent is the longest identifier PostgreSQL keeps (NAMEDATALEN - 1).

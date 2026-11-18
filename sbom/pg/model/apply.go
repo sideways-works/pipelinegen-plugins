@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/sideways-works/pipelinegen-sbom-pg/sqlref"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/pg/sqlref"
 )
 
 // Apply runs one migration file's statements against the model. A file the

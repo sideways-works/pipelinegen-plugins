@@ -18,9 +18,9 @@ import (
 
 	"github.com/sideways-works/pipelinegen/plugin"
 
-	"github.com/sideways-works/pipelinegen-sbom-pg/migrations"
-	"github.com/sideways-works/pipelinegen-sbom-pg/model"
-	"github.com/sideways-works/pipelinegen-sbom-pg/pgid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/pg/migrations"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/pg/model"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/pg/pgid"
 )
 
 var Version = "dev"

@@ -3,8 +3,8 @@ package model
 import (
 	pg "github.com/pganalyze/pg_query_go/v6"
 
-	"github.com/sideways-works/pipelinegen-sbom-pg/pgid"
-	"github.com/sideways-works/pipelinegen-sbom-pg/sqlref"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/pg/pgid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/pg/sqlref"
 )
 
 var serials = map[string]bool{
