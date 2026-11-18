@@ -47,7 +47,6 @@ export interface ObserveConfig {
   build_root?: string;
 }
 
-/** Observe can't tell what the slice touched; the reason says why. */
 export class CannotTell extends Error {}
 
 const whereObserveRuns =

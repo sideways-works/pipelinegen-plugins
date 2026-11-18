@@ -66,7 +66,6 @@ export class Linker {
   private absent = new Set<string>();
   /** Files every answer depends on: the ones import resolution reads. */
   private readonly shared: string[];
-  /** The claimed files: a set's inputs are among them. */
   private readonly files: Set<string>;
 
   readonly root: string;
