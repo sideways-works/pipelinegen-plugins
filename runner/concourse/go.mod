@@ -1,4 +1,4 @@
-module github.com/sideways-works/pipelinegen-runner-concourse
+module github.com/sideways-works/pipelinegen-plugins/runner/concourse
 
 go 1.27.1
 

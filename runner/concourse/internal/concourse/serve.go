@@ -9,7 +9,7 @@ import (
 
 	"github.com/sideways-works/pipelinegen/plugin"
 
-	"github.com/sideways-works/pipelinegen-runner-concourse/internal/runstep"
+	"github.com/sideways-works/pipelinegen-plugins/runner/concourse/internal/runstep"
 )
 
 // Version is the plugin's version, set by the release build.

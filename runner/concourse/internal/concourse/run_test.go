@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sideways-works/pipelinegen-runner-concourse/internal/runstep"
+	"github.com/sideways-works/pipelinegen-plugins/runner/concourse/internal/runstep"
 )
 
 // errExit is a step that exited other than 0.

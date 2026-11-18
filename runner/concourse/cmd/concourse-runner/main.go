@@ -4,7 +4,7 @@ package main
 import (
 	"os"
 
-	"github.com/sideways-works/pipelinegen-runner-concourse/internal/concourse"
+	"github.com/sideways-works/pipelinegen-plugins/runner/concourse/internal/concourse"
 )
 
 func main() {
