@@ -13,9 +13,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sideways-works/pipelinegen-correlator-go/collect"
-	"github.com/sideways-works/pipelinegen-correlator-go/graph"
-	"github.com/sideways-works/pipelinegen-correlator-go/observe"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/go/collect"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/go/graph"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/go/observe"
 	"github.com/sideways-works/pipelinegen-sbom-go/decls"
 	"github.com/sideways-works/pipelinegen-sbom-go/detect"
 	"github.com/sideways-works/pipelinegen/plugin"

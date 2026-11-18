@@ -2,4 +2,4 @@
 
 package main
 
-import _ "github.com/sideways-works/pipelinegen-correlator-go/cover"
+import _ "github.com/sideways-works/pipelinegen-plugins/correlator/go/cover"

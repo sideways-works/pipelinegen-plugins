@@ -20,7 +20,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/sideways-works/pipelinegen-correlator-go/graph"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/go/graph"
 	"github.com/sideways-works/pipelinegen-sbom-go/decls"
 	"github.com/sideways-works/pipelinegen-sbom-go/goid"
 )

@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/sideways-works/pipelinegen-correlator-go/internal/cli"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/go/internal/cli"
 )
 
 var Version = "dev"

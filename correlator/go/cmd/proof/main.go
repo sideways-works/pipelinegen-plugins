@@ -15,7 +15,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sideways-works/pipelinegen-correlator-go/internal/proof"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/go/internal/proof"
 )
 
 func main() {

@@ -1,4 +1,4 @@
-module github.com/sideways-works/pipelinegen-correlator-go
+module github.com/sideways-works/pipelinegen-plugins/correlator/go
 
 go 1.27.1
 

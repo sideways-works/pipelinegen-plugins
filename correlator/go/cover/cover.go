@@ -8,7 +8,7 @@
 //
 //	package main
 //
-//	import _ "github.com/sideways-works/pipelinegen-correlator-go/cover"
+//	import _ "github.com/sideways-works/pipelinegen-plugins/correlator/go/cover"
 //
 // and is built with `-tags pipelinegen_cover -cover -covermode=atomic`.
 // When PIPELINEGEN_COVER_DIR names a directory, the binary talks through

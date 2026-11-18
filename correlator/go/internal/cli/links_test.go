@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sideways-works/pipelinegen-correlator-go/graph"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/go/graph"
 	"github.com/sideways-works/pipelinegen/plugin"
 )
 

@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sideways-works/pipelinegen-correlator-go/observe"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/go/observe"
 )
 
 func serverDir(t *testing.T) string {
