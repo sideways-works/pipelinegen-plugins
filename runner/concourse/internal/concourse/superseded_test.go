@@ -86,7 +86,7 @@ func TestASupersededCommitRunsNothing(t *testing.T) {
 
 	env := cleanEnv(t, "PIPELINEGEN_RUN=full", "PIPELINEGEN_TRIGGER=trigger", "PIPELINEGEN_JOB_URL=https://ci/builds/1")
 
-	out, code := runStep(t, work, env, "plan")
+	out, code := taskStep(t, work, env, "plan")
 	if code != 0 || !strings.Contains(string(out), "superseded by "+tip[:12]) {
 		t.Fatalf("the plan step: exit %d\n%s", code, out)
 	}

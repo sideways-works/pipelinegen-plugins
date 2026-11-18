@@ -122,11 +122,9 @@ func TestTheScriptsTakeTheirPurposesToken(t *testing.T) {
 		t.Skip("no git")
 	}
 
-	begin, end := strings.Index(bootstrapScript, "# git-auth:begin\n"), strings.Index(bootstrapScript, "# git-auth:end\n")
-	script := bootstrapScript[begin:end] + "printf 'protocol=https\\nhost=github.com\\n\\n' | git credential fill\n"
-
-	cmd := exec.CommandContext(t.Context(), "sh", "-ec", script)
-	cmd.Env = cleanEnv(t, "GITHUB_TOKEN=one-token-value", "PIPELINEGEN_READ_TOKEN=read-token-value")
+	cmd := exec.CommandContext(t.Context(), "git", "credential", "fill")
+	cmd.Env = append(cleanEnv(t, "GITHUB_TOKEN=one-token-value", "PIPELINEGEN_READ_TOKEN=read-token-value"), bootstrapGitEnv(t)...)
+	cmd.Stdin = strings.NewReader("protocol=https\nhost=github.com\n\n")
 
 	if out, err := cmd.Output(); err != nil || !strings.Contains(string(out), "\npassword=read-token-value\n") {
 		t.Errorf("git answered without the read token: %v (output withheld)", err)
@@ -144,7 +142,7 @@ func TestTheScriptsTakeTheirPurposesToken(t *testing.T) {
 	work := t.TempDir()
 	writeTestFile(t, filepath.Join(work, "trigger", ".git", "resource", "version.json"), `{"pr":"3","commit":"abc123"}`)
 
-	out, code := runStep(t, work, cleanEnv(t, "GITHUB_TOKEN=one-token-value", "PIPELINEGEN_REPORT_TOKEN=report-token-value",
+	out, code := taskStep(t, work, cleanEnv(t, "GITHUB_TOKEN=one-token-value", "PIPELINEGEN_REPORT_TOKEN=report-token-value",
 		"PIPELINEGEN_GITHUB_API="+srv.URL, "REPOSITORY=o/r", "SUITE_CONTEXT=p/pr/e2e", "RUN_CONTEXT=p/pr", "TARGET_URL=https://ci/x"), "report-error")
 	if code != 0 || strings.Contains(string(out), "token-value") {
 		t.Fatalf("report-error: exit %d\n%s", code, out)

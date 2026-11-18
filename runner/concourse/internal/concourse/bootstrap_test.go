@@ -49,7 +49,7 @@ func releases(t *testing.T, body []byte) *httptest.Server {
 func runBootstrap(t *testing.T, work, sum string, srv *httptest.Server) ([]byte, error) {
 	t.Helper()
 
-	out, code := runStep(t, work, pinsEnv(t, sum, srv), "tools")
+	out, code := taskStep(t, work, pinsEnv(t, sum, srv), "tools")
 	if code != 0 {
 		return out, fmt.Errorf("bootstrap: %w %d", errExit, code)
 	}
@@ -108,7 +108,7 @@ func TestTheEndFetchesTheToolsTheBuildNeverHad(t *testing.T) {
 			sum = sha256.Sum256([]byte("another tool"))
 		}
 
-		out, code := runStep(t, work, pinsEnv(t, hex.EncodeToString(sum[:]), releases(t, tool)), "end")
+		out, code := taskStep(t, work, pinsEnv(t, hex.EncodeToString(sum[:]), releases(t, tool)), "end")
 		if code != 0 {
 			t.Errorf("%s: exit %d\n%s", c.name, code, out)
 		}
@@ -274,7 +274,7 @@ func TestBootstrapTakesANodePluginsScript(t *testing.T) {
 	run := func(plugins string) (string, []byte, error) {
 		work := t.TempDir()
 
-		out, code := runStep(t, work, cleanEnv(t, "GITHUB_TOKEN=x", "PIPELINEGEN_GITHUB_API="+srv.URL, "PIPELINEGEN_BAZELISK_BASE="+srv.URL+"/bazelisk",
+		out, code := taskStep(t, work, cleanEnv(t, "GITHUB_TOKEN=x", "PIPELINEGEN_GITHUB_API="+srv.URL, "PIPELINEGEN_BAZELISK_BASE="+srv.URL+"/bazelisk",
 			"PIPELINEGEN_TOOL_REPOSITORY=o/pipelinegen", "PIPELINEGEN_TOOL_VERSION=v1", "PIPELINEGEN_TOOL_SHA256="+hex.EncodeToString(bsum[:]),
 			"PIPELINEGEN_TOOL_COMMIT=", "PIPELINEGEN_BAZELISK_VERSION=v1.27.0", "PIPELINEGEN_BAZELISK_SHA256="+hex.EncodeToString(bsum[:]),
 			"PIPELINEGEN_PLUGINS="+plugins, "PIPELINEGEN_PRIVATE="), "tools")

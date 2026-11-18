@@ -163,7 +163,7 @@ func TestEveryToolTaskInstallsFirst(t *testing.T) {
 			run := asMap(cfg["run"])
 			args := fmt.Sprint(run["args"])
 
-			if run["path"] != "sh" || !strings.Contains(args, "tools/pipelinegen") {
+			if run["path"] != "sh" || !runsTheTool(run) {
 				return
 			}
 

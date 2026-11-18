@@ -44,10 +44,10 @@ func paramIn(t *testing.T, out, name string) trustedSeen {
 				at := fmt.Sprintf("%s/%v", where, task)
 
 				if cfg, ok := x["config"].(map[string]any); ok {
-					run := fmt.Sprint(cfg["run"])
+					run, _ := cfg["run"].(map[string]any)       //nolint:errcheck // none: runs nothing
 					params, _ := cfg["params"].(map[string]any) //nolint:errcheck // none: nothing given
 
-					if strings.Contains(run, "tools/pipelinegen") {
+					if runsTheTool(run) {
 						seen.tool[at] = fmt.Sprint(params[name])
 					}
 				} else if _, ok := x["file"]; ok {

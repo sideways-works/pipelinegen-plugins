@@ -30,12 +30,7 @@ func TestNothingPrintsASecret(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		sources := map[string]string{
-			"the pipeline": text(t, p), "bootstrap.sh": bootstrapScript,
-			"fallback.sh": fallbackScript, "stale.sh": staleScript, "plan.sh": planScript,
-			"planlib.sh": planLib, "sweep.sh": sweepScript, "sweep-plan.sh": sweepPlan, "sweep-write.sh": sweepWrite,
-			"proposed-plan.sh": proposedPlan, "proposed-write.sh": proposedWrite,
-		}
+		sources := map[string]string{"the pipeline": text(t, p), "bootstrap.sh": bootstrapScript}
 
 		for name, src := range sources {
 			for what, re := range leaks {
@@ -135,7 +130,7 @@ func TestStaleCheck(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		out, code := runStep(t, work, append(os.Environ(), staleHash+"="+want, "PIPELINEGEN_PIPELINE=fixture", "GITHUB_TOKEN=secret-value"), "stale")
+		out, code := taskStep(t, work, append(os.Environ(), staleHash+"="+want, "PIPELINEGEN_PIPELINE=fixture", "GITHUB_TOKEN=secret-value"), "stale")
 		if (code == 0) != c.ok {
 			t.Errorf("%s: exit %d\n%s", c.name, code, out)
 		}

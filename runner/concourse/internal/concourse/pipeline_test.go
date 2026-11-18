@@ -340,17 +340,6 @@ func TestEveryJobTriggersOnce(t *testing.T) {
 	}
 }
 
-func TestFallbackScriptParses(t *testing.T) {
-	file := filepath.Join(t.TempDir(), "fallback.sh")
-	if err := os.WriteFile(file, []byte(fallbackScript), 0o600); err != nil {
-		t.Fatal(err)
-	}
-
-	if out, err := exec.CommandContext(t.Context(), "sh", "-n", file).CombinedOutput(); err != nil {
-		t.Fatalf("sh -n: %v\n%s", err, out)
-	}
-}
-
 func TestBootstrapPlacesPluginsFromTheCache(t *testing.T) {
 	work := t.TempDir()
 
@@ -414,10 +403,7 @@ func TestEveryPipelinegenStepFindsBazel(t *testing.T) {
 		switch x := v.(type) {
 		case M:
 			if cfg, ok := x["config"].(M); ok {
-				run := asMap(cfg["run"])
-				text := fmt.Sprint(run["path"], run["args"])
-
-				if strings.HasPrefix(text, "tools/pipelinegen") || strings.Contains(text, "tools/pipelinegen ") {
+				if runsTheTool(asMap(cfg["run"])) {
 					steps++
 
 					if asMap(cfg["params"])["PIPELINEGEN_BAZELISK"] != "tools/bazelisk" {

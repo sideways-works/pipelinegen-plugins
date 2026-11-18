@@ -24,13 +24,13 @@ func TestAContinuousBuildDecidesBeforeItsPrepare(t *testing.T) {
 	}
 
 	plan := text(t, M{"jobs": []any{jobByName(t, p, "plan-full")}})
-	for _, want := range []string{"plan --decide --run", "PIPELINEGEN_LIMIT=limits.plan=60", "+ 3600 ))", "PIPELINEGEN_LIMIT: limits.plan=90"} {
+	for _, want := range []string{"- continuous-plan\n", "- --plan-minutes\n", "- \"60\"\n", "PIPELINEGEN_LIMIT: limits.plan=90"} {
 		if !strings.Contains(plan, want) {
 			t.Errorf("plan-full lacks %q", want)
 		}
 	}
 
-	if other := text(t, M{"jobs": []any{jobByName(t, p, "plan-main")}}); strings.Contains(other, "--decide") {
+	if other := text(t, M{"jobs": []any{jobByName(t, p, "plan-main")}}); strings.Contains(other, "continuous-plan") {
 		t.Error("a branch run's planning task decides apart")
 	}
 

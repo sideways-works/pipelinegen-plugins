@@ -10,54 +10,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"sync"
 	"testing"
-
-	"github.com/sideways-works/pipelinegen/plugin"
 )
-
-func programShell(t *testing.T) string {
-	t.Helper()
-
-	kinds := regexp.MustCompile(`(?m)^kinds="[^"]*"$`).FindString(bootstrapScript)
-	fn := regexp.MustCompile(`(?ms)^program\(\) \{\n.*?^\}$`).FindString(bootstrapScript)
-
-	if kinds == "" || fn == "" {
-		t.Fatal("the bootstrap has no kinds list or program function")
-	}
-
-	return kinds + "\n" + fn + "\n"
-}
-
-func TestBootstrapKnowsThePluginKinds(t *testing.T) {
-	want := `kinds="` + strings.Join(plugin.Kinds, " ") + `"`
-	if got, _, _ := strings.Cut(programShell(t), "\n"); got != want {
-		t.Errorf("the bootstrap: %s, want %s", got, want)
-	}
-}
-
-func TestBootstrapNamesTheProgramAsTheToolDoes(t *testing.T) {
-	fns := programShell(t)
-
-	repos := []string{
-		"o/pipelinegen", "o/go-sbom", "o/concourse-runner", "acme/whatever", "acme/pipelinegen-whatever",
-		"o/pipelinegen-go-sbom", "o/pipelinegen-sbom", "o/pipelinegen-driver-", "o/pipelinegen-", "o/pipelinegen-sboms-go",
-		"o/pipelinegen-correlator-oapi-codegen", "o/pipelinegen-runner-concourse-runner", "widget",
-	}
-
-	for _, kind := range plugin.Kinds {
-		repos = append(repos, "o/pipelinegen-"+kind+"-go", "o/pipelinegen-"+kind+"-a-b-c", "o/pipelinegen-"+kind)
-	}
-
-	for _, repo := range repos {
-		out, err := exec.CommandContext(t.Context(), "sh", "-c", fns+`program "$1"`, "program", repo).CombinedOutput()
-		if got, want := strings.TrimSpace(string(out)), plugin.Program(repo); err != nil || got != want {
-			t.Errorf("program %s: %q (%v), want %q", repo, got, err, want)
-		}
-	}
-}
 
 // o/pipelinegen-sbom-go is fetched into the entry its short name kept
 // (go-sbom-release-v1), so switching spellings fetches nothing again.

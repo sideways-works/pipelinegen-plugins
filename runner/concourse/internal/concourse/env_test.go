@@ -88,7 +88,7 @@ func scripts(p M) []string {
 
 	walkTasks(p, func(task M) {
 		run := asMap(asMap(task["config"])["run"])
-		if args := asSlice(run["args"]); run["path"] == "sh" && len(args) == 2 {
+		if args := asSlice(run["args"]); run["path"] == "sh" && len(args) >= 2 {
 			out = append(out, fmt.Sprint(args[1]))
 		}
 	})
@@ -111,7 +111,7 @@ func TestNoScriptExpandsASecret(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	all := append(scripts(p), bootstrapScript, planLib, planScript, proposedPlan, proposedWrite, sweepScript, sweepPlan, sweepWrite, staleScript, fallbackScript)
+	all := append(scripts(p), bootstrapScript)
 	if len(scripts(p)) < 4 {
 		t.Fatalf("only %d scripts in the pipeline", len(scripts(p)))
 	}
@@ -279,7 +279,7 @@ func checkOwnStep(t *testing.T, job string, task M, params M, declared []string,
 	t.Helper()
 
 	run := asMap(asMap(task["config"])["run"])
-	ownCall := run["path"] == "tools/pipelinegen" || strings.Contains(fmt.Sprint(run["args"]), "tools/pipelinegen ") || task["task"] == "report-error"
+	ownCall := runsTheTool(run)
 
 	if ownCall && params["GITHUB_TOKEN"] != "((github_token))" {
 		t.Errorf("%s %s: pipelinegen's step without the pipeline's token", job, task["task"])
@@ -453,24 +453,29 @@ func readEnv(t *testing.T, file string) map[string]string {
 	return out
 }
 
+// bootstrapGitEnv is the environment the bootstrap gives git to fetch a
+// runner built from a commit.
+func bootstrapGitEnv(t *testing.T) []string {
+	t.Helper()
+
+	helper := regexp.MustCompile(`GIT_CONFIG_VALUE_0='([^']*)'`).FindStringSubmatch(bootstrapScript)
+	if helper == nil || !strings.Contains(bootstrapScript, "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=credential.https://github.com.helper") {
+		t.Fatal("the bootstrap gives git no credential helper")
+	}
+
+	return []string{"GIT_CONFIG_COUNT=1", "GIT_CONFIG_KEY_0=credential.https://github.com.helper", "GIT_CONFIG_VALUE_0=" + helper[1]}
+}
+
 // The answer is compared here and never printed.
 func TestBootstrapGitAsksTheVariable(t *testing.T) {
 	if _, err := exec.LookPath("git"); err != nil {
 		t.Skip("no git")
 	}
 
-	begin, end := strings.Index(bootstrapScript, "# git-auth:begin\n"), strings.Index(bootstrapScript, "# git-auth:end\n")
-	if begin < 0 || end < begin {
-		t.Fatal("the bootstrap's git lines aren't marked")
-	}
-
-	lines := bootstrapScript[begin:end]
-
 	for host, want := range map[string]bool{"github.com": true, "example.com": false} {
-		script := lines + "printf 'protocol=https\\nhost=" + host + "\\n\\n' | git credential fill\n"
-
-		cmd := exec.CommandContext(t.Context(), "sh", "-ec", script)
-		cmd.Env = cleanEnv(t, "GITHUB_TOKEN=fake-token-value")
+		cmd := exec.CommandContext(t.Context(), "git", "credential", "fill")
+		cmd.Env = append(cleanEnv(t, "GITHUB_TOKEN=fake-token-value"), bootstrapGitEnv(t)...)
+		cmd.Stdin = strings.NewReader("protocol=https\nhost=" + host + "\n\n")
 
 		out, err := cmd.Output()
 
@@ -538,7 +543,7 @@ func TestCurlTakesItsHeaderFromStdin(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	out, code := runStep(t, work, cleanEnv(t, "GITHUB_TOKEN=secret-value", "PIPELINEGEN_GITHUB_API="+srv.URL, "REPOSITORY=o/r",
+	out, code := taskStep(t, work, cleanEnv(t, "GITHUB_TOKEN=secret-value", "PIPELINEGEN_GITHUB_API="+srv.URL, "REPOSITORY=o/r",
 		"SUITE_CONTEXT=p/pr/e2e", "RUN_CONTEXT=p/pr", "TARGET_URL=https://ci.example/jobs/x"), "report-error")
 	if code != 0 || strings.Contains(string(out), "secret-value") {
 		t.Fatalf("report-error: exit %d\n%s", code, out)
@@ -555,7 +560,7 @@ func TestCurlTakesItsHeaderFromStdin(t *testing.T) {
 
 	hex := hex.EncodeToString(sum[:])
 
-	out, code = runStep(t, work, cleanEnv(t, "GITHUB_TOKEN=secret-value", "PIPELINEGEN_GITHUB_API="+srv.URL,
+	out, code = taskStep(t, work, cleanEnv(t, "GITHUB_TOKEN=secret-value", "PIPELINEGEN_GITHUB_API="+srv.URL,
 		"PIPELINEGEN_TOOL_REPOSITORY=o/pipelinegen", "PIPELINEGEN_TOOL_VERSION=v1", "PIPELINEGEN_TOOL_SHA256="+hex,
 		"PIPELINEGEN_TOOL_COMMIT=", "PIPELINEGEN_BAZELISK_VERSION=v1.27.0", "PIPELINEGEN_BAZELISK_SHA256="+hex,
 		"PIPELINEGEN_PLUGINS=go o/go-sbom v1 "+hex+" -\n", "PIPELINEGEN_PRIVATE="), "tools")

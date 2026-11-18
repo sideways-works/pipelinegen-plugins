@@ -25,70 +25,27 @@ import (
 // M is one mapping of a pipeline's YAML.
 type M = map[string]any
 
+// bootstrapScript is the one script a task runs: it places the runner the
+// pipeline pins and runs the task's step with it, `concourse-runner step
+// <name>`, which does the step's work in Go.
+//
 //go:embed bootstrap.sh
 var bootstrapScript string
 
-//go:embed plan.sh
-var planScript string
-
-//go:embed continuous-plan.sh
-var continuousPlanScript string
-
-func continuousPlanFor(planMinutes int) string {
-	return strings.NewReplacer(
-		"#PLAN_SECONDS#", strconv.Itoa(planMinutes*60),
-		"#PLAN_LIMIT#", fmt.Sprintf("%s=%d", planKey, planMinutes),
-	).Replace(continuousPlanScript)
-}
-
-//go:embed planlib.sh
-var planLib string
-
-// proposedPlan runs the change's code and writes nothing; proposedWrite
-// runs none of it and writes.
-//
-//go:embed proposed-plan.sh
-var proposedPlan string
-
-//go:embed proposed-write.sh
-var proposedWrite string
-
-// proposedBegin records that planning began, so the sweep leaves the head
-// to this build.
-//
-//go:embed proposed-begin.sh
-var proposedBegin string
-
-// The sweep is split the same way: only sweepPlan runs the changes' code.
-//
-//go:embed sweep.sh
-var sweepScript string
-
-//go:embed sweep-plan.sh
-var sweepPlan string
-
-//go:embed sweep-write.sh
-var sweepWrite string
-
-//go:embed stale.sh
-var staleScript string
-
 const staleHash = "PIPELINEGEN_PIPELINE_SHA256"
 
-//go:embed start.sh
-var startScript string
+// runStep is a task's run: the bootstrap, then the runner's step with args.
+// The bootstrap's $0 names it in the shell's own messages.
+func runStep(args ...string) M {
+	all := make([]any, 0, 3+len(args))
+	all = append(all, "-ec", bootstrapScript, "bootstrap")
 
-//go:embed end.sh
-var endScript string
+	for _, a := range args {
+		all = append(all, a)
+	}
 
-// endTaskScript fetches the tools as the start task does when the build broke
-// before that task had them, so the suite still ends.
-func endTaskScript() string {
-	return strings.Replace(endScript, "#BOOTSTRAP#\n", bootstrapScript, 1)
+	return M{"path": "sh", "args": all}
 }
-
-//go:embed fallback.sh
-var fallbackScript string
 
 // defaultPullRequests is the maintained fork of telia-oss/github-pr-resource.
 var defaultPullRequests = M{"repository": "cfcommunity/github-pr-resource", "tag": "0.26.0"}
@@ -517,22 +474,36 @@ func (g *gen) bootstrapEnv() M {
 	}
 
 	maps.Copy(env, g.tokens(plugin.PurposeRead))
+	maps.Copy(env, g.runnerEnv())
 
 	return env
 }
 
-// withBootstrap runs the bootstrap in a subshell, so its shell settings stay
-// there, and without the planner's params and secrets, which belong to the
-// prepare command alone.
-func withBootstrap(script string) string {
-	return "set -eu\n(\n" +
-		"for name in ${PIPELINEGEN_PLANNER_ENV:-}; do\n  [ \"$name\" = GITHUB_TOKEN ] || unset \"$name\"\ndone\n" +
-		bootstrapScript + ")\n" + script
+// defaultRunner names the runner when the spec pins none, as a spec written
+// by hand may not; the bootstrap then says the pipeline pins none.
+const defaultRunner = "concourse-runner"
+
+// runnerEnv is the bootstrap's pin of the runner, which the config's
+// plugins name, as the tool fetches it.
+func (g *gen) runnerEnv() M {
+	r := g.runnerTool()
+
+	name, program := r.Name, plugin.Program(r.Repository)
+	if name == "" {
+		name, program = defaultRunner, defaultRunner
+	}
+
+	return M{
+		"PIPELINEGEN_RUNNER": name, "PIPELINEGEN_RUNNER_PROGRAM": program, "PIPELINEGEN_RUNNER_REPOSITORY": r.Repository,
+		"PIPELINEGEN_RUNNER_VERSION": r.Version, "PIPELINEGEN_RUNNER_SHA256": r.SHA256, "PIPELINEGEN_RUNNER_COMMIT": r.Commit,
+	}
 }
+
+func (g *gen) runnerTool() plugin.SpecTool { return tool(g.spec, plugin.KindRunner) }
 
 // toolTask keeps a job's bookkeeping in one container, so it waits for a
 // worker once. It holds the pipeline's token and runs no test.
-func (g *gen) toolTask(name string, tags []string, inputs []M, outputs []string, cacheDirs []string, env M, script string) M {
+func (g *gen) toolTask(name string, tags []string, inputs []M, outputs []string, cacheDirs []string, env M, step ...string) M {
 	params := g.bootstrapEnv()
 	maps.Copy(params, env)
 	params["PIPELINEGEN_BAZELISK"] = "tools/bazelisk"
@@ -547,7 +518,7 @@ func (g *gen) toolTask(name string, tags []string, inputs []M, outputs []string,
 		"inputs":   inputs,
 		"caches":   caches(append([]string{"cache"}, cacheDirs...)...),
 		"params":   params,
-		"run":      M{"path": "sh", "args": []any{"-ec", withBootstrap(script)}},
+		"run":      runStep(step...),
 	}
 
 	if !slices.Contains(outputs, "tools") {
@@ -698,8 +669,7 @@ func (g *gen) pipelineJob() M {
 	// gate, so an older pipeline is never set over a newer one.
 	if g.ci.SelfSet {
 		plan = append(plan,
-			limited(g.toolTask("pipeline", tags, names("repo"), []string{"pipeline"}, nil, g.concourseURL(),
-				"tools/pipelinegen pipeline --root repo --gate pipeline --out pipeline/pipeline.yml\n"), stepsKey, g.stepMinutes()),
+			limited(g.toolTask("pipeline", tags, names("repo"), []string{"pipeline"}, nil, g.concourseURL(), "pipeline"), stepsKey, g.stepMinutes()),
 			M{"load_var": "newest", "file": "pipeline/gate.json"},
 			M{"across": []any{M{"var": "newest_config", "values": "((.:newest))"}}, "do": []any{
 				timeout(M{"set_pipeline": "self", "file": "pipeline/pipeline.yml"}, g.stepMinutes()),
@@ -712,7 +682,7 @@ func (g *gen) pipelineJob() M {
 	env := M{staleHash: "", "PIPELINEGEN_PIPELINE": g.spec.Pipeline}
 	maps.Copy(env, g.concourseURL())
 
-	stale := limited(g.toolTask("stale", tags, names("repo"), []string{"newest"}, nil, env, staleScript), stepsKey, g.stepMinutes())
+	stale := limited(g.toolTask("stale", tags, names("repo"), []string{"newest"}, nil, env, "stale"), stepsKey, g.stepMinutes())
 	g.staleParams = asParams(stale)
 	plan = append(plan, stale)
 
@@ -753,14 +723,14 @@ func (g *gen) planJob(run string) M {
 	gets := g.gets(tags, g.trigger(run, tags, nil), g.planMinutes())
 	env := g.plannerEnv()
 
-	script, outputs := planScript, []string(nil)
+	step, outputs := []string{"plan"}, []string(nil)
 
 	continuous := g.runs[run].Trigger.Kind == triggerContinuous
 	if continuous {
-		script, outputs = continuousPlanFor(g.planMinutes()), []string{"handoff"}
+		step, outputs = []string{"continuous-plan", "--plan-minutes", strconv.Itoa(g.planMinutes())}, []string{"handoff"}
 	}
 
-	task := limited(g.toolTask("plan", tags, names("trigger"), outputs, []string{"plan-cache"}, g.env(run, "", env), planLib+script),
+	task := limited(g.toolTask("plan", tags, names("trigger"), outputs, []string{"plan-cache"}, g.env(run, "", env), step...),
 		planKey, g.planMinutes()+g.runs[run].WaitMinutes)
 
 	// The whole plan task runs in the prepare image, since a separate task
@@ -858,11 +828,11 @@ func (g *gen) proposedPlanJob(run string) M {
 	maps.Copy(beginEnv, g.tokens(plugin.PurposeRead, plugin.PurposeStore))
 
 	begin := limited(g.toolTask("begin", tags, names("trigger"), nil, []string{"write-cache"},
-		beginEnv, proposedBegin), stepsKey, g.stepMinutes())
+		beginEnv, "begin"), stepsKey, g.stepMinutes())
 	plan := limited(g.toolTask("plan", tags, names("trigger", "base"), []string{"plan"}, []string{"plan-cache"},
-		g.untrusted(run), planLib+proposedPlan), planKey, g.planMinutes())
+		g.untrusted(run), "proposed-plan"), planKey, g.planMinutes())
 	write := limited(g.toolTask("write", tags, names("trigger", "plan"), []string{"handoff"}, []string{"write-cache"},
-		g.trusted(run), planLib+proposedWrite), planKey, g.planMinutes())
+		g.trusted(run), "proposed-write"), planKey, g.planMinutes())
 
 	gets := g.gets(tags, inputs, g.planMinutes())
 
@@ -912,11 +882,11 @@ func (g *gen) sweepJob(run string) M {
 	gets := g.gets(tags, inputs, g.planMinutes())
 
 	list := limited(g.toolTask("sweep", tags, names("config"), []string{"sweep", "gate"}, []string{"write-cache"},
-		g.trusted(run), planLib+sweepScript), planKey, g.planMinutes())
+		g.trusted(run), "sweep"), planKey, g.planMinutes())
 	plan := limited(g.toolTask("plan", tags, names("sweep", "base"), []string{"plans"}, []string{"plan-cache"},
-		g.untrusted(run), planLib+sweepPlan), planKey, g.planMinutes())
+		g.untrusted(run), "sweep-plan"), planKey, g.planMinutes())
 	write := limited(g.toolTask("write", tags, names("sweep", "plans"), []string{"handoffs"}, []string{"write-cache"},
-		g.trusted(run), g.sweepLib(run)+sweepWrite), planKey, g.planMinutes())
+		g.trusted(run), g.sweepWrite(run)...), planKey, g.planMinutes())
 
 	if img := g.ci.Planner.PrepareImage; img != "" {
 		gets = timeout(M{"in_parallel": append(inputs, withTags(M{"get": img}, tags))}, g.planMinutes())
@@ -1032,7 +1002,7 @@ func (g *gen) suiteJob(run, suite string) (M, error) {
 
 	plan = append(plan,
 		limited(g.toolTask("start", tags, names("trigger"), []string{"tools", "source", "gate", "batches"}, nil,
-			g.env(run, suite, nil), startScript), stepsKey, g.stepMinutes()),
+			g.env(run, suite, nil), "start"), stepsKey, g.stepMinutes()),
 		M{"load_var": "gate", "file": "gate/gate.json"},
 		M{"load_var": "batches", "file": "batches/batches.json"},
 		// Without a plan for this suite the gate is empty and nothing runs.
@@ -1098,7 +1068,7 @@ func (g *gen) endTask(run, suite string) M {
 		"platform": "linux",
 		"inputs":   inputs,
 		"params":   env,
-		"run":      M{"path": "sh", "args": []any{"-ec", endTaskScript()}},
+		"run":      runStep("end"),
 	}}, g.bookkeepingTags(run, suite)), stepsKey, g.stepMinutes()), run, suite)
 }
 
@@ -1171,8 +1141,9 @@ func asParams(task M) M {
 }
 
 // fallback reports through pipelinegen when the build got its tools and
-// trigger, so the run's round can end; otherwise it posts the statuses as
-// errored with curl and awk. It holds no more than the end task.
+// trigger, so the run's round can end; otherwise the runner posts the
+// statuses as errored. It holds no more than the end task, and the
+// runner's pin, as it may run before any task fetched the runner.
 func (g *gen) fallback(run, suite string, tags []string) M {
 	env := g.env(run, suite, M{
 		"PIPELINEGEN_BAZELISK": "tools/bazelisk",
@@ -1182,6 +1153,7 @@ func (g *gen) fallback(run, suite string, tags []string) M {
 		"RUN_CONTEXT":          g.spec.GitHub.StatusPrefix + "/" + run,
 		"TARGET_URL":           g.jobURL(SuiteJob(run, suite)),
 	})
+	maps.Copy(env, g.runnerEnv())
 	g.forTool(env)
 
 	return withTags(M{"task": "report-error", "config": M{
@@ -1189,7 +1161,7 @@ func (g *gen) fallback(run, suite string, tags []string) M {
 		"image_resource": M{"type": "registry-image", "source": g.ci.Planner.Image, "version": M{"digest": g.ci.Planner.Digest}},
 		"inputs":         []M{{"name": "tools", "optional": true}, {"name": "trigger", "optional": true}, {"name": "batches", "optional": true}},
 		"params":         env,
-		"run":            M{"path": "sh", "args": []any{"-ec", fallbackScript}},
+		"run":            runStep("report-error"),
 	}}, tags)
 }
 
@@ -1419,7 +1391,7 @@ func limited(step M, key string, minutes int) M {
 	}
 
 	if run, ok := cfg["run"].(M); ok && run["path"] == "sh" {
-		if args, ok := run["args"].([]any); ok && len(args) == 2 {
+		if args, ok := run["args"].([]any); ok && len(args) >= 2 {
 			if script, ok := args[1].(string); ok {
 				args[1] = fmt.Sprintf("export %s=$(( $(date +%%s) + %d ))\n", plugin.EnvDeadline, minutes*60) + script
 			}
@@ -1643,17 +1615,12 @@ func handOffTrigger(tags []string) M {
 	}}, tags)
 }
 
-const connectorHandOff = `
-handoff() {
-  mkdir -p "$2"
-  cp "$1/run.json" "$2/run.json"
-}
-`
-
-func (g *gen) sweepLib(run string) string {
+// sweepWrite hands on a connector's change as its run.json, the mock
+// resource's version.
+func (g *gen) sweepWrite(run string) []string {
 	if g.byConnector(run) {
-		return planLib + connectorHandOff
+		return []string{"sweep-write", "--connector"}
 	}
 
-	return planLib
+	return []string{"sweep-write"}
 }

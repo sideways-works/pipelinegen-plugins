@@ -402,7 +402,7 @@ func (g *gen) install(task M, suite string) {
 	switch {
 	case path.Base(p) == "pipelinegen":
 		script = ""
-	case p == "sh" && len(args) > 1 && strings.Contains(fmt.Sprint(args[1]), "tools/pipelinegen"):
+	case p == "sh" && len(args) > 1 && strings.Contains(fmt.Sprint(args[1]), bootstrapScript):
 		script = fmt.Sprint(args[1])
 	default:
 		return

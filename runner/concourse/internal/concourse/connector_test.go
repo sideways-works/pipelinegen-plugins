@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -66,7 +67,7 @@ func TestAConnectorsRunIsSweptPlannedAndHandedOn(t *testing.T) {
 
 	sweep := text(t, findJob(p, "sweep-pr"))
 	if strings.Contains(sweep, "get: planned") || !strings.Contains(sweep, "file: handoffs/((.:handoff))/run.json") ||
-		!strings.Contains(sweep, `cp "$1/run.json" "$2/run.json"`) {
+		!regexp.MustCompile(`- sweep-write\n\s*- --connector\n`).MatchString(sweep) {
 		t.Errorf("the sweep job:\n%s", sweep)
 	}
 

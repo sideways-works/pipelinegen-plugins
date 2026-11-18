@@ -138,7 +138,7 @@ func TestASweepPerPullRequestRun(t *testing.T) {
 	plan := asSlice(job["plan"])
 	list := asMap(plan[1])
 
-	if list["task"] != "sweep" || !strings.Contains(fmt.Sprint(asMap(list["config"])["run"]), "tools/pipelinegen unplanned") {
+	if list["task"] != "sweep" || fmt.Sprint(stepOf(asMap(asMap(list["config"])["run"]))) != "[sweep]" {
 		t.Errorf("sweep: first task %v", list["task"])
 	}
 

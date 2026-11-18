@@ -104,7 +104,7 @@ func TestAStepEndsWithTheExitOfWhatFailed(t *testing.T) {
 				}
 			}
 
-			out, code := runStep(t, work, cleanEnv(t, append([]string{"PIPELINEGEN_RUN=r"}, c.env...)...), c.step, c.args...)
+			out, code := taskStep(t, work, cleanEnv(t, append([]string{"PIPELINEGEN_RUN=r"}, c.env...)...), c.step, c.args...)
 			if code != c.code {
 				t.Errorf("exit %d, want %d\n%s", code, c.code, out)
 			}
@@ -263,7 +263,7 @@ func TestTheStaleChecksWords(t *testing.T) {
 			work := t.TempDir()
 			writeFakeTool(t, work, "#!/bin/sh\n"+c.tool)
 
-			out, code := runStep(t, work, cleanEnv(t, staleHash+"="+sha256Hex(c.hash), "PIPELINEGEN_PIPELINE=fixture"), "stale")
+			out, code := taskStep(t, work, cleanEnv(t, staleHash+"="+sha256Hex(c.hash), "PIPELINEGEN_PIPELINE=fixture"), "stale")
 			if code != c.code || string(out) != c.out {
 				t.Errorf("exit %d, want %d; said\n%q\nwant\n%q", code, c.code, out, c.out)
 			}
@@ -293,7 +293,7 @@ func TestTheEndSaysWhyItEndsNothing(t *testing.T) {
 				}
 			}
 
-			out, code := runStep(t, work, cleanEnv(t), "end")
+			out, code := taskStep(t, work, cleanEnv(t), "end")
 			if code != c.code || string(out) != c.out {
 				t.Errorf("exit %d, want %d; said %q, want %q", code, c.code, out, c.out)
 			}
@@ -305,7 +305,7 @@ func TestTheEndSaysWhyItEndsNothing(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	out, code := runStep(t, work, cleanEnv(t, "PIPELINEGEN_TOOL_REPOSITORY=o/pipelinegen", "PIPELINEGEN_TOOL_COMMIT=",
+	out, code := taskStep(t, work, cleanEnv(t, "PIPELINEGEN_TOOL_REPOSITORY=o/pipelinegen", "PIPELINEGEN_TOOL_COMMIT=",
 		"PIPELINEGEN_TOOL_VERSION=v1", "PIPELINEGEN_TOOL_SHA256=", "PIPELINEGEN_GITHUB_API=http://127.0.0.1:1"), "end")
 	// A release the API couldn't list has no files either.
 	if !strings.HasPrefix(string(out), "no tools: the build broke before its start task had them; fetching them to end the suite\n") ||
@@ -404,7 +404,7 @@ func TestTheErrorReportPostsWhatTheEndCannot(t *testing.T) {
 			p := &posted{}
 			srv := p.server(t, status)
 
-			out, code := runStep(t, work, cleanEnv(t, "GITHUB_TOKEN=x", "PIPELINEGEN_GITHUB_API="+srv.URL, "REPOSITORY=o/r",
+			out, code := taskStep(t, work, cleanEnv(t, "GITHUB_TOKEN=x", "PIPELINEGEN_GITHUB_API="+srv.URL, "REPOSITORY=o/r",
 				"SUITE_CONTEXT=p/pr/e2e", "RUN_CONTEXT=p/pr", "TARGET_URL=https://ci/x"), "report-error")
 			if code != c.code {
 				t.Errorf("exit %d, want %d\n%s", code, c.code, out)

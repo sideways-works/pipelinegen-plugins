@@ -53,7 +53,7 @@ func TestAContinuousRun(t *testing.T) {
 	}
 
 	planText := text(t, M{"jobs": []any{plan}})
-	for _, want := range []string{"--gate handoff", "load_var: planned", "file: handoff/gate.json", "values: ((.:planned))", "put: planned-full", "file: handoff/version"} {
+	for _, want := range []string{"- continuous-plan\n", "load_var: planned", "file: handoff/gate.json", "values: ((.:planned))", "put: planned-full", "file: handoff/version"} {
 		if !strings.Contains(planText, want) {
 			t.Errorf("plan-full lacks %q:\n%s", want, planText)
 		}

@@ -4,8 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"os"
 	"path"
-	"regexp"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -256,6 +257,10 @@ func (c call) needs(params M, recording bool) (read, written []string, err error
 	return read, written, nil
 }
 
+// pipelinegenCalls are the calls of the tool a task makes. A task that runs
+// the runner's step is run against a stand-in for the tool that notes each
+// call, opens each gate but a decision's, and writes what each call names
+// as its output, so the step takes every branch that calls the tool.
 func pipelinegenCalls(t *testing.T, cfg M) [][]string {
 	t.Helper()
 
@@ -272,37 +277,105 @@ func pipelinegenCalls(t *testing.T, cfg M) [][]string {
 		args = append(args, s)
 	}
 
-	if run["path"] == "tools/pipelinegen" {
+	switch {
+	case run["path"] == "tools/pipelinegen":
 		return [][]string{args}
+	case run["path"] != "sh" || len(args) < 3:
+		return nil
+	case args[2] == "tools/pipelinegen":
+		// a tool's call that installs packages first
+		return [][]string{args[3:]}
+	case strings.Contains(args[1], bootstrapScript):
+		return stepCalls(t, cfg, args[3:])
 	}
 
-	if run["path"] != "sh" || len(args) != 2 {
-		return nil
+	return nil
+}
+
+const recordingTool = `#!/bin/sh
+printf '%s\n' "$*" >> "$(dirname "$0")/../calls"
+[ "$1" = git-auth ] && exit 0
+prev=
+for a in "$@"; do
+  case "$prev" in
+  --gate) [ "$2" = --decide ] || { mkdir -p "$a" && echo '["1"]' > "$a/gate.json"; } ;;
+  --out)
+    case "$1" in
+    pipeline) mkdir -p "$(dirname "$a")" && echo 'jobs: []' > "$a" ;;
+    unplanned)
+      for d in "$a/plan/7" "$a/handoff/9"; do
+        mkdir -p "$d/.git/resource" && echo '{"commit":"abc","pr":"7"}' > "$d/.git/resource/version.json"
+      done
+      ;;
+    *) mkdir -p "$a" ;;
+    esac
+    ;;
+  esac
+  prev=$a
+done
+`
+
+func stepCalls(t *testing.T, cfg M, step []string) [][]string {
+	t.Helper()
+
+	work := t.TempDir()
+
+	for _, in := range mounts(cfg, "inputs", "caches") {
+		if err := os.MkdirAll(filepath.Join(work, in), 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	for _, d := range []string{"trigger", "sweep/plan/7", "sweep/handoff/9"} {
+		if !slices.Contains(mounts(cfg, "inputs"), top(d)) {
+			continue
+		}
+
+		writeTestFile(t, filepath.Join(work, d, ".git", "resource", "version.json"), `{"commit":"abc","pr":"7"}`)
+		writeTestFile(t, filepath.Join(work, d, "run.json"), "{}\n")
+	}
+
+	if slices.Contains(mounts(cfg, "inputs"), "plans") {
+		writeTestFile(t, filepath.Join(work, "plans", "7", "plan.json"), "{}")
+	}
+
+	for _, out := range mounts(cfg, "outputs") {
+		if err := os.MkdirAll(filepath.Join(work, out), 0o750); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	writeFakeTool(t, work, recordingTool)
+
+	env := []string{"PATH=" + os.Getenv("PATH"), "HOME=" + t.TempDir()}
+
+	params := asMap(cfg["params"])
+	for _, k := range slices.Sorted(maps.Keys(params)) {
+		env = append(env, k+"="+fmt.Sprint(params[k]))
+	}
+
+	// a prepare command, so its git-auth call is seen
+	if v, ok := params["PIPELINEGEN_PREPARE"]; ok && v == "" {
+		env = append(env, "PIPELINEGEN_PREPARE=true")
+	}
+
+	taskStep(t, work, env, step[0], step[1:]...)
+
+	data, err := os.ReadFile(filepath.Join(work, "calls"))
+	if err != nil && !os.IsNotExist(err) {
+		t.Fatal(err)
 	}
 
 	var out [][]string
 
-	for line := range strings.SplitSeq(args[1], "\n") {
-		// A comment may name the tool in prose.
-		if c := strings.Index(line, "#"); c >= 0 {
-			line = line[:c]
-		}
-
-		for _, m := range inScript.FindAllStringSubmatch(line, -1) {
-			words := strings.Fields(m[1])
-			for i, w := range words {
-				words[i] = strings.Trim(w, `"'`)
-			}
-
-			out = append(out, words)
+	for line := range strings.SplitSeq(strings.TrimSpace(string(data)), "\n") {
+		if line != "" {
+			out = append(out, strings.Fields(line))
 		}
 	}
 
 	return out
 }
-
-// inScript also matches inside a command substitution.
-var inScript = regexp.MustCompile(`(?:^|[\s;&|("])tools/pipelinegen((?:[ \t]+[^\s;&|)]+)+)`)
 
 func asSlice(v any) []any {
 	switch x := v.(type) {
@@ -396,7 +469,7 @@ func TestEveryPipelinegenStepMountsWhatItReads(t *testing.T) {
 				// A task that begins with the bootstrap has the tools it fetched; each
 				// later command sees what earlier ones wrote.
 				present := mounts(cfg, "inputs", "caches")
-				if args := asSlice(asMap(cfg["run"])["args"]); len(args) == 2 && strings.Contains(fmt.Sprint(args[1]), bootstrapScript) {
+				if args := asSlice(asMap(cfg["run"])["args"]); len(args) >= 2 && strings.Contains(fmt.Sprint(args[1]), bootstrapScript) {
 					present = append(present, "tools")
 				}
 

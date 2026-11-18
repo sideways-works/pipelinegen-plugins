@@ -16,6 +16,12 @@ func TestWithoutImagesTheOutputStays(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		if *update {
+			if err := os.WriteFile(filepath.Join("testdata", name), []byte(text(t, p)), 0o600); err != nil {
+				t.Fatal(err)
+			}
+		}
+
 		want, err := os.ReadFile(filepath.Join("testdata", name))
 		if err != nil {
 			t.Fatal(err)
