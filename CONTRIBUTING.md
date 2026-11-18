@@ -30,10 +30,12 @@ cd pipelinegen-plugins
 bazel run //tools:hooks           # the commit-msg hook below
 ```
 
-`go.work` puts every module in one workspace for an editor. Nothing else
-uses it: each target builds, tests and lints a module on its own
-(`GOWORK=off`), as its release does, and a plugin that uses another's
-library takes a released version of it, never the copy beside it.
+`go.work` puts every Go module in one workspace for an editor, and
+nothing else uses it: each target builds, tests and lints a module on
+its own (`GOWORK=off`), as its release does, and a Go plugin that uses
+another's library takes a released version of it, never the copy beside
+it. The root's `package.json` makes the Node plugins one npm workspace
+(see [Releases](#releases)).
 
 ## What every change passes
 
@@ -74,52 +76,58 @@ Open a pull request against `main`.
 ## Releases
 
 Each plugin is released on its own, from a tag `<kind>/<name>/vX.Y.Z` on
-`main`, by its `:release` target. The target runs pipelinegen's release
-command (at the version `tools/go.mod` requires), which releases a
-repository whose root is the plugin. So each form first makes that
-repository: in a directory named `pipelinegen-<kind>-<name>`, which names
-the program, one commit whose tree is the plugin's directory at the
-commit released, with that commit's authors and dates, tagged `vX.Y.Z`,
-and `<sub>/vX.Y.Z` for each nested module.
+`main`, by its `:release` target, which runs pipelinegen's release command
+(at the version `tools/go.mod` requires) on the plugin's directory. The
+command clones the tagged commit and builds the plugin in that directory
+of the clone, so its programs record this repository's commit and their
+version, and a nested module released with it is tagged
+`<kind>/<name>/<sub>/vX.Y.Z` on the same commit. [RELEASING](RELEASING.md)
+says in which order the plugins are released.
 
 ```sh
 bazel run //<kind>/<name>:release -- build OUT [VERSION]
 bazel run //<kind>/<name>:release -- notice
 bazel run //<kind>/<name>:release -- publish VERSION OUT
 bazel run //<kind>/<name>:release -- check VERSION
+bazel run //<kind>/<name>:release -- patch VERSION OUT
+bazel run //<kind>/<name>:release -- tagged OUT CONTEXT...
 bazel run //:release -- build OUT
 ```
 
-- `build` builds the plugin into `OUT` twice and fails unless the two
-  builds give the same bytes: the commit of the tag
-  `<kind>/<name>/VERSION`, or `HEAD` when there is no such tag, built as
-  `VERSION`. Without `VERSION` it builds the newest tag of the plugin on
-  `HEAD`. A release holds the programs for linux and darwin on amd64 and
-  arm64 (or one bundled `.mjs` for a Node plugin), `plugin.json`,
-  `LICENSE`, `NOTICE` and `SHA256SUMS`, and the build refuses a `NOTICE`
-  other than the one `notice` writes.
-- `notice` writes the plugin's `NOTICE` from its working tree: commit it
-  before tagging.
+- `build` builds the tag `<kind>/<name>/VERSION` into `OUT` twice and fails
+  unless the two builds give the same bytes; without `VERSION`, the
+  plugin's newest tag on `HEAD`. A release holds the programs for linux
+  and darwin on amd64 and arm64 (or one bundled `.mjs` for a Node
+  plugin), `plugin.json`, the plugin's `LICENSE` and `NOTICE`, and
+  `SHA256SUMS`, and the build refuses a `NOTICE` other than the one
+  `notice` writes.
+- `notice` writes the plugin's `NOTICE`: commit it before tagging.
 - `publish` attaches `OUT` to the GitHub release of the tag, which must be
-  pushed, then downloads the release and fails unless every file is byte
-  for byte the build's. A published release never changes: publishing it
-  again succeeds only when it holds exactly this build.
+  pushed. A published release never changes: publishing it again succeeds
+  only when it holds exactly this build.
 - `check` builds the tag afresh and fails unless every file of its
   published release, a Node plugin's `.mjs` included, is byte for byte that
   build: a released file holds the code of its tag.
+- `patch` tags `main`'s head (and each nested module), pushes the tags,
+  builds, publishes and checks the release by download; run it again after
+  a failure and it picks up where it stopped.
+- `tagged` is a release job's form: the plugin's version tag on `HEAD`,
+  once one of the commit statuses named passed on it.
 - `//:release -- build OUT` builds every plugin whose newest tag is on
   `HEAD`, each into `OUT/<kind>/<name>`.
 
-To cut a release: run the plugin's checks, run `notice` and commit what
-changed, tag the commit `<kind>/<name>/vX.Y.Z` (and each nested module's
-tag), build, push the tags, publish. A candidate is tagged
-`<kind>/<name>/vX.Y.Z-rc.N` in the same way and published as a
-prerelease that is never marked the latest. A pushed tag never moves; a
-wrong release gets a new version.
+`PIPELINEGEN_SOURCE=<dir>` in the environment builds the release command
+and pipelinegen from a checkout of pipelinegen instead, to try a version
+not yet released.
 
-A build is reproducible from its commit, so building the same tag twice,
-anywhere, gives the same files. The Go programs record the module path
-and the commit of the split in their build information.
+A candidate is tagged `<kind>/<name>/vX.Y.Z-rc.N` in the same way and
+published as a prerelease that is never marked the latest. A pushed tag
+never moves; a wrong release gets a new version.
+
+The Node plugins are one npm workspace, the root's `package.json`, with
+one lockfile: `npm ci` anywhere in it installs every plugin's packages at
+the root, and correlator/react takes ts-sbom from sbom/ts of the same
+commit. A release still bundles each command into one `.mjs` of its own.
 
 ## Licence
 

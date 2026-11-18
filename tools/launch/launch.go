@@ -19,7 +19,8 @@ import (
 
 const usage = `usage: launch --go=RLOCATION [--lint=RLOCATION] [--node=RLOCATION] [--gh=RLOCATION] COMMAND
   test DIR... | lint DIR... | all test|lint | all release build OUT | checks | templates | hooks | subjects
-  release DIR build OUT [VERSION] | release DIR notice | release DIR publish VERSION OUT | release DIR check VERSION`
+  release DIR build OUT [VERSION] | release DIR notice | release DIR publish VERSION OUT | release DIR check VERSION
+  release DIR patch VERSION OUT | release DIR tagged OUT CONTEXT...`
 
 var errUsage = errors.New(usage)
 
@@ -302,11 +303,19 @@ func (l *Launch) scratch(pattern string) (string, func(), error) {
 }
 
 // tool builds the main package pkg of a module the tools module requires (pipelinegen's command,
-// its release command) into dir, at the version tools/go.mod pins.
+// its release command) into dir, at the version tools/go.mod pins, or from the pipelinegen checkout
+// $PIPELINEGEN_SOURCE names.
 func (l *Launch) tool(ctx context.Context, dir, pkg string) (string, error) {
 	exe := filepath.Join(dir, filepath.Base(pkg))
+	args := []string{"build", "-o", exe, pkg}
+	from := filepath.Join(l.workspace, "tools")
 
-	if err := l.run(ctx, filepath.Join(l.workspace, "tools"), l.goTool, "build", "-o", exe, pkg); err != nil {
+	if src := getenv(l.Env, EnvPipelinegenSource); src != "" {
+		args = []string{"build", "-buildvcs=false", "-o", exe, "./" + strings.TrimPrefix(pkg, "github.com/sideways-works/pipelinegen/")}
+		from = src
+	}
+
+	if err := l.run(ctx, from, l.goTool, args...); err != nil {
 		return "", err
 	}
 

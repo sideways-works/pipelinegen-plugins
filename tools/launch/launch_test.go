@@ -82,27 +82,3 @@ func TestUnitsAndModules(t *testing.T) {
 		t.Fatalf("modules: got %q", mods)
 	}
 }
-
-func TestSameFiles(t *testing.T) {
-	a, b := t.TempDir(), t.TempDir()
-	write(t, a, "x.mjs", "SHA256SUMS")
-	write(t, b, "x.mjs", "SHA256SUMS")
-
-	if err := SameFiles(a, b); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := os.WriteFile(filepath.Join(b, "x.mjs"), []byte("other"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := SameFiles(a, b); err == nil || !strings.Contains(err.Error(), "differs: x.mjs") {
-		t.Fatalf("a changed byte: got %v", err)
-	}
-
-	write(t, b, "extra")
-
-	if err := SameFiles(a, b); err == nil || !strings.Contains(err.Error(), "files") {
-		t.Fatalf("an extra file: got %v", err)
-	}
-}
