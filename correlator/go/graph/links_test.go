@@ -510,6 +510,9 @@ func replacedRoot(t *testing.T) string {
 }
 
 func TestLinkSetsReadAParentWorkspace(t *testing.T) {
+	// the go command finds the fixture's go.work, whatever GOWORK the caller set
+	t.Setenv("GOWORK", "")
+
 	root := t.TempDir()
 	write(t, root, "go.work", "go 1.24\n\nuse (\n\t./mods/a\n\t./mods/b\n)\n")
 	write(t, root, "mods/a/go.mod", "module example.com/a\n\ngo 1.24\n")

@@ -224,6 +224,9 @@ func TestLinksAreDeclaredPerSet(t *testing.T) {
 }
 
 func TestLinksAnswerAWorkspace(t *testing.T) {
+	// the go command finds the fixture's go.work, whatever GOWORK the caller set
+	t.Setenv("GOWORK", "")
+
 	root := t.TempDir()
 
 	for rel, src := range map[string]string{
