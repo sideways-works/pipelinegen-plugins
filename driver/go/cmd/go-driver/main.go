@@ -7,7 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/sideways-works/pipelinegen-driver-go/driver"
+	"github.com/sideways-works/pipelinegen-plugins/driver/go/driver"
 	"github.com/sideways-works/pipelinegen/plugin"
 )
 
