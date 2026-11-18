@@ -17,7 +17,7 @@ import (
 	"github.com/sideways-works/pipelinegen-sbom-pg/pgid"
 	"github.com/sideways-works/pipelinegen-sbom-pg/sqlref"
 
-	"github.com/sideways-works/pipelinegen-correlator-sql/collect"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/sql/collect"
 )
 
 type Config struct {

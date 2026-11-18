@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sideways-works/pipelinegen-correlator-sql/collect"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/sql/collect"
 )
 
 func slice(t *testing.T, statements string) string {

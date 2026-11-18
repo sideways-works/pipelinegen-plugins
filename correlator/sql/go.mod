@@ -1,4 +1,4 @@
-module github.com/sideways-works/pipelinegen-correlator-sql
+module github.com/sideways-works/pipelinegen-plugins/correlator/sql
 
 go 1.27.1
 

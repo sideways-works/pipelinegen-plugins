@@ -11,8 +11,8 @@ import (
 
 	"github.com/sideways-works/pipelinegen/plugin"
 
-	"github.com/sideways-works/pipelinegen-correlator-sql/collect"
-	"github.com/sideways-works/pipelinegen-correlator-sql/observe"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/sql/collect"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/sql/observe"
 )
 
 var Version = "dev"

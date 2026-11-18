@@ -19,7 +19,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sideways-works/pipelinegen-correlator-sql/pglog"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/sql/pglog"
 )
 
 type Config struct {

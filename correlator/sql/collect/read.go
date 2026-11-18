@@ -10,7 +10,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/sideways-works/pipelinegen-correlator-sql/pglog"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/sql/pglog"
 )
 
 var ErrCannotTell = errors.New("cannot tell")
