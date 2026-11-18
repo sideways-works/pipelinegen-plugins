@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sideways-works/pipelinegen-sbom-go/goid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/goid"
 )
 
 // lab is a module with what the shop fixture lacks: interfaces and their

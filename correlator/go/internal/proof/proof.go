@@ -21,8 +21,8 @@ import (
 	"strings"
 
 	"github.com/sideways-works/pipelinegen-plugins/correlator/go/graph"
-	"github.com/sideways-works/pipelinegen-sbom-go/decls"
-	"github.com/sideways-works/pipelinegen-sbom-go/goid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/decls"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/goid"
 )
 
 // errOutside is an archive entry that would land outside the tree.

@@ -3,7 +3,7 @@ package graph
 import (
 	"testing"
 
-	"github.com/sideways-works/pipelinegen-sbom-go/goid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/goid"
 )
 
 // startFile holds one variable for each way an initialiser can panic or

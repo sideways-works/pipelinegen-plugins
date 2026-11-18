@@ -25,7 +25,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/sideways-works/pipelinegen-sbom-locale/catalog"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/locale/catalog"
 )
 
 var ErrCantTell = errors.New("can't tell")

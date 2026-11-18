@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sideways-works/pipelinegen-sbom-go/decls"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/decls"
 )
 
 // GoVersion is the version of the go command the correlator runs in dir, as

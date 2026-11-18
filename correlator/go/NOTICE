@@ -4,7 +4,7 @@ Copyright 2026 Sideways Works UG (haftungsbeschränkt)
 This product is licensed under the Apache License, Version 2.0 (see
 LICENSE). Its release binaries include code from
 github.com/sideways-works/pipelinegen and
-github.com/sideways-works/pipelinegen-sbom-go, which have the same
+github.com/sideways-works/pipelinegen-plugins, which have the same
 copyright holder and licence, and the third-party software below, each
 under its own licence, reproduced here as those licences require.
 

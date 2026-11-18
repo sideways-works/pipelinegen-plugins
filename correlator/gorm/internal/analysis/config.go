@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sideways-works/pipelinegen-sbom-pg/pgid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/pg/pgid"
 
 	"gorm.io/gorm/schema"
 )

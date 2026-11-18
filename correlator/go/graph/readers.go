@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/sideways-works/pipelinegen-sbom-go/decls"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/decls"
 )
 
 // Readers are the package directories whose initialisers' purity proofs read

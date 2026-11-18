@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sideways-works/pipelinegen-sbom-go/decls"
-	"github.com/sideways-works/pipelinegen-sbom-go/deps"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/decls"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/deps"
 )
 
 // changed is a copy of the fixture with getNote given a query parameter,

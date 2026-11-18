@@ -24,8 +24,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/sideways-works/pipelinegen-sbom-go/decls"
-	"github.com/sideways-works/pipelinegen-sbom-go/goid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/decls"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/goid"
 )
 
 // NamesGroup is the group of the set that holds every link depending on N,

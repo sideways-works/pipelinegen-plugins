@@ -1,4 +1,4 @@
 github.com/sideways-works/pipelinegen v0.3.1 h1:SO9GXSs13+aCyGhsjjCl3LQZqkah4aKCr6iJZcSjQio=
 github.com/sideways-works/pipelinegen v0.3.1/go.mod h1:pwy1nF67pcfWzUmSBfTE6QcZbD1qek+u7gI0shNMVpg=
-github.com/sideways-works/pipelinegen-sbom-locale v0.2.0 h1:oncmwEPUAXqv5TT43T7EsvynRkOWWdp6FRSRVVkcZ0Q=
-github.com/sideways-works/pipelinegen-sbom-locale v0.2.0/go.mod h1:aaJuEGDJKkL76FAdPPQxgFS2bOYSPz+6ddO1I3OKcto=
+github.com/sideways-works/pipelinegen-plugins/sbom/locale v0.4.0 h1:69FMroD7EIOXQyXrEfnJ9LlM2enhfvhBTuVTr8oOdek=
+github.com/sideways-works/pipelinegen-plugins/sbom/locale v0.4.0/go.mod h1:O9c9YsQCGrh+2xhqlwx5DkPU5md0AxY3Wukfqy6GIEw=

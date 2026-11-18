@@ -16,7 +16,7 @@ import (
 	"golang.org/x/tools/go/packages"
 
 	"github.com/sideways-works/pipelinegen-plugins/correlator/gorm/internal/sqlrefs"
-	"github.com/sideways-works/pipelinegen-sbom-go/goid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/goid"
 )
 
 var ErrLoad = errors.New("loading Go packages")

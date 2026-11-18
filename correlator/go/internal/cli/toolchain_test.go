@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/sideways-works/pipelinegen-plugins/correlator/go/graph"
-	"github.com/sideways-works/pipelinegen-sbom-go/decls"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/decls"
 )
 
 // fakeGo puts a go first on PATH that answers `go env GOVERSION GOROOT` like

@@ -21,8 +21,8 @@ import (
 
 	"golang.org/x/mod/modfile"
 
-	"github.com/sideways-works/pipelinegen-sbom-go/decls"
-	"github.com/sideways-works/pipelinegen-sbom-go/goid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/decls"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/goid"
 )
 
 // ErrMissing is coverage that isn't there: a directory without a

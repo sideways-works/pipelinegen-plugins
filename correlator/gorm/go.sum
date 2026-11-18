@@ -8,10 +8,10 @@ github.com/pganalyze/pg_query_go/v6 v6.2.5 h1:i7dvkA5167th3rXtk0jv9+r5DeJd4GqeGO
 github.com/pganalyze/pg_query_go/v6 v6.2.5/go.mod h1:JZoURQupTV7G8lS6OzKakgvp+xpwu7+dH5kA5WrikzM=
 github.com/sideways-works/pipelinegen v0.3.1 h1:SO9GXSs13+aCyGhsjjCl3LQZqkah4aKCr6iJZcSjQio=
 github.com/sideways-works/pipelinegen v0.3.1/go.mod h1:pwy1nF67pcfWzUmSBfTE6QcZbD1qek+u7gI0shNMVpg=
-github.com/sideways-works/pipelinegen-sbom-go v0.2.0 h1:MX0Ufco5e1UiR2ENNaIaOK52UgNltnu+3G5ibb3FuTc=
-github.com/sideways-works/pipelinegen-sbom-go v0.2.0/go.mod h1:s1RXNAtsTkI9MKKI7I/52AtYNDAgJheBfJALDyccJOE=
-github.com/sideways-works/pipelinegen-sbom-pg v0.2.0 h1:bW5MBOsYTW1scacRDraOt/pey4cCfI1RpazWW1i491A=
-github.com/sideways-works/pipelinegen-sbom-pg v0.2.0/go.mod h1:JYryUMN0y87r1RXyMAoRlvaOt2Az4fgWhPqWhNjwLe8=
+github.com/sideways-works/pipelinegen-plugins/sbom/go v0.4.0 h1:G42MF6dGequl1ukWqSembN5MhSzgQbPl8Fi3AERsF8o=
+github.com/sideways-works/pipelinegen-plugins/sbom/go v0.4.0/go.mod h1:dcZHU4Erw77XAiuBPz3EZqYDpUqxP3pNuxr9gVv50nk=
+github.com/sideways-works/pipelinegen-plugins/sbom/pg v0.4.0 h1:vCKhPAbEuuMXA6wZGZEyaYLzMvpYh0G+Xd2cJqafyec=
+github.com/sideways-works/pipelinegen-plugins/sbom/pg v0.4.0/go.mod h1:MFDJP2xbJWLaS5ygis+KynK+WKC8xapUNuY1BrBhCeA=
 github.com/stretchr/testify v1.12.1 h1:EuwCh5fleGS7H32xRwO3wRGT7DxrDhLAT6FF8MpWDWE=
 github.com/stretchr/testify v1.12.1/go.mod h1:MDEgiDPPsNp5cuIrHPPCyornHKgEVbtFUmoNlxoYthg=
 github.com/tailscale/hujson v0.0.0-20221223112325-20486734a56a h1:SJy1Pu0eH1C29XwJucQo73FrleVK6t4kYz4NVhp34Yw=

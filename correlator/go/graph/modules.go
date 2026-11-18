@@ -16,7 +16,7 @@ import (
 
 	"golang.org/x/mod/modfile"
 
-	"github.com/sideways-works/pipelinegen-sbom-go/decls"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/decls"
 )
 
 type module struct {

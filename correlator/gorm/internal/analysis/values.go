@@ -5,7 +5,7 @@ import (
 	"go/types"
 	"sort"
 
-	"github.com/sideways-works/pipelinegen-sbom-go/goid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/goid"
 )
 
 // fresh are the parameters of function literals GORM calls with a new

@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/sideways-works/pipelinegen-plugins/correlator/gorm/internal/sqlrefs"
-	"github.com/sideways-works/pipelinegen-sbom-go/goid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/goid"
 )
 
 type declCtx struct {

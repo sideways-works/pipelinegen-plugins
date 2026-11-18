@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/sideways-works/pipelinegen-sbom-go/goid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/goid"
 )
 
 func (t *Tree) fileRefs(fset *token.FileSet, idx *goid.Index, w work, calls map[*types.Func][]int32) {

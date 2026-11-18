@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sideways-works/pipelinegen-sbom-locale/catalog"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/locale/catalog"
 
 	"github.com/sideways-works/pipelinegen-plugins/correlator/locale/observe"
 )

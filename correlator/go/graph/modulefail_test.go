@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sideways-works/pipelinegen-sbom-go/decls"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/decls"
 )
 
 func repo(t *testing.T, files map[string]string) string {

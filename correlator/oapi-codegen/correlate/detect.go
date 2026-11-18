@@ -14,7 +14,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/sideways-works/pipelinegen-sbom-openapi/openapi"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/openapi/openapi"
 )
 
 const (

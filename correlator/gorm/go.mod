@@ -5,8 +5,8 @@ go 1.27.1
 require (
 	github.com/pganalyze/pg_query_go/v6 v6.2.5
 	github.com/sideways-works/pipelinegen v0.3.1
-	github.com/sideways-works/pipelinegen-sbom-go v0.2.0
-	github.com/sideways-works/pipelinegen-sbom-pg v0.2.0
+	github.com/sideways-works/pipelinegen-plugins/sbom/go v0.4.0
+	github.com/sideways-works/pipelinegen-plugins/sbom/pg v0.4.0
 	github.com/wasilibs/go-pgquery v0.0.0-20261106060434-4301e51f8dbf
 	golang.org/x/mod v0.42.0
 	golang.org/x/tools v0.52.0

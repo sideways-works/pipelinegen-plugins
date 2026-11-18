@@ -3,7 +3,7 @@ package graph
 import (
 	"slices"
 
-	"github.com/sideways-works/pipelinegen-sbom-go/goid"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/go/goid"
 )
 
 // binding turns an index binding into ids: whole packages as groups, the

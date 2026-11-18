@@ -14,7 +14,7 @@ import (
 	"sync"
 
 	pg "github.com/pganalyze/pg_query_go/v6"
-	"github.com/sideways-works/pipelinegen-sbom-pg/sqlref"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/pg/sqlref"
 	pgquery "github.com/wasilibs/go-pgquery"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
