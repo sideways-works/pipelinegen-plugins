@@ -225,7 +225,8 @@ repository's own parts from its include file.
   commit, and starts no suite.
 - A suite job that breaks before pipelinegen can report posts its status,
   and its run's, as errored from the runner's `report-error` step, which
-  needs no pipelinegen.
+  needs no pipelinegen; when the runner can't be fetched either, the
+  bootstrap posts them with `curl`, so a status never stays pending.
 
 By default the `pipeline` job only checks. It regenerates the pipeline and,
 when it differs from the one set, fails with "the pipeline is stale: set
