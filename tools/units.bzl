@@ -23,5 +23,6 @@ UNITS = [
     "templates/connector",
     "templates/correlator",
     "templates/driver",
+    "templates/runner",
     "templates/sbom",
 ]

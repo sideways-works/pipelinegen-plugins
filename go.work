@@ -23,6 +23,7 @@ use (
 	./templates/connector
 	./templates/correlator
 	./templates/driver
+	./templates/runner
 	./templates/sbom
 	./tools
 )
