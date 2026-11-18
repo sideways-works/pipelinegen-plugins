@@ -1,7 +1,5 @@
-// Package driver is go-driver: it runs a suite's Go test files with go test,
-// each _test.go file a slice. A bundle never puts two packages in one
-// process. A file holding a line "//ci:alone" runs on its own, and one
-// holding "//ci:race" on its own under the race detector.
+// Package driver runs each _test.go file as a slice; a bundle never puts two packages in
+// one process. A file with a line "//ci:alone" runs alone, "//ci:race" alone under -race.
 package driver
 
 import (
@@ -20,13 +18,10 @@ import (
 	"github.com/sideways-works/pipelinegen/plugin"
 )
 
-// Version is the driver's version, set by its release build.
 var Version = "dev"
 
-// Settings are what a step's with block may hold.
 type Settings struct {
-	// Timeout is each test file's limit (default go test's own); a go test of
-	// several files gets it once per file, so bundling never tightens it.
+	// Timeout applies per test file; a go test of several files gets it once per file.
 	Timeout string `json:"timeout"`
 	// CacheMB caps Go's build cache in megabytes, trimming entries unused for a
 	// day first, then the least lately used (default no cap).
@@ -34,24 +29,20 @@ type Settings struct {
 	// ModcacheMB caps Go's module cache in megabytes; a cache over it is
 	// removed whole, since a partly removed one is corrupt (default no cap).
 	ModcacheMB int `json:"modcache_mb"`
-	// Coverpkg is go test's -coverpkg for a recording (default ./...).
+	// Coverpkg defaults to ./... for a recording.
 	Coverpkg []string `json:"coverpkg"`
 	Tags     []string `json:"tags"`
-	// CoverTags are build tags a recording adds to Tags.
+	// CoverTags are added to Tags for a recording only.
 	CoverTags []string `json:"cover_tags"`
-	// Flags go to every go test as they are.
-	Flags []string `json:"flags"`
-	// Race runs every test under the race detector (default off: a file that
-	// needs it says so with "//ci:race").
-	Race bool `json:"race"`
-	// Module is the Go module's directory in the tree (default its root).
-	Module string `json:"module"`
+	Flags     []string `json:"flags"`
+	Race      bool     `json:"race"`
+	Module    string   `json:"module"`
 	// MustRun maps a test file to a pattern of its top-level tests that must
 	// run: a matching test that skips fails the file, and so does a file with
 	// no matching test.
 	MustRun map[string]string `json:"must_run"`
-	// Uncached are patterns of test files that never take a result from go
-	// test's cache: tests that read git history, the network or a clock.
+	// Uncached test files never take a result from go test's cache: tests that read git
+	// history, the network or a clock.
 	Uncached []string `json:"uncached"`
 
 	held holds
@@ -62,7 +53,6 @@ type Settings struct {
 // environment is recorded too.
 const Apart = true
 
-// Handlers are the driver's verbs.
 func Handlers(log io.Writer) plugin.DriverHandlers {
 	return plugin.DriverHandlers{
 		Describe: describe,
@@ -155,8 +145,7 @@ type slice struct {
 
 	pkgs        []string
 	alone, race bool
-	// uncached slices never take a result from go test's cache.
-	uncached bool
+	uncached    bool
 }
 
 type job struct {
@@ -332,8 +321,6 @@ func (j *job) groups(todo []*slice) []group {
 }
 
 func (j *job) runGroup(ctx context.Context, g group) error {
-	// A recording bundle of several files builds the binary once and runs it
-	// per file.
 	if j.req.Record && len(g.slices) > 1 {
 		return j.recordBundle(ctx, g)
 	}

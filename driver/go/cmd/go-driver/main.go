@@ -1,4 +1,3 @@
-// Command go-driver is a pipelinegen driver for Go test files.
 package main
 
 import (

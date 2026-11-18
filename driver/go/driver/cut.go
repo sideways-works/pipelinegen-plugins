@@ -19,10 +19,8 @@ func cutRecording(dir string) {
 	}
 }
 
-// cutProfile keeps the mode line, every block that ran, and the first block
-// of each file none of whose blocks ran: a full profile of a large module is
-// megabytes of zeros. Every file keeps a block, so a reader still knows
-// which files the coverage holds.
+// cutProfile keeps the mode line, every block that ran, and one block of each other file,
+// so the files stay known: a full profile of a large module is megabytes of zeros.
 func cutProfile(p string) error {
 	data, err := os.ReadFile(p) //nolint:gosec // the slice's own recording
 	if err != nil {
@@ -44,6 +42,7 @@ func cutProfile(p string) error {
 	blocks := make([]block, 0, len(lines)-1)
 
 	for _, line := range lines[1:] {
+		// A block line: file:startLine.col,endLine.col statements count.
 		file, rest, ok := strings.CutLast(line, ":")
 		f := strings.Fields(rest)
 

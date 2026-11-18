@@ -41,7 +41,6 @@ other.org/x/x.go:3.1,4.2 1 0
 		t.Errorf("got\n%s\nwant\n%s", got, want)
 	}
 
-	// A line the driver can't read leaves the profile whole.
 	odd := in + "not a block line\n"
 	if err := os.WriteFile(p, []byte(odd), 0o600); err != nil {
 		t.Fatal(err)

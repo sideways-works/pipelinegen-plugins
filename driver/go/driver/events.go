@@ -40,6 +40,7 @@ func newOutcome() *outcome { return &outcome{tests: map[string]*testState{}} }
 
 func keep(lines []string, line string) []string {
 	lines = append(lines, strings.TrimRight(line, "\n"))
+	// Trimmed in bulk, so an append stays cheap.
 	if len(lines) > 4*tailLines {
 		lines = lines[len(lines)-tailLines:]
 	}
