@@ -21,7 +21,7 @@ flowchart LR
 plugins:
   - repository: https://github.com/sideways-works/pipelinegen-plugins
     with:
-      - {name: go, kind: driver, path: driver/go, release: {version: v0.1.0, sha256: ...}}
+      - {name: go, kind: driver, path: driver/go, release: {version: v0.4.0, sums: …}}
 suites:
   go:
     tests: ["**/*_test.go"]
@@ -163,24 +163,34 @@ it.
 
 ## Developing
 
-The tests and the lint run with the Go, golangci-lint and Node that the
-repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
-other commands run in this directory.
+`bazel run //driver/go:test` runs the tests and `bazel run
+//driver/go:lint` the lint, with the Go, golangci-lint and Node the
+repository pins in `MODULE.bazel`
+([CONTRIBUTING](../../CONTRIBUTING.md)). The tests run the go command on
+the fixture module in `driver/testdata/mod`, whose `kid` package starts
+a child process. They include pipelinegen's conformance kit:
+`TestTheKit` builds go-driver and runs it through the kit with that
+fixture and the pipelinegen `go.mod` requires as a tool. The kit runs
+every slice one by one and bundled, recording and not, compares the
+results and the recordings, and checks the marks of a recorded stack
+suite's bundle.
+
+By hand, in this directory, with a go on your `PATH` at least as new as
+`go.mod` asks:
 
 ```sh
-bazel run //driver/go:test
-bazel run //driver/go:lint
+go build -trimpath -o go-driver ./cmd/go-driver
+go tool pipelinegen plugin test ./go-driver --tree driver/testdata/mod
 ```
 
-- The tests include pipelinegen's conformance kit: `TestTheKit` builds
-  the driver and runs `go tool pipelinegen plugin test` on it with the
-  fixture module in `driver/testdata/mod`, with the pipelinegen that
-  `go.mod` requires as a tool. The kit runs every slice of the fixture one
-  by one and bundled, recording and not, compares the results and the
-  recordings, and checks the marks of a recorded stack suite's bundle. By
-  hand: `pipelinegen plugin test ./go-driver --tree driver/testdata/mod`.
-- Tests run the go command on the fixture module, whose `kid` package
-  starts a child process, so the go on your `PATH` must be at least the
-  version in `go.mod`.
-- A change to what go-driver runs comes with its docs: the README
-  describes go-driver as it is on `main`.
+`bazel run //driver/go:release` releases it from a tag
+`driver/go/vX.Y.Z` on `main`, as
+[CONTRIBUTING](../../CONTRIBUTING.md#releases) describes: static
+`go-driver-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (its own `describe` answer), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. Its first release here is `v0.4.0`
+([RELEASING](../../RELEASING.md)), and a published release never
+changes.
+
+A change to what go-driver runs comes with its docs, so this README
+describes go-driver as it is on `main`.
