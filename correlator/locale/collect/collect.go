@@ -19,7 +19,6 @@ import (
 	"github.com/sideways-works/pipelinegen-correlator-locale/observe"
 )
 
-// ErrCollect is a collect that couldn't do its work.
 var ErrCollect = errors.New("collect")
 
 const markFile = ".log-offset"

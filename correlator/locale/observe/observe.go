@@ -28,19 +28,16 @@ import (
 	"github.com/sideways-works/pipelinegen-sbom-locale/catalog"
 )
 
-// ErrCantTell is a recording that can't say what the slice looked up.
 var ErrCantTell = errors.New("can't tell")
 
 // ErrUnreadable is a recording that can't be read: the slice errors.
 var ErrUnreadable = errors.New("unreadable recording")
 
-// Prefix and Suffix name a recorder's files.
 const (
 	Prefix = "locale-keys."
 	Suffix = ".jsonl"
 )
 
-// The runtimes a header names.
 const (
 	RuntimeGo      = "go"
 	RuntimeVitest  = "vitest"
@@ -48,7 +45,6 @@ const (
 	RuntimeCollect = "collect"
 )
 
-// Header is a file's first line.
 type Header struct {
 	Recorder string `json:"recorder"`
 	Version  int    `json:"version"`
@@ -56,7 +52,6 @@ type Header struct {
 	PID      int    `json:"pid,omitempty"`
 }
 
-// Record is any other line.
 type Record struct {
 	Catalog string  `json:"c,omitempty"`
 	File    string  `json:"f,omitempty"`

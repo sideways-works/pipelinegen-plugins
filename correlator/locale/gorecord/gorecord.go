@@ -18,7 +18,6 @@ import (
 	"time"
 )
 
-// The variables that name where the records go.
 const (
 	EnvDir = "PIPELINEGEN_LOCALE_KEYS_DIR"
 	EnvLog = "PIPELINEGEN_LOCALE_KEYS_LOG"

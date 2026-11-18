@@ -13,7 +13,6 @@ import (
 //go:embed js/*.mjs
 var files embed.FS
 
-// Names are the files Write writes.
 func Names() []string {
 	entries, _ := fs.ReadDir(files, "js") //nolint:errcheck // an embedded directory always reads
 
@@ -25,7 +24,6 @@ func Names() []string {
 	return out
 }
 
-// Write writes the recorders into dir, replacing what is there.
 func Write(dir string) error {
 	if err := os.MkdirAll(dir, 0o750); err != nil {
 		return fmt.Errorf("writing the recorders: %w", err)

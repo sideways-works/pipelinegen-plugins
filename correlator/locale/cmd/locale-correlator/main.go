@@ -1,7 +1,3 @@
-// Command locale-correlator is a pipelinegen correlator that records which
-// catalog keys each test looked up, so a slice depends on the keys it
-// rendered rather than on every catalog its test target names. Its own call
-// `recorder <dir>` writes the JavaScript recorders into a directory.
 package main
 
 import (
@@ -21,14 +17,12 @@ import (
 	"github.com/sideways-works/pipelinegen-correlator-locale/recorder"
 )
 
-// Version is set at release time and reported by describe.
 var Version = "dev"
 
 const callRecorder = "recorder"
 
 const roleCatalog = "catalog"
 
-// config is the plugin's block in the repository's config.
 type config struct {
 	// Log is the file a batch's stack shares (PIPELINEGEN_LOCALE_KEYS_LOG),
 	// relative to the batch's directory; collect cuts it per slice.
