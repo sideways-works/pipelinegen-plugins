@@ -1,3 +1,5 @@
+// Package connector sends no request, holds no token and reports nowhere: the core lists the
+// remote's branches with git and hands them in.
 package connector
 
 import (
@@ -122,6 +124,7 @@ func matches(branch string, patterns []string) bool {
 	return false
 }
 
+// Links fills the config's page template's {commit}, {branch} and {path}.
 func Links(c Config, a plugin.LinksArgs) plugin.WebLinks {
 	if c.Links == "" {
 		return plugin.WebLinks{}
