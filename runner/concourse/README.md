@@ -135,7 +135,8 @@ names a run or a suite its `for` can't have or the spec lacks, and one that
 places no step: an earlier rule covers all it would, or the pipeline has
 no such step (a suite in no run). `pipelinegen check` asks the runner for
 the pipeline when it is in `tools/plugins`, so these show before the
-pipeline job runs.
+pipeline job runs. A rule that names a run another runner owns is no
+mistake; see [several runners](#several-runners).
 
 The concourse section's `planner.tags`, `resource_tags` and `bookkeeping`
 and each suite's `run_on.tags` placed steps before. pipelinegen refuses
@@ -148,6 +149,24 @@ A pull request can't move its own jobs. The pipeline is made from the
 default branch's config. The plugin's block is one of pipelinegen's
 trusted keys, so a change that edits it is planned with the default
 branch's block, and its plan says the change takes effect once merged.
+
+### Several runners
+
+A config may name more than one runner, each run naming its own in
+`runs.<name>.runner`. pipelinegen writes each runner's pipeline with
+`pipelinegen pipeline --for <name>`, and the spec this runner then gets
+holds the runs it owns, the names of the others and its own entry's name.
+The pipeline has jobs for its own runs alone. Its `pipeline` job writes
+the pipeline with `--for <name>`, and the stale check's advice names it
+too. The bootstrap fetches this runner and no other, and the steps fetch
+every pinned plugin but the other runners.
+
+A placement rule that names another runner's run places nothing here and
+isn't refused, so a run can move to another runner without an edit to
+this block. The rule's form is still checked: its `for` and its `tags`.
+A runner left with no runs writes the `pipeline` job alone, and its rules
+for planning, suites and bookkeeping place nothing without being refused
+for it.
 
 ## What it produces
 

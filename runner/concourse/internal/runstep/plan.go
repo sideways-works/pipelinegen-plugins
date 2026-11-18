@@ -235,8 +235,31 @@ func (t *Task) proposedWrite([]string) int {
 }
 
 // pipeline writes the pipeline a pipeline that sets itself sets.
-func (t *Task) pipeline([]string) int {
-	return t.last(t.Env, "pipeline", "--root", "repo", "--gate", "pipeline", "--out", "pipeline/pipeline.yml")
+func (t *Task) pipeline(args []string) int {
+	forRunner, ok := t.forFlag("pipeline", args)
+	if !ok {
+		return 2
+	}
+
+	return t.last(t.Env, then(forRunner, "pipeline", "--root", "repo", "--gate", "pipeline", "--out", "pipeline/pipeline.yml")...)
+}
+
+// then is args with more after them.
+func then(more []string, args ...string) []string { return slices.Concat(args, more) }
+
+// forFlag reads a step's --for <runner>, which names the runner whose
+// pipeline pipelinegen writes when the config has several.
+func (t *Task) forFlag(step string, args []string) ([]string, bool) {
+	switch {
+	case len(args) == 0:
+		return nil, true
+	case len(args) == 2 && args[0] == "--for" && args[1] != "":
+		return args, true
+	}
+
+	t.sayf("usage: concourse-runner step %s [--for <runner>]", step)
+
+	return nil, false
 }
 
 var (

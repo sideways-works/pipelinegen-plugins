@@ -15,10 +15,15 @@ const staleHash = "PIPELINEGEN_PIPELINE_SHA256"
 // writes. It never prints the pipeline or a diff, which would show its
 // variables' values. A config the pinned tool can't read means a stale
 // pipeline too.
-func (t *Task) stale([]string) int {
+func (t *Task) stale(args []string) int {
+	forRunner, ok := t.forFlag("stale", args)
+	if !ok {
+		return 2
+	}
+
 	var errs bytes.Buffer
 
-	cmd := t.command(t.Env, t.Dir, tool, "pipeline", "--root", "repo", "--plugins", "tools/plugins", "--gate", "newest", "--out", "pipeline.yml")
+	cmd := t.command(t.Env, t.Dir, tool, then(forRunner, "pipeline", "--root", "repo", "--plugins", "tools/plugins", "--gate", "newest", "--out", "pipeline.yml")...)
 	cmd.Stderr = &errs
 
 	if code := t.exited(tool, cmd.Run()); code != 0 {
@@ -29,7 +34,7 @@ func (t *Task) stale([]string) int {
 			return 1
 		}
 
-		t.sayStale()
+		t.sayStale(forRunner)
 		t.sayf("the pinned tool cannot read this tree's config: %s", why)
 
 		return 1
@@ -53,7 +58,7 @@ func (t *Task) stale([]string) int {
 	}
 
 	if pipelineHash(string(text)) != t.getenv(staleHash) {
-		t.sayStale()
+		t.sayStale(forRunner)
 
 		return 1
 	}
@@ -63,9 +68,10 @@ func (t *Task) stale([]string) int {
 	return 0
 }
 
-func (t *Task) sayStale() {
+func (t *Task) sayStale(forRunner []string) {
 	t.sayf("the pipeline is stale: set it from the default branch with")
-	t.sayf("  pipelinegen pipeline --out pipeline.yml && fly -t <target> set-pipeline -p %s -c pipeline.yml", t.getenv("PIPELINEGEN_PIPELINE"))
+	t.sayf("  pipelinegen pipeline %s && fly -t <target> set-pipeline -p %s -c pipeline.yml",
+		strings.Join(then([]string{"--out", "pipeline.yml"}, forRunner...), " "), t.getenv("PIPELINEGEN_PIPELINE"))
 }
 
 var hashLine = regexp.MustCompile(`^([ \t\v\f\r]*` + staleHash + `:).*$`)

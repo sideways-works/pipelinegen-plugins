@@ -530,7 +530,7 @@ var ErrRunnerPin = errors.New("runner pin")
 // checkRunnerPin refuses a runner the bootstrap can't fetch: it fetches
 // from github.com alone.
 func checkRunnerPin(spec plugin.Spec) error {
-	r := tool(spec, plugin.KindRunner)
+	r := ownRunner(spec)
 	if r.Repository == "" {
 		return nil
 	}
@@ -551,7 +551,7 @@ func checkRunnerPin(spec plugin.Spec) error {
 	return nil
 }
 
-func (g *gen) runnerTool() plugin.SpecTool { return tool(g.spec, plugin.KindRunner) }
+func (g *gen) runnerTool() plugin.SpecTool { return ownRunner(g.spec) }
 
 // toolTask keeps a job's bookkeeping in one container, so it waits for a
 // worker once. It holds the pipeline's token and runs no test.
@@ -583,7 +583,8 @@ func (g *gen) toolTask(name string, tags []string, inputs []M, outputs []string,
 }
 
 // pluginLines is the bootstrap's input format: one plugin per line, "-" for
-// an empty field, and a path only where a tool has one.
+// an empty field, and a path only where a tool has one. Another runner's
+// pipeline holds the runs it owns, so this one fetches no other runner.
 func pluginLines(s plugin.Spec) string {
 	var b strings.Builder
 
@@ -617,12 +618,18 @@ func privateModules(s plugin.Spec) string {
 	return strings.Join(mods, ",")
 }
 
-// plugins are the tools the steps fetch besides pipelinegen and bazelisk.
+// plugins are the tools the steps fetch besides pipelinegen and bazelisk:
+// every plugin but another runner.
 func plugins(s plugin.Spec) []plugin.SpecTool {
+	own := ownRunner(s).Name
+
 	var out []plugin.SpecTool
 
 	for _, t := range s.Tools {
-		if t.Kind != plugin.ToolPipelinegen && t.Kind != plugin.ToolBazelisk {
+		switch {
+		case t.Kind == plugin.ToolPipelinegen || t.Kind == plugin.ToolBazelisk:
+		case t.Kind == plugin.KindRunner && t.Name != own:
+		default:
 			out = append(out, t)
 		}
 	}
@@ -734,7 +741,7 @@ func (g *gen) pipelineJob() M {
 	// gate, so an older pipeline is never set over a newer one.
 	if g.ci.SelfSet {
 		plan = append(plan,
-			limited(g.toolTask("pipeline", tags, names("repo"), []string{"pipeline"}, nil, g.concourseURL(), "pipeline"), stepsKey, g.stepMinutes()),
+			limited(g.toolTask("pipeline", tags, names("repo"), []string{"pipeline"}, nil, g.concourseURL(), g.forRunner("pipeline")...), stepsKey, g.stepMinutes()),
 			M{"load_var": "newest", "file": "pipeline/gate.json"},
 			M{"across": []any{M{"var": "newest_config", "values": "((.:newest))"}}, "do": []any{
 				timeout(M{"set_pipeline": "self", "file": "pipeline/pipeline.yml"}, g.stepMinutes()),
@@ -747,11 +754,21 @@ func (g *gen) pipelineJob() M {
 	env := M{staleHash: "", "PIPELINEGEN_PIPELINE": g.spec.Pipeline}
 	maps.Copy(env, g.concourseURL())
 
-	stale := limited(g.toolTask("stale", tags, names("repo"), []string{"newest"}, nil, env, "stale"), stepsKey, g.stepMinutes())
+	stale := limited(g.toolTask("stale", tags, names("repo"), []string{"newest"}, nil, env, g.forRunner("stale")...), stepsKey, g.stepMinutes())
 	g.staleParams = asParams(stale)
 	plan = append(plan, stale)
 
 	return M{"name": "pipeline", "plan": plan}
+}
+
+// forRunner is a step that writes the pipeline: with several runners, this
+// runner's, which pipelinegen writes when told its name.
+func (g *gen) forRunner(step string) []string {
+	if g.spec.Runner == "" {
+		return []string{step}
+	}
+
+	return []string{step, "--for", g.spec.Runner}
 }
 
 // sealStale hashes the pipeline's text with the param empty, as the check

@@ -60,3 +60,15 @@ func tool(spec plugin.Spec, kind string) plugin.SpecTool {
 
 	return plugin.SpecTool{}
 }
+
+// ownRunner is the runner's own pin: the one the spec names, with several
+// runners, else the only one.
+func ownRunner(spec plugin.Spec) plugin.SpecTool {
+	for _, t := range spec.Tools {
+		if t.Kind == plugin.KindRunner && (spec.Runner == "" || t.Name == spec.Runner) {
+			return t
+		}
+	}
+
+	return plugin.SpecTool{}
+}

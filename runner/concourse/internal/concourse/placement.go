@@ -104,7 +104,7 @@ type placer struct {
 }
 
 func newPlacer(spec plugin.Spec, conf runnerConfig) placer {
-	p := placer{own: conf.Placement, name: tool(spec, plugin.KindRunner).Name}
+	p := placer{own: conf.Placement, name: ownRunner(spec).Name}
 	if p.name == "" {
 		p.name = "<runner>"
 	}
@@ -269,6 +269,11 @@ func (p placer) checkRules(spec plugin.Spec, bad func(string, ...any)) {
 			bad("%s: a rule for %s names no suite", where, r.For)
 		}
 
+		// another runner's run is that runner's to place
+		if elsewhere(spec, r) {
+			continue
+		}
+
 		if r.Run != "" && !runs[r.Run] {
 			bad("%s: no run %s", where, r.Run)
 		}
@@ -278,6 +283,16 @@ func (p placer) checkRules(spec plugin.Spec, bad func(string, ...any)) {
 		}
 	}
 }
+
+// elsewhere says the rule names a run another runner's pipeline holds, so
+// it places nothing here and is no mistake.
+func elsewhere(spec plugin.Spec, r rule) bool {
+	return r.Run != "" && slices.Contains(spec.OtherRuns, r.Run)
+}
+
+// inRuns says the rule places steps a run's jobs hold, which a pipeline
+// whose every run another runner owns has none of.
+func inRuns(r rule) bool { return placeable[r.For].run }
 
 func (r rule) coveredBy(e rule) bool {
 	return e.For == r.For && (e.Run == "" || e.Run == r.Run) && (e.Suite == "" || e.Suite == r.Suite)
@@ -289,9 +304,17 @@ func (p placer) checkSteps(spec plugin.Spec, bad func(string, ...any)) {
 	for i, r := range p.own.Rules {
 		where := fmt.Sprintf("rule %d %s", i+1, r)
 
+		if elsewhere(spec, r) {
+			continue
+		}
+
 		if j := slices.IndexFunc(p.own.Rules[:i], r.coveredBy); j >= 0 {
 			bad("%s places nothing: rule %d %s comes first and places all it would", where, j+1, p.own.Rules[j])
 
+			continue
+		}
+
+		if len(spec.Runs) == 0 && inRuns(r) {
 			continue
 		}
 
