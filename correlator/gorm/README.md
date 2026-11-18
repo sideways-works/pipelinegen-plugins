@@ -11,10 +11,10 @@ writes.
 It owns no units. Its links go from Go declarations, which
 [go-sbom](../../sbom/go) lists
 (`go:<package dir>#<kind>:<name>`, named by go-sbom's `goid` package), to
-what [pg-sbom](../../sbom/pg) lists: relations
-as `pg:relation:<schema>.<name>`, the alias pg-sbom gives every table,
-view and materialised view so a link doesn't need to know which one a name
-is, and functions and procedures as `pg:routine:<schema>.<name>`, which
+what [pg-sbom](../../sbom/pg) lists. A relation is
+`pg:relation:<schema>.<name>`, the alias pg-sbom gives every table, view
+and materialised view, so a link doesn't need to know which one a name
+is. Functions and procedures are `pg:routine:<schema>.<name>`, which
 stands for every overload of a name.
 
 ```mermaid
@@ -39,7 +39,7 @@ through pg-sbom's alias the relation. The link carries that change to
 `Store.CreateNote`, and through go-correlator to the tests that ran it,
 even where a test's recorded statements didn't show the table. With
 `follow: dependents`, a change to the model `Note` reaches its table, and
-the table every declaration that uses it.
+the table reaches every declaration that uses it.
 
 ## Setting it up
 
@@ -77,10 +77,10 @@ start with a dot or an underscore:
 | any Go file | `source` |
 | any other `go.mod`, a `go.sum`, a `go.work` | `module-file` |
 
-Every Go file is claimed, including those that don't import GORM, since
-such a file can still change what a statement reaches (a `TableName`
-method in a file of its own), and a new claimed file, which pipelinegen
-has no answer for, makes it ask `links` again.
+Every Go file is claimed, including those that don't import GORM. Such a
+file can still change what a statement reaches (a `TableName` method in a
+file of its own), and a new claimed file, which pipelinegen has no answer
+for, makes it ask `links` again.
 
 `links` answers for the module of every claimed manifest, or for the
 modules the `modules` key names. Without claims in the request, it finds
@@ -226,7 +226,7 @@ run time. A full analysis takes a few seconds once the Go build cache is
 warm.
 
 When a dependency is missing from the module cache, the module's
-declarations in files that import GORM are can't tell, and the answer says
+declarations in files that import GORM end as can't tell, and the answer says
 `"cacheable": false` so the next plan asks again.
 
 ## Narrowings
@@ -252,8 +252,8 @@ so it holds at every level. The links add to what the tests' recorded
 statements already show: sql-correlator records the tables each test
 touched while it ran. A wrong reading here costs a missed link only where
 the recording missed it too, which means a test that didn't reach that
-statement on its last run. The nightly run of everything is the net under
-both.
+statement on its last run. The nightly run of everything catches what
+both miss.
 
 ## What it can't see
 
@@ -265,7 +265,7 @@ is plain `database/sql`. Beyond that, what the reading can miss:
   doesn't see (one passed through an interface method, or built in code
   outside the loaded modules), then used with `Find(&models)`: the link
   goes to the model's table, not the one set elsewhere. A `TableName()`
-  that reads a field is can't tell; GORM calls `TableName` on a new zero
+  that reads a field ends as can't tell; GORM calls `TableName` on a new zero
   value and caches it, so such a name doesn't work in GORM either. Hooks
   found by reflection on embedded types from outside the loaded modules
   aren't seen. Soft delete changes nothing: a `Delete` on a model with
@@ -273,8 +273,8 @@ is plain `database/sql`. Beyond that, what the reading can miss:
 - Associations. GORM resolves an association by its struct field, and so
   does the correlator. It can miss one GORM resolves differently (a
   `polymorphic` setup across tables, or a join table set by
-  `SetupJoinTable` at run time). A `Joins` on a subquery expression is
-  can't tell.
+  `SetupJoinTable` at run time). A `Joins` on a subquery expression ends
+  as can't tell.
 - SQL. What a view, function, trigger or rule reaches in turn is pg-sbom's
   link: the statement links to the view or the routine and to the table a
   trigger fires on. Relations named in strings the parser never sees
@@ -284,7 +284,7 @@ is plain `database/sql`. Beyond that, what the reading can miss:
   one statement, is taken as the expression. When SQL is built from
   pieces, each appended piece is taken as present once or absent;
   combinations that aren't SQL are dropped, and if none is SQL the
-  declaration is can't tell. A piece that only makes sense when repeated
+  declaration ends as can't tell. A piece that only makes sense when repeated
   would be missed.
 - A function added in a PostgreSQL release after 17 is linked as if the
   schema defined it. The link then points at nothing pg-sbom lists, and
@@ -294,8 +294,8 @@ is plain `database/sql`. Beyond that, what the reading can miss:
 
 The requests and answers follow pipelinegen's
 [plugin protocol](https://github.com/sideways-works/pipelinegen/blob/main/docs/plugins.md).
-This section adds what is particular to gorm-correlator. Its capabilities
-are `detect`, `links` and `why`; `inputs` declares `detect` per file and
+What follows is particular to gorm-correlator. Its capabilities are
+`detect`, `links` and `why`, and `inputs` declares `detect` per file and
 `links` per set. It declares no namespace.
 
 ### `detect`
@@ -330,18 +330,18 @@ echo '{"protocol": 1, "work": "w", "cache": "c", "tree": ".",
 ```
 
 A link read from the declaration's own source (a statement's table, model
-or SQL text, the name a `TableName` method returns) carries `"ref": true`:
-it is a reference in the source. A hook or callback GORM calls on the
-statement's behalf is reached through GORM's machinery, as a type's methods
-are, and a link that only a narrowing's wide rule adds names nothing the
-source names, so neither carries it.
+or SQL text, the name a `TableName` method returns) carries `"ref": true`,
+because it is a reference in the source. A hook or callback GORM calls on
+the statement's behalf is reached through GORM's machinery, as a type's
+methods are. A link that only a narrowing's wide rule adds names nothing
+the source names. Neither of these carries it.
 
 There is one set per module, cached by the blob hashes of its `inputs`:
 the module's Go files, `go.mod` and `go.sum`, the files of the local
 directories its `replace` directives point at, and a `go.work` at the
 root, all taken from the claimed files (from the tree only when run by
-hand without claims). The type checker reads a module's packages together, so the set is
-the module. With `paths`, only the modules holding one of them answer, and
+hand without claims). The type checker reads a module's packages
+together, so the set is the module. With `paths`, only the modules holding one of them answer, and
 a module whose `go.mod` is gone answers an empty set. Past 5,000 links the
 sets go to `sets.jsonl` in the work directory, named in `files`.
 
@@ -362,8 +362,8 @@ It answers "can't tell" (exit 3) when there is no such link.
 
 ### `inspect`
 
-Not part of the protocol: the whole analysis for people tuning the config,
-with every model, its table, columns, associations and hooks, and counts
+This call is not part of the protocol. It answers the whole analysis, for
+people tuning the config, with every model, its table, columns, associations and hooks, and counts
 of what was resolved and why the rest wasn't. Set
 `GORM_CORRELATOR_TRACE=1` to print each SQL text the correlator couldn't
 read or parse to stderr.
@@ -390,12 +390,15 @@ kit=$(mktemp -d)
 pipelinegen plugin test ./gorm-correlator --tree internal/analysis/testdata/app --cache "$kit"
 ```
 
-Releases are built and published with `bazel run //correlator/gorm:release`, which
-runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
-describes: static `gorm-correlator-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
-`-darwin-arm64`,
-`plugin.json` (the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `correlator/gorm/vX.Y.Z` on `main`. A published release never changes; a wrong one gets a
-new version.
+Releases are built and published with
+`bazel run //correlator/gorm:release`, which runs pipelinegen's release
+command as its [release
+guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+describes. For a tag `correlator/gorm/vX.Y.Z` on `main` it publishes
+static `gorm-correlator-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (the plugin's own `describe`), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. A published release never changes; a wrong one
+gets a new version.
 
 ## Developing
 
@@ -418,7 +421,7 @@ pipelinegen plugin test ./gorm-correlator --tree internal/analysis/testdata/app 
   `internal/analysis/testdata`, which require GORM, so fill the module
   cache once (`go mod download` in `internal/analysis/testdata/app`);
   after that they use no network.
-- The last lines are pipelinegen's conformance kit. It calls the
+- The last lines run pipelinegen's conformance kit, which calls the
   gorm-correlator you built the way pipelinegen does, on the fixture
   module, with a module cache of its own that you fill first. With
   go-sbom beside it as `--sbom` (built from [its
