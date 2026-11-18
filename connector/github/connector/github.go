@@ -1,6 +1,5 @@
-// Package connector is the GitHub connector's logic: each call as rounds of
-// requests the core sends, and the answers read from what came back. It
-// sends nothing itself and never holds a token.
+// Package connector never sends a request or holds a token: each call answers with the
+// requests it needs, which the core sends with the token of their purpose.
 package connector
 
 import (
@@ -15,7 +14,6 @@ import (
 	"github.com/sideways-works/pipelinegen/plugin"
 )
 
-// DefaultAPI is github.com's API.
 const DefaultAPI = "https://api.github.com"
 
 const (
@@ -27,19 +25,15 @@ const perPage = 100
 
 const maxPages = 10
 
-// ErrGitHub is an answer from GitHub the connector can't use.
 var ErrGitHub = errors.New("github")
 
-// Config is the connector's block: where the API is, and the code's
-// remote, which the core puts in every call.
+// Config's Remote is filled by the core in every call.
 type Config struct {
-	// API is the API's root (DefaultAPI; https://<host>/api/v3 on GitHub
-	// Enterprise Server).
+	// GitHub Enterprise Server: https://<host>/api/v3.
 	API    string
 	Remote string
 }
 
-// ConfigFrom reads the connector's block.
 func ConfigFrom(m map[string]any) Config {
 	c := Config{API: DefaultAPI}
 
@@ -54,7 +48,6 @@ func ConfigFrom(m map[string]any) Config {
 	return c
 }
 
-// Describe is what the connector can tell and what its requests carry.
 func Describe(version string) plugin.Description {
 	return plugin.Description{
 		Protocol: plugin.Protocol, Kind: plugin.KindConnector, Name: "github", Version: version,
@@ -72,8 +65,6 @@ func Describe(version string) plugin.Description {
 	}
 }
 
-// Repository is owner/name of a GitHub remote: https, ssh or the scp
-// form; false when the remote isn't one.
 func Repository(remote string) (string, bool) {
 	var rest string
 
@@ -112,8 +103,6 @@ func webHost(remote string) string {
 	return ""
 }
 
-// Identify answers from the remote alone: it is GitHub's when it is on
-// github.com, or on the host of a configured API.
 func Identify(c Config, remote string) plugin.Identity {
 	repo, ok := Repository(remote)
 	host := webHost(remote)
@@ -165,13 +154,10 @@ func request(id, method, u, purpose string, body any) (plugin.HTTPRequest, error
 	return r, nil
 }
 
-// withoutVersion leaves the API version header out, as the requests that
-// read pull requests always have: their answers are read as the default
-// version gives them.
+// withoutVersion: the pull request reads have always gone without the version header,
+// and their answers are read as the default version gives them.
 func withoutVersion(r *plugin.HTTPRequest) { delete(r.Headers, "X-Github-Api-Version") }
 
-// Body reads a response's body; the connector's main gives it the round's
-// work directory.
 type Body func(file string) ([]byte, error)
 
 func decode(r plugin.HTTPResponse, read Body, out any) error {
@@ -209,8 +195,6 @@ func done(v any) (plugin.Round, error) {
 	return plugin.Round{Done: data}, nil
 }
 
-// Round answers one round of a call: the requests it needs next, or its
-// answer, from the call's arguments and every response so far.
 func Round(call string, req plugin.ExchangeRequest, read Body) (plugin.Round, error) {
 	c := ConfigFrom(req.Config)
 
@@ -244,8 +228,6 @@ func Round(call string, req plugin.ExchangeRequest, read Body) (plugin.Round, er
 	return plugin.Round{}, fmt.Errorf("%w: no call %q", ErrGitHub, call)
 }
 
-// Links are the web pages of a commit, a file at a commit, and a pull
-// request.
 func Links(c Config, a plugin.LinksArgs) plugin.WebLinks {
 	repo, ok := Repository(c.Remote)
 	if !ok {

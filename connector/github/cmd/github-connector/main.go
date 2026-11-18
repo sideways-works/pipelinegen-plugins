@@ -1,8 +1,3 @@
-// Command github-connector is a pipelinegen connector for repositories on
-// GitHub: it lists their pull requests, sets commit statuses and keeps a
-// comment on each pull request. It sends nothing itself: each call answers
-// with the requests it wants sent, which pipelinegen checks, sends with the
-// token of the call's purpose and hands back, round by round.
 package main
 
 import (
@@ -15,7 +10,6 @@ import (
 	"github.com/sideways-works/pipelinegen/plugin"
 )
 
-// Version is set by the release build.
 var Version = "dev"
 
 func main() {

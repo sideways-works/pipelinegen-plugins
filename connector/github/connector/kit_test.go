@@ -7,8 +7,6 @@ import (
 	"testing"
 )
 
-// TestTheKit runs the tool's conformance kit on the built connector and its
-// fixture: every call it declares, against a fake host, and the fork rule.
 func TestTheKit(t *testing.T) {
 	bin := filepath.Join(t.TempDir(), "github-connector")
 

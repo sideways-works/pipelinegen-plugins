@@ -118,8 +118,8 @@ func (f *fakeGitHub) take() []sent {
 	return out
 }
 
-// oldCalls are the requests pipelinegen's own GitHub clients sent before
-// the connector replaced them, one per kind, recorded against this fake.
+// oldCalls were recorded from pipelinegen's own GitHub clients before the connector
+// replaced them.
 func oldCalls(t *testing.T) map[string]sent {
 	t.Helper()
 
@@ -149,8 +149,6 @@ func drive(t *testing.T, f *fakeGitHub, call string, args any) json.RawMessage {
 	return driveWith(t, call, req, func(int) {})
 }
 
-// driveWith sends each round's requests as the core does, telling round
-// how many a round asked for.
 func driveWith(t *testing.T, call string, req plugin.ExchangeRequest, round func(n int)) json.RawMessage {
 	t.Helper()
 
@@ -216,7 +214,7 @@ var table = map[string]row{
 	"POST /repos/o/r/statuses/{sha}": {call: plugin.CallStatus, args: plugin.StatusArgs{Commit: headSHA, Context: "pipelinegen/pr", State: "pending", Text: "planning", URL: "https://ci.example.test/b/1"}},
 	"GET /repos/o/r/commits/{sha}/status": {
 		call: plugin.CallStatuses, args: plugin.StatusesArgs{Commit: headSHA},
-		// last_passed's check read one page; statuses names its page
+		// last_passed's check read one page; statuses names its page.
 		queryAdded: url.Values{"page": {"1"}},
 	},
 	"GET /repos/o/r/commits/{sha}":          {call: plugin.CallSubject, args: plugin.SubjectArgs{Commit: headSHA}},

@@ -37,9 +37,8 @@ type side struct {
 	} `json:"repo"`
 }
 
-// from is where a pull request comes from, by repository id: a fork, or
-// a repository deleted and made again under the same name, has another
-// id; a head repository that is gone can't be told.
+// from compares repository ids: a fork, or a repository deleted and made again under
+// the same name, has another id; a head repository that is gone can't be told.
 func from(p listed) string {
 	switch {
 	case p.Head.Repo == nil || p.Base.Repo == nil || p.Head.Repo.ID == 0:
@@ -81,8 +80,7 @@ func changes(c Config, req plugin.ExchangeRequest, read Body) (plugin.Round, err
 	return done(plugin.ChangesAnswer{Changes: changesOf(pulls, a.Base, ready)})
 }
 
-// narrowed are the pull requests that pass the run's filters: the core
-// applies them again, and a timeline is asked only for these.
+// narrowed only saves timeline requests: the core applies the run's filters again.
 func narrowed(pulls []listed, f plugin.ChangesFilters) []listed {
 	out := make([]listed, 0, len(pulls))
 
@@ -185,7 +183,7 @@ func readyTimes(repo string, pulls []listed, responses []plugin.HTTPResponse, re
 
 			withoutVersion(&q)
 
-			// the core sends at most maxRound requests a round
+			// Requests past the cap are asked again next round.
 			if len(more) < maxRound {
 				more = append(more, q)
 			}
@@ -278,7 +276,7 @@ func statuses(c Config, req plugin.ExchangeRequest, read Body) (plugin.Round, er
 	n := 0
 
 	for _, r := range req.Responses {
-		// a commit GitHub doesn't know has no statuses
+		// A commit GitHub doesn't know has no statuses.
 		if r.Status == 404 || r.Status == 422 {
 			return done(plugin.StatusesAnswer{Statuses: []plugin.Status{}})
 		}
@@ -358,10 +356,8 @@ type issueComment struct {
 	UpdatedAt timeOf `json:"updated_at"`
 }
 
-// comment keeps one comment that starts with the marker on the pull
-// request: the oldest such comment is updated when its body differs, one is
-// made when there is none, and every other is deleted. A comment that only
-// quotes the marker further down is someone else's and stays.
+// comment keeps one comment starting with the marker: the oldest is updated, the others
+// deleted. A comment that only quotes the marker further down is someone else's.
 func comment(c Config, req plugin.ExchangeRequest, read Body) (plugin.Round, error) {
 	var a plugin.CommentArgs
 	if err := json.Unmarshal(req.Args, &a); err != nil {
@@ -378,7 +374,7 @@ func comment(c Config, req plugin.ExchangeRequest, read Body) (plugin.Round, err
 		return plugin.Round{}, err
 	}
 
-	// the writes were the last round: check them and answer
+	// Writes are the last round.
 	for _, r := range req.Responses {
 		if strings.HasPrefix(r.ID, "write-") {
 			for _, w := range req.Responses {
@@ -451,8 +447,7 @@ func commentWrites(repo, number string, a plugin.CommentArgs, all []issueComment
 	return writes, nil
 }
 
-// normal is a comment's body as GitHub may give it back: line ends and
-// trailing space aside.
+// normal drops what GitHub may change in a body it gives back: line ends and trailing space.
 func normal(body string) string {
 	return strings.TrimRight(strings.ReplaceAll(body, "\r\n", "\n"), " \n\t")
 }

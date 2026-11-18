@@ -181,8 +181,6 @@ func TestStatusesOfAnUnknownCommit(t *testing.T) {
 
 func itoa(n int) string { return strconv.Itoa(n) }
 
-// Each pull request's timeline is one request, and the core sends twenty a
-// round: more pull requests take more rounds.
 func TestManyTimelinesTakeRounds(t *testing.T) {
 	var pulls []string
 	for n := 1; n <= 45; n++ {
@@ -215,8 +213,6 @@ func TestManyTimelinesTakeRounds(t *testing.T) {
 	}
 }
 
-// A run's filters narrow the listing, so a run that asks after one branch
-// asks one timeline.
 func TestFiltersNarrowTheTimelines(t *testing.T) {
 	pulls := `[{"number": 7, "draft": false, "labels": [{"name": "ci"}], "created_at": "2026-01-01T00:00:00Z", "head": {"sha": "` + headSHA + `", "ref": "feat/a", "repo": {"id": 1}}, "base": {"ref": "main", "repo": {"id": 1}}},
 		{"number": 8, "draft": true, "labels": [], "created_at": "2026-01-01T00:00:00Z", "head": {"sha": "` + headSHA + `", "ref": "feat/b", "repo": {"id": 1}}, "base": {"ref": "main", "repo": {"id": 1}}},
