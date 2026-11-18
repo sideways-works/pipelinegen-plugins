@@ -50,14 +50,14 @@ plugins:
       - name: concourse
         kind: runner
         path: runner/concourse
-        release: {version: vX.Y.Z, sha256: ...}
+        release: {version: v0.4.0, sums: …}
 ```
 
-The checksum is the `concourse-runner-linux-amd64` line of the release's
-`SHA256SUMS`. Or pin the release by the checksum of its `SHA256SUMS`
-itself, `sums: ...` in place of `sha256`: one pin then serves every
-platform, a Mac's binary checked by its own line of the list. A runner
-claims no files, so there is no `detect` and no `include` or `exclude`.
+`sums` is the checksum of the release's `SHA256SUMS`, so one pin serves
+every platform and each binary is checked by its own line of that list.
+To pin one binary alone, put `sha256:` with its line
+(`concourse-runner-linux-amd64`) in place of `sums`. A runner claims no
+files, so there is no `detect` and no `include` or `exclude`.
 
 ### Config
 
@@ -96,7 +96,7 @@ plugins:
       - name: concourse
         kind: runner
         path: runner/concourse
-        release: {version: vX.Y.Z, sha256: ...}
+        release: {version: v0.4.0, sums: …}
         config:
           placement:
             default: [small]
@@ -190,11 +190,11 @@ repository's own parts from its include file.
   file, the script `<name>.mjs`, checked the same way and run by its own
   `node` shebang. `<name>` is the program the repository holds: a
   repository named `pipelinegen-KIND-NAME`, KIND a plugin kind, holds
-  `NAME-KIND` (`pipelinegen-sbom-go` holds `go-sbom`), and any other
+  `NAME-KIND`, and any other
   repository the program of its own name. Both spellings of a renamed
-  repository (`sideways-works/go-sbom`, `sideways-works/pipelinegen-sbom-go`)
-  fetch the same file into the same cache entry, so switching a pin from
-  one to the other fetches nothing again.
+  repository (`owner/NAME-KIND` and `owner/pipelinegen-KIND-NAME`) fetch
+  the same file into the same cache entry, so switching a pin from one to
+  the other fetches nothing again.
 - Every task that runs pipelinegen, planning and bookkeeping tasks as
   much as a suite's, gets `PIPELINEGEN_PIPELINE_STEP=1`, which tells
   pipelinegen it runs as a pipeline's step: Bazel's output and bazelisk's
@@ -712,62 +712,44 @@ The requests and answers follow pipelinegen's
 file) and answers `{"files": ["pipeline.yml"]}` in the work directory. A
 call of another kind fails.
 
-## Developing and releasing
-
-The Go version and golangci-lint version are in `.tool-versions`. Before a
-push, run `go test ./...` and `golangci-lint run`.
-
-The conformance kit checks the plugin the way pipelinegen calls it; for a
-runner it needs no fixture tree:
-
-```sh
-go build -trimpath -o concourse-runner ./cmd/concourse-runner
-pipelinegen plugin test ./concourse-runner
-```
-
-Releases are built and published with
-`bazel run //runner/concourse:release`, which runs pipelinegen's release
-command as its
-[release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
-describes. For a tag `runner/concourse/vX.Y.Z` on `main` it makes static
-`concourse-runner-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
-`-darwin-arm64`, `plugin.json` (the plugin's own `describe`), `LICENSE`,
-`NOTICE` and `SHA256SUMS`. A published release never changes; a wrong one
-gets a new version. A change to what the pipeline's steps call ships with the
-pipelinegen release that has those commands, both pins moving in one
-commit.
-
 ## Developing
 
-The tests and the lint run with the Go, golangci-lint and Node that the
-repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
-other commands run in this directory. The tests need a POSIX shell.
+`bazel run //runner/concourse:test` runs the tests and `bazel run
+//runner/concourse:lint` the lint, with the Go, golangci-lint and Node
+the repository pins in `MODULE.bazel`
+([CONTRIBUTING](../../CONTRIBUTING.md)). The tests need a POSIX shell.
+They run each step of `concourse-runner step` against a stand-in for
+pipelinegen and the bootstrap with `sh` against a stand-in for the
+runner, and compare whole pipelines with the files in
+`internal/concourse/testdata`. With `fly` on your `PATH` they also check
+every pipeline with `fly validate-pipeline --strict`; without it those
+checks are skipped, so run them with `fly` before a pull request. No
+step may print a secret: the tests check the pipeline and the bootstrap
+for the patterns that would leak the token, and run every step to check
+that none passes it on.
+
+pipelinegen's conformance kit calls the runner the way pipelinegen does
+and needs no fixture tree. It runs with the pipelinegen `go.mod`
+requires as a tool, in this directory:
 
 ```sh
-bazel run //runner/concourse:test
-bazel run //runner/concourse:lint
 go build -trimpath -o concourse-runner ./cmd/concourse-runner
 go tool pipelinegen plugin test ./concourse-runner
 ```
 
-- The last line is pipelinegen's conformance kit, run with the pipelinegen
-  that `go.mod` requires as a tool. It calls the concourse-runner you
-  built the way pipelinegen does and checks that the pipeline it writes
-  calls only commands and flags that pipelinegen has. A runner needs no
-  fixture tree.
-- The pipeline's steps call pipelinegen's commands, so the runner and the
-  tool move together: a change that makes a step call something new comes
-  with the `go.mod` bump to the pipelinegen that has it, and the kit run
-  with an older pipelinegen fails on it.
-- Tests run each step of `concourse-runner step` against a stand-in for
-  pipelinegen, the bootstrap with `sh` against a stand-in for the runner,
-  and compare whole pipelines with the files in
-  `internal/concourse/testdata`. With `fly` on your `PATH`, they also
-  check every pipeline with `fly validate-pipeline --strict`; without it
-  those checks are skipped, so run them with `fly` before a pull request.
-- No step prints a secret. Tests check the generated pipeline and the
-  bootstrap for the patterns that would leak the token, and run every
-  step to check none passes it on. A change keeps them passing and
-  doesn't loosen them.
-- A change to the pipeline comes with its docs: the README describes the
-  pipeline as concourse-runner writes it on `main`.
+The pipeline's steps call pipelinegen's commands, so the runner and the
+tool move together. A change that makes a step call something new comes
+with the `go.mod` bump to the pipelinegen that has it, and the kit of an
+older pipelinegen fails on it.
+
+`bazel run //runner/concourse:release` releases it from a tag
+`runner/concourse/vX.Y.Z` on `main`, as
+[CONTRIBUTING](../../CONTRIBUTING.md#releases) describes: static
+`concourse-runner-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (its own `describe` answer), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. Its first release here is `v0.4.0`
+([RELEASING](../../RELEASING.md)), and a published release never
+changes.
+
+A change to the pipeline comes with its docs, so this README describes
+the pipeline as concourse-runner writes it on `main`.
