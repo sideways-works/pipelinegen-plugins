@@ -30,7 +30,7 @@ by its checksum. A `plugins` entry named `github` pins another release:
 plugins:
   - repository: https://github.com/sideways-works/pipelinegen-plugins
     with:
-      - {name: github, kind: connector, path: connector/github, release: {version: v0.1.0, sums: ...}}
+      - {name: github, kind: connector, path: connector/github, release: {version: v0.4.0, sums: …}}
 ```
 
 On GitHub Enterprise Server, the step's `PIPELINEGEN_GITHUB_API` names the
@@ -71,19 +71,29 @@ the connector to them, request by request.
 
 ## Developing
 
-The tests and the lint run with the Go, golangci-lint and Node that the
-repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
-other commands run in this directory.
+`bazel run //connector/github:test` runs the tests and `bazel run
+//connector/github:lint` the lint, with the Go, golangci-lint and Node
+the repository pins in `MODULE.bazel`
+([CONTRIBUTING](../../CONTRIBUTING.md)). The tests include pipelinegen's
+conformance kit: `TestTheKit` builds github-connector and runs it
+through the kit with the fixture in `connector/testdata/kit`, using the
+pipelinegen that `go.mod` requires as a tool.
+
+By hand, in this directory:
 
 ```sh
-bazel run //connector/github:test
-bazel run //connector/github:lint
+go build -trimpath -o github-connector ./cmd/github-connector
+go tool pipelinegen plugin test ./github-connector --tree connector/testdata/kit
 ```
 
-- The tests include pipelinegen's conformance kit: `TestTheKit` builds
-  the connector and runs `go tool pipelinegen plugin test` on it with the
-  fixture in `connector/testdata/kit`, with the pipelinegen that `go.mod` requires as
-  a tool. By hand:
-  `pipelinegen plugin test ./github-connector --tree connector/testdata/kit`.
-- A change to what github-connector answers comes with its docs: the README
-  describes github-connector as it is on `main`.
+`bazel run //connector/github:release` releases it from a tag
+`connector/github/vX.Y.Z` on `main`, as
+[CONTRIBUTING](../../CONTRIBUTING.md#releases) describes: static
+`github-connector-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (its own `describe` answer), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. Its first release here is `v0.4.0`
+([RELEASING](../../RELEASING.md)), and a published release never
+changes.
+
+A change to what github-connector answers comes with its docs, so this
+README describes github-connector as it is on `main`.
