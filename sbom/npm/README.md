@@ -7,9 +7,9 @@ installs: every package with its resolved version and checksum, the
 dependencies between packages, and the Node and npm versions the workspace
 declares.
 
-It records what exists. Which source file loads which package is
-[react-correlator](../../correlator/react)'s
-knowledge: it links files to the `dep:npm:` units listed here.
+It records what exists. Which source file loads which package is for
+[react-correlator](../../correlator/react) to know: it links files to the
+`dep:npm:` units listed here.
 
 ```mermaid
 flowchart LR
@@ -28,8 +28,8 @@ A lockfile change that bumps only `loose-envify` changes the digest of
 `dep:npm:loose-envify`. npm-sbom's link from `dep:npm:react` to
 `dep:npm:loose-envify` carries the change to everything that loads
 `react`, so the tests bound to `app/main.tsx` run, and tests whose code
-loads neither package don't. A bump of `vite` instead is a toolchain bump:
-pipelinegen samples every suite that builds with it.
+loads neither package don't. A bump of `vite` is a toolchain bump instead,
+and pipelinegen samples every suite that builds with it.
 
 On a real repository of about 900 source files, most of about a hundred
 lockfile changes bumped one package. Bumps of a UI library that most of
@@ -93,9 +93,9 @@ alias such as `my-react: npm:react@17` is `dep:npm:my-react`). Every
 package of the store is a copy at `node_modules/.pnpm/<key>/node_modules/<name>`.
 Where each copy loads its dependencies from is read from the lockfile's
 snapshots. A package that is imported directly and also sits in the store
-has both copies in its digest. So does the real package behind an alias,
-so a bump of `react@17` behind `my-react` changes `dep:npm:react` too,
-which can only select more. A peer dependency links to the version the
+has both copies in its digest. So does the real package behind an alias:
+a bump of `react@17` behind `my-react` changes `dep:npm:react` too, which
+can only select more. A peer dependency links to the version the
 snapshot resolved it to.
 
 ### Config
@@ -164,11 +164,11 @@ relative imports and workspace packages are files.
 ### Toolchains
 
 A bundler, a compiler, a linter or a test runner is a package that builds
-or runs code rather than being loaded by it. A bump of one reaches every
-test of everything it builds, one of the few honest "run everything"
-cases. These units have the kind `toolchain`: pipelinegen samples every
-suite that uses them instead of following links, and the nightly run
-covers the rest.
+or runs code, and the code doesn't load it. A bump of one reaches
+every test of everything it builds, which makes it one of the few cases
+where running everything is honest. These units have the kind
+`toolchain`. pipelinegen samples every suite that uses them instead of
+following links, and the nightly run covers the rest.
 
 A package that only a toolchain needs, such as a CSS minifier inside a
 bundler, is a toolchain too. Otherwise a bump of the minifier would reach
@@ -201,7 +201,7 @@ shows them. A lockfile that can't be read fails (exit 1).
 
 ## Narrowings
 
-npm-sbom declares none: binding follows what is installed and imported,
+npm-sbom declares none. Binding follows what is installed and imported,
 and nothing narrower would be sound.
 
 ## What it can't see
@@ -218,8 +218,8 @@ and nothing narrower would be sound.
   JSONC with a `packages` map keyed by install path, close to npm's, and
   the older binary `bun.lockb` can't be read at all.
 - What an install script downloads (a browser, a native binary). It isn't
-  in the lockfile, and changes only when the package's version does, which
-  the digest covers.
+  in the lockfile, and it changes only when the package's version does,
+  which the digest covers.
 - A peer dependency that nothing installed: it gets no link. A peer that
   is installed resolves to what the workspace installed, as npm does.
 - An import the code never declared. The toolchain closure goes by
@@ -232,9 +232,9 @@ and nothing narrower would be sound.
 
 The requests and answers follow pipelinegen's
 [plugin protocol](https://github.com/sideways-works/pipelinegen/blob/main/docs/plugins.md).
-This section adds what is particular to npm-sbom. Its capabilities are
-`detect`, `units` and `document`; its namespace is `dep:npm`; `inputs`
-declares `detect` per file and `units` and `document` per set.
+What follows is particular to npm-sbom. Its capabilities are `detect`,
+`units` and `document`, and its namespace is `dep:npm`. `inputs` declares
+`detect` per file, and `units` and `document` per set.
 
 ### `detect`
 
@@ -249,9 +249,9 @@ The units come in one set, because a package that several lockfiles
 install is one unit whose digest covers every copy. The set's `inputs`
 are the lockfiles, the `package.json` and Node version files beside them,
 and the configured `documents`. `units` reads only the lockfiles in
-`claimed`, or those the `lockfiles` key names; with `paths` and no
-`claimed` it detects them among the paths, and run by hand with neither
-it walks the tree. With `paths`, it answers the set when one of them is
+`claimed`, or those the `lockfiles` key names. With `paths` and no
+`claimed` it detects them among the paths, and when run by hand with
+neither it walks the tree. With `paths`, it answers the set when one of them is
 an input or no longer in the tree, and no set otherwise:
 
 ```console
@@ -287,12 +287,14 @@ pipelinegen plugin test ./npm-sbom --tree npm/testdata/workspace
 pipelinegen plugin test ./npm-sbom --tree npm/testdata/pnpm
 ```
 
-Releases are built and published with `bazel run //sbom/npm:release`, which
-runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
-describes: static `npm-sbom-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
-`-darwin-arm64`,
-`plugin.json` (the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `sbom/npm/vX.Y.Z` on `main`. A published release never changes; a wrong one gets a
-new version.
+Releases are built and published with `bazel run //sbom/npm:release`,
+which runs pipelinegen's release command as its [release
+guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+describes. For a tag `sbom/npm/vX.Y.Z` on `main` it publishes static
+`npm-sbom-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (the plugin's own `describe`), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. A published release never changes; a wrong one
+gets a new version.
 
 ## Developing
 
@@ -310,9 +312,9 @@ pipelinegen plugin test ./npm-sbom --tree npm/testdata/pnpm
 
 - Tests read the fixture workspaces in `npm/testdata` and use no
   network.
-- The last two lines are pipelinegen's conformance kit. It calls the
-  npm-sbom you built the way pipelinegen does, on an npm workspace and
-  on a pnpm one. Take `pipelinegen` from [its
+- The last two lines run pipelinegen's conformance kit, which calls the
+  npm-sbom you built the way pipelinegen does, on an npm workspace and on
+  a pnpm one. Take `pipelinegen` from [its
   releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
 - A change to what npm-sbom lists comes with its docs: the README
   describes npm-sbom as it is on `main`.
