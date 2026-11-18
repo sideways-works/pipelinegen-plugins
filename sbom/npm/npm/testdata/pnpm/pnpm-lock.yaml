@@ -1,0 +1,123 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    devDependencies:
+      vite:
+        specifier: ^6.0.0
+        version: 6.0.3(postcss@8.4.49)
+
+  apps/web:
+    dependencies:
+      '@demo/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      chart:
+        specifier: ^1.0.0
+        version: 1.0.0(react@18.3.1)
+      my-react:
+        specifier: npm:react@^17.0.2
+        version: react@17.0.2
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+
+  packages/ui:
+    dependencies:
+      left-pad:
+        specifier: ^1.3.0
+        version: 1.3.0
+      postcss:
+        specifier: ^8.4.49
+        version: 8.4.49
+
+packages:
+
+  chart@1.0.0:
+    resolution: {integrity: sha512-chart}
+    peerDependencies:
+      react: '>=17'
+
+  js-tokens@2.0.0:
+    resolution: {integrity: sha512-jstokens2}
+
+  js-tokens@4.0.0:
+    resolution: {integrity: sha512-jstokens4}
+
+  left-pad@1.3.0:
+    resolution: {integrity: sha512-leftpad}
+
+  loose-envify@1.4.0:
+    resolution: {integrity: sha512-looseenvify}
+    hasBin: true
+
+  object-assign@4.1.1:
+    resolution: {integrity: sha512-objectassign}
+    engines: {node: '>=0.10.0'}
+
+  picocolors@1.1.1:
+    resolution: {integrity: sha512-picocolors}
+
+  picomatch@4.0.2:
+    resolution: {integrity: sha512-picomatch}
+
+  postcss@8.4.49:
+    resolution: {integrity: sha512-postcss}
+
+  react@17.0.2:
+    resolution: {integrity: sha512-react17}
+
+  react@18.3.1:
+    resolution: {integrity: sha512-react18}
+
+  vite@6.0.3:
+    resolution: {integrity: sha512-vite}
+    peerDependencies:
+      postcss: ^8
+
+snapshots:
+
+  chart@1.0.0(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+
+  js-tokens@2.0.0: {}
+
+  js-tokens@4.0.0: {}
+
+  left-pad@1.3.0:
+    dependencies:
+      js-tokens: 2.0.0
+
+  loose-envify@1.4.0:
+    dependencies:
+      js-tokens: 4.0.0
+
+  object-assign@4.1.1: {}
+
+  picocolors@1.1.1: {}
+
+  picomatch@4.0.2: {}
+
+  postcss@8.4.49:
+    dependencies:
+      picocolors: 1.1.1
+
+  react@17.0.2:
+    dependencies:
+      loose-envify: 1.4.0
+      object-assign: 4.1.1
+
+  react@18.3.1:
+    dependencies:
+      loose-envify: 1.4.0
+
+  vite@6.0.3(postcss@8.4.49):
+    dependencies:
+      picomatch: 4.0.2
+      postcss: 8.4.49
