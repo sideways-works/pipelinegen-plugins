@@ -15,9 +15,9 @@ plugins spell ids through go-sbom's `goid` package, so they always agree:
 configures the two together.
 
 Type-checked knowledge is too large to hand to pipelinegen as plain links:
-a backend of about 20,000 declarations takes hundreds of MB in memory. So
-go-correlator answers `bind` instead of `links`. It binds each slice
-itself and gives every bound unit with the reason it is there.
+a backend of about 20,000 declarations takes hundreds of MB in memory.
+go-correlator therefore answers `bind` instead of `links`: it binds each
+slice itself and gives every bound unit with the reason it is there.
 
 ```mermaid
 flowchart LR
@@ -146,9 +146,9 @@ working directory's version file, so describe, which gets no tree, asks in
 the directory pipelinegen starts it in, with the environment above, and
 `bind` asks again in that directory and in every module directory it
 loads. If any of them differ, `bind` still answers, marked `"cacheable":
-false`: on a machine where the working directory and a module resolve
+false`. On a machine where the working directory and a module resolve
 different Go versions, bind answers are never cached, which is correct,
-only slower; in a CI image with one Go they always are. When no usable go
+only slower. In a CI image with one Go they always are. When no usable go
 resolves in the working directory (none at all, or one whose `GOROOT`
 holds another release, whose compiler refuses it), `toolchains` is left
 out, so nothing is cached; in a module directory the same makes `bind`
@@ -156,8 +156,8 @@ answer "can't tell" as above.
 
 ## What it produces
 
-go-correlator produces bindings, not units. For each slice and each width
-it answers the units the slice is bound to, each with a reason:
+go-correlator produces bindings. For each slice and each width it
+answers the units the slice is bound to, each with a reason:
 
 | Reason | The unit is bound because |
 |---|---|
@@ -241,7 +241,7 @@ looks no deeper and leaves every other file for other plugins. A slice that
 runs more than once in one batch (a retry, a suite recorded on two
 configurations) writes every run into the same `coverage/<slice>/`, and
 pipelinegen names each later part's directory apart,
-`coverage/.pipelinegen/part-<k>/<slice>/<plugin>`: that part's `collect`
+`coverage/.pipelinegen/part-<k>/<slice>/<plugin>`. That part's `collect`
 takes what is still lying in `coverage/<slice>/`, which is its own run,
 since each earlier part moved its files out. Within one part, a name
 written again gets a numbered one and the files add up. Files already in
@@ -294,8 +294,8 @@ suite, which is what such a change does.
 ### A running stack
 
 A browser test or an API test against a started server needs the server's
-counters between slices, without restarting it. That is the way when the
-stack is slow to start or is several processes. Each binary of the stack
+counters between slices, without restarting it. Use this when the stack
+is slow to start or is several processes. Each binary of the stack
 links the `cover` package, in coverage builds only, through one file of
 its own:
 
@@ -342,10 +342,10 @@ clear its counters, so it answers its first request with an error and
 exits.
 
 At `setup-end` and `slice-end`, after moving what the task wrote, `collect`
-writes a request and waits for every ready binary's answer; the binaries
-write into the plugin's own directory. Background work during the slices (timers,
-polling loops) lands in whichever slice is current, so a stack's periodic
-jobs should be off or run on request. A binary that is killed loses its
+writes a request and waits for every ready binary's answer, and the
+binaries write into the plugin's own directory. Background work during the
+slices (timers, polling loops) lands in whichever slice is current, so a
+stack's periodic jobs should be off or run on request. A binary that is killed loses its
 counters since the last snapshot.
 
 ### When it can't tell
@@ -363,10 +363,10 @@ counters since the last snapshot.
 - the tree has no `go.mod`.
 
 pipelinegen then marks the slice, and the slice runs on every change until
-a recording tells again. The one empty answer is coverage of the tree's
-packages whose counts are all zero: positive evidence of a recording that
-ran nothing. A setup directory without coverage is fine; it is a batch of
-plain test binaries. A coverprofile that can't be parsed fails (exit 1).
+a recording tells again. The only empty answer comes from coverage of the
+tree's packages whose counts are all zero, which is positive evidence of a
+recording that ran nothing. A setup directory without coverage is fine:
+it belongs to a batch of plain test binaries. A coverprofile that can't be parsed fails (exit 1).
 
 `touched` holds every top-level function, method and init with a covered
 block, what only the setup ran included. `setup_like` is that setup-only
@@ -586,8 +586,8 @@ with this version and go-sbom v0.1.3-rc.4, 106 and 12. Each of those ran a
 changed method: the unexported method turned into a function (101 and 11),
 another method of the server (3) or a handler (2 and 1); none is a slice
 the release left out. At level 4, where `interface-methods` is off,
-both select the same slices, slice for slice. The measure leaves
-out what no Go plugin decides: the repository's own plan of the change
+both select the same slices, slice for slice. The measure leaves out what
+no Go plugin decides: the repository's own plan of the change
 also selects 113 browser specs through a changed frontend target, and 8
 backend test files and 33 browser specs have no recording yet, so they run
 on any change. `tools/proof` on the same change, against that plan, counts
@@ -605,8 +605,8 @@ wide.
 ### Proving a go-sbom release through the planner
 
 A go-sbom release that changes what it lists must be safe to take on its
-own, next to the go-correlator release a repository already pins. That is
-shown through pipelinegen's planner. A small Bazel workspace holds one Go
+own, next to the go-correlator release a repository already pins.
+pipelinegen's planner shows it. A small Bazel workspace holds one Go
 module: a package `orders` with a type `Order`, its methods `Price` and
 `Label`, an unexported helper `round` that `Label` calls for a refund, and
 an unexported `check` that makes `Order` satisfy an interface of its
@@ -642,8 +642,8 @@ Reflection and templates see exported methods only, other packages can't
 name it, and no interface holds it. A change that breaks the package's
 compilation is caught by go-correlator's type check of the head, which
 binds the package wide: every slice of it was selected in those plans,
-whether or not one had run the method. At level 5, and in the `dependents` width, the
-two releases agree.
+whether or not one had run the method. At level 5, and in the `dependents`
+width, the two releases agree.
 
 ## What it can't see
 
@@ -696,8 +696,8 @@ two releases agree.
 
 The requests and answers follow pipelinegen's
 [plugin protocol](https://github.com/sideways-works/pipelinegen/blob/main/docs/plugins.md).
-This section adds what is particular to go-correlator. Its capabilities are
-`detect`, `bind`, `observe`, `collect` and `why`; `inputs` declares
+What follows is particular to go-correlator. Its capabilities are
+`detect`, `bind`, `observe`, `collect` and `why`, and `inputs` declares
 `detect` per file and `bind` per set. It answers no `links` and declares no
 namespace. A tree may be a symlink: every call reads the directory it
 points at.
@@ -761,8 +761,8 @@ since the last snapshot cleared the counters. The answer is
 answers the shortest path over references, method sets and interface
 implementations, each step with a note (`referenced`, `a method of the
 type`, `may run through an interface call`). A `to` of `dep:go:<module>`
-ends at the first declaration whose package links that module. No path is
-an empty `path`.
+ends at the first declaration whose package links that module. When there
+is no path, the answer holds an empty `path`.
 
 ```json
 {"path": [{"unit": "go:internal/notes#func:Create", "note": ""},
@@ -785,13 +785,15 @@ go build -trimpath -o go-correlator ./cmd/go-correlator
 pipelinegen plugin test ./go-correlator --tree graph/testdata
 ```
 
-Releases are built and published with `bazel run //correlator/go:release`, which
-runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
-describes: static `go-correlator-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
-`-darwin-arm64`,
-`plugin.json` (the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`. Each release
-tags the commit `vX.Y.Z` and the `cover` module `cover/vX.Y.Z` on the same
-commit. A published release never changes; a wrong one gets a new
+Releases are built and published with
+`bazel run //correlator/go:release`, which runs pipelinegen's release
+command as its [release
+guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+describes. It publishes static `go-correlator-linux-amd64`,
+`-linux-arm64`, `-darwin-amd64` and `-darwin-arm64`, `plugin.json` (the
+plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`. Each
+release tags the commit `vX.Y.Z` and the `cover` module `cover/vX.Y.Z` on
+the same commit. A published release never changes; a wrong one gets a new
 version.
 
 ## Developing
@@ -812,7 +814,7 @@ pipelinegen plugin test ./go-correlator --tree graph/testdata --sbom <go-sbom>
 - `cover` is a module of its own, which coverage builds of a repository
   link, so `./...` stops at it and it is tested and linted on its own.
   It keeps to the standard library.
-- The last line is pipelinegen's conformance kit. It calls the
+- The last line runs pipelinegen's conformance kit, which calls the
   go-correlator you built the way pipelinegen does, on the fixture tree
   in `graph/testdata`, whose `.pipelinegen-kit.json` names the slices to
   bind and the recording in `coverage/` that `observe` reads. With go-sbom
