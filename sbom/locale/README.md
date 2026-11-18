@@ -11,7 +11,8 @@ which records the keys each test looked up, a change to one key runs the
 tests that rendered that key. Without them, every test whose Bazel target
 names a catalog runs.
 
-It reads files and answers JSON. It starts nothing and connects to nothing.
+It only reads files and answers in JSON: it starts no process and opens no
+connection.
 
 ```mermaid
 flowchart LR
@@ -35,9 +36,9 @@ or `translations`. Those names are the candidates; a plugin entry's
 
 A candidate is claimed when its content is a JSON object whose values are
 strings, objects and arrays of them. JSON of another shape (a number, a
-boolean, `null`, a list at the top) is no catalog and stays unclaimed. A
-file laid out as a catalog that is no JSON at all is claimed, and its
-units can't tell (below).
+boolean, `null`, a list at the top) is not a catalog and stays unclaimed.
+A file laid out like a catalog that isn't JSON at all is still claimed,
+and its units can't tell (see below).
 
 Never claimed: a path outside the tree, under `.git`, `node_modules`,
 `dist` or `bazel-*`; anything that looks like a secret (`.env*`, keys and
@@ -47,13 +48,13 @@ their kin); a symlink. Each claim has the role `catalog`,
 `by_units: locale-keys` and the anchor `locale:<catalog>`, the catalog's
 own unit.
 
-The anchor is what lets pipelinegen narrow a catalog that a test reaches
-inside a filegroup or another rule (an app's files, its shell), not only
-through a label naming the file. locale-correlator puts the catalog's
-unit in a slice's list whenever its recorder ran for that catalog. For a
-slice whose list holds it, the core replaces every path to a changed file
-of the catalog by the keys the slice looked up there; a slice without it
-keeps every path, since nothing recorded what it read.
+With the anchor, pipelinegen can narrow a catalog that a test reaches
+inside a filegroup or another rule (an app's files, its shell), as well as
+one reached through a label naming the file. locale-correlator puts the
+catalog's unit in a slice's list whenever its recorder ran for that
+catalog. For a slice whose list holds it, the core replaces every path to
+a changed file of the catalog with the keys the slice looked up there. A
+slice without it keeps every path, because nothing recorded what it read.
 
 ## The ids
 
@@ -67,16 +68,16 @@ keeps every path, since nothing recorded what it read.
 `<ns>` is `-` for the one-file-per-language layout. `<key>` is the key's
 path joined by dots, as i18next spells a key (`cart.items_one`,
 `booking.lines.0`). A key that holds an object or an array is a unit too,
-its digest that of everything below it: a lookup with `returnObjects`, or a
-Go lookup that takes a whole template, binds it. The empty key
+and its digest covers everything below it. A lookup with `returnObjects`,
+or a Go lookup that takes a whole template, binds it. The empty key
 (`...#de/home:`) is the whole namespace. A flat key `"a.b"` and a nested
 `a.b` are one unit, since i18next finds either for `a.b`.
 
 A digest is the key's meaning: the decoded value, written one way. Key
-order, indentation, a trailing newline, an escape against the literal
+order, indentation, a trailing newline, an escape instead of the literal
 character it stands for (`é` and `é`) and moving a key within the file
-change no digest. Any change to a value does, a space included, since a
-test may compare it.
+change no digest. Any change to a value does, even a space, since a test
+may compare it.
 
 ## What each change does
 
@@ -94,11 +95,11 @@ units, `TestWhichTestsSeeAChange` in locale-correlator for the tests.
 
 ## What it can't tell
 
-A claimed file that is no JSON: `units` exits 3 for the call and says which
+When a claimed file isn't JSON, `units` exits 3 for the call and names the
 file on stderr, and every file asked about binds as a whole to the slices
 that could reach it.
 
-What the units can't carry, because nothing records it:
+Nothing records the following, so the units can't carry it:
 
 - text a test reads from a catalog other than through a recorded lookup:
   a test that parses the file (`os.ReadFile`, `readFileSync`) or ranges over
@@ -119,12 +120,12 @@ so a plan asks again only about the files that changed.
 
 That is about six times the 20,000 units the core assumes. In
 pipelinegen's planner on that tree, beside go-sbom and go-correlator for
-one Go package, a warm plan took 26.6 to 35 s against 19.6 to 21 s
-without this pair, and the planner's peak memory rose from 31 to 125 MB to
-486 to 701 MB (a loaded machine; see locale-correlator's README). The
-answers are 39 MB uncompressed in the core's answer cache, and a commit
-that changes a catalog file adds that file's answer anew, about 2 MB for a
-web namespace of one language: the weekly cache ref grows by that much per
+one Go package, a warm plan took 26.6 to 35 s, against 19.6 to 21 s
+without this pair. The planner's peak memory rose from 31 to 125 MB to
+486 to 701 MB (on a loaded machine; see locale-correlator's README). The
+answers take 39 MB uncompressed in the core's answer cache. A commit that
+changes a catalog file adds that file's answer anew, about 2 MB for a web
+namespace of one language, so the weekly cache ref grows by that much per
 changed file until the core compresses its entries.
 
 ## Setting it up
@@ -145,18 +146,19 @@ plugins:
 
 ## Narrowing
 
-`locale-keys`, off from level 3: a slice that depends on a catalog file
-depends on the keys it was seen to look up, in each language, misses
-included. It misses text a test takes from the file other than through a
-recorded lookup.
+`locale-keys`, off from level 3. A slice that depends on a catalog file
+depends instead on the keys it was seen to look up in each language,
+misses included. The narrowing misses text a test takes from the file
+other than through a recorded lookup.
 
 ## Calls
 
-`detect` claims as above, per file. `units` answers per set: one set per
-catalog file (the namespace being there and every key), and one per catalog
-whose inputs are all its files (the catalog and its languages), so a file
-added or removed asks again about the catalog's set. An answer of more than
-2,000 units goes into `sets.jsonl` in the work directory.
+`detect` claims as above, per file. `units` answers per set. There is one
+set per catalog file (the namespace being there and every key), and one
+per catalog whose inputs are all its files (the catalog and its
+languages), so adding or removing a file asks again about the catalog's
+set. An answer of more than 2,000 units goes into `sets.jsonl` in the work
+directory.
 
 ## Development
 
@@ -197,7 +199,7 @@ pipelinegen plugin test ./locale-sbom --tree testdata/kit
 ```
 
 - Tests use the catalogs in `testdata` and no network.
-- The last line is pipelinegen's conformance kit. It calls the
+- The last line runs pipelinegen's conformance kit, which calls the
   locale-sbom you built the way pipelinegen does, on the fixture tree in
   `testdata/kit`. `PIPELINEGEN=<pipelinegen> go test ./cmd/locale-sbom
   -run TestKit` runs the same kit from the tests, which skip it when
