@@ -1,0 +1,8 @@
+{"driver": {
+  "record": true,
+  "slices": [
+    {"name": "//calc:add_test", "label": "//calc:add_test", "kind": "script_test"},
+    {"name": "//calc:neg_test", "label": "//calc:neg_test", "kind": "script_test"},
+    {"name": "//text:upper_test", "label": "//text:upper_test", "kind": "script_test"}
+  ]
+}}

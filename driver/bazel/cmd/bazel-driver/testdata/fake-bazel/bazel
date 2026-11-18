@@ -1,0 +1,123 @@
+#!/bin/sh
+# A stand-in for Bazel, not Bazel: the conformance kit's fixture runs the
+# driver against it, because a real `bazel test` fetches the platforms
+# repository and the coverage tools before its first test and so can't run
+# offline. It does what the driver reads of Bazel, and nothing more:
+#
+#   bazel [startup options] test|coverage [options] -- //pkg:name...
+#
+# Each target //pkg:name is the script pkg/name.sh of the workspace (the
+# current directory); a target without one fails to build. Each runs with
+# the environment Bazel gives a test (nothing inherited but PATH and the
+# --test_env names), under the --run_under prefix when one is given, with
+# TEST_TARGET, TEST_TMPDIR, XML_OUTPUT_FILE and TESTBRIDGE_TEST_ONLY, and
+# under coverage with COVERAGE_DIR, whose *.dat files are joined into the
+# target's coverage after a test that passed, as Bazel's merger joins them
+# (without normalising the records). Its outputs go under the
+# --output_user_root, and --build_event_json_file gets the testResult,
+# testSummary and targetCompleted events Bazel writes for them, with a
+# test.xml of one case per target when the test wrote none, as Bazel's
+# own: an error "exited with error code N" for a failed one. Exit 0 when
+# every test passed, 3 when one failed, 1 when one didn't build. It
+# replays nothing from a cache.
+set -u
+
+root=${TMPDIR:-/tmp}/fake-bazel
+while [ $# -gt 0 ]; do
+	case $1 in
+	--output_user_root=*) root=${1#*=} ;;
+	--*) ;;
+	*) break ;;
+	esac
+	shift
+done
+
+[ $# -gt 0 ] || { echo "fake bazel: no command" >&2; exit 2; }
+command=$1
+shift
+case $command in
+test | coverage) ;;
+shutdown | version) exit 0 ;;
+*) echo "fake bazel: $command is not faked" >&2; exit 2 ;;
+esac
+
+events=/dev/null filter= run_under= test_env=
+while [ $# -gt 0 ]; do
+	case $1 in
+	--) shift; break ;;
+	--build_event_json_file=*) events=${1#*=} ;;
+	--test_filter=*) filter=${1#*=} ;;
+	--run_under=*) run_under=${1#*=} ;;
+	--test_env=*) test_env="$test_env ${1#*=}" ;;
+	esac
+	shift
+done
+
+: >"$events"
+testlogs=$root/fake-testlogs
+code=0
+started=$(date +%s)
+
+for label in "$@"; do
+	target=${label#@}
+	target=${target#@}
+	target=${target#//}
+	pkg=${target%%:*}
+	name=${target#*:}
+	script=$PWD/$pkg/$name.sh
+	if [ ! -f "$script" ]; then
+		printf '{"id":{"targetCompleted":{"label":"%s"}},"completed":{"success":false,"failureDetail":{"message":"no such target %s: the fake has no %s"}}}\n' \
+			"$label" "$label" "$pkg/$name.sh" >>"$events"
+		[ $code -ne 0 ] || code=1
+		continue
+	fi
+
+	dir=$testlogs/$pkg/$name
+	rm -rf "$dir"
+	mkdir -p "$dir/tmp" "$dir/coverage"
+
+	set -- env -i "PATH=$PATH" "TEST_TARGET=//$pkg:$name" "TEST_TMPDIR=$dir/tmp" \
+		"XML_OUTPUT_FILE=$dir/test.xml" "TESTBRIDGE_TEST_ONLY=$filter"
+	if [ "$command" = coverage ]; then
+		set -- "$@" "COVERAGE_DIR=$dir/coverage"
+	fi
+	for v in $test_env; do
+		eval "set -- \"\$@\" \"$v=\${$v-}\""
+	done
+	# the test runs from the workspace's root, as from its runfiles; the
+	# prefix is split on spaces, as Bazel splits it
+	# shellcheck disable=SC2086
+	(cd "$PWD" && "$@" $run_under sh "$script") >"$dir/test.log" 2>&1
+	rc=$?
+
+	status=PASSED
+	[ $rc -eq 0 ] || status=FAILED
+	[ $rc -eq 0 ] || code=3
+	if [ ! -s "$dir/test.xml" ]; then
+		failure=
+		[ $rc -eq 0 ] || failure="<error message=\"exited with error code $rc\"></error>"
+		printf '<?xml version="1.0" encoding="UTF-8"?>\n<testsuites><testsuite name="%s/%s" tests="1"><testcase name="%s/%s">%s</testcase></testsuite></testsuites>\n' \
+			"$pkg" "$name" "$pkg" "$name" "$failure" >"$dir/test.xml"
+	fi
+
+	outputs="{\"name\":\"test.log\",\"uri\":\"file://$dir/test.log\"},{\"name\":\"test.xml\",\"uri\":\"file://$dir/test.xml\"}"
+	if [ "$command" = coverage ]; then
+		# a failed test's coverage stays empty, as Bazel's merger runs only
+		# after a test that passed
+		: >"$dir/coverage.dat"
+		for dat in "$dir"/coverage/*.dat; do
+			[ $rc -eq 0 ] && [ -f "$dat" ] && cat "$dat" >>"$dir/coverage.dat"
+		done
+		outputs="$outputs,{\"name\":\"test.lcov\",\"uri\":\"file://$dir/coverage.dat\"}"
+	fi
+
+	ms=$((($(date +%s) - started) * 1000))
+	printf '{"id":{"testResult":{"label":"//%s:%s","run":1,"shard":1,"attempt":1}},"testResult":{"status":"%s","testAttemptDurationMillis":"%s","testActionOutput":[%s]}}\n' \
+		"$pkg" "$name" "$status" "$ms" "$outputs" >>"$events"
+	printf '{"id":{"testSummary":{"label":"//%s:%s"}},"testSummary":{"overallStatus":"%s"}}\n' \
+		"$pkg" "$name" "$status" >>"$events"
+	printf '{"id":{"targetCompleted":{"label":"//%s:%s"}},"completed":{"success":true}}\n' "$pkg" "$name" >>"$events"
+done
+
+printf '{"id":{"buildFinished":{}},"lastMessage":true}\n' >>"$events"
+exit $code
