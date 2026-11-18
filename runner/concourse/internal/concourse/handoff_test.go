@@ -210,25 +210,21 @@ func handOffVersion(t *testing.T, version, metadata string) (map[string]string, 
 	t.Helper()
 
 	work := t.TempDir()
-	writeTestFile(t, filepath.Join(work, "head", ".git", "resource", "version.json"), version)
+	writeTestFile(t, filepath.Join(work, "trigger", ".git", "resource", "version.json"), version)
 
 	if metadata != "" {
-		writeTestFile(t, filepath.Join(work, "head", ".git", "resource", "metadata.json"), metadata)
+		writeTestFile(t, filepath.Join(work, "trigger", ".git", "resource", "metadata.json"), metadata)
 	}
 
-	cmd := exec.CommandContext(t.Context(), "sh", "-ec", planLib+"handoff head out\n")
-	cmd.Dir = work
-
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("%v\n%s", err, out)
-	}
+	writeFakeTool(t, work, "#!/bin/sh\n")
+	mustStep(t, work, append(os.Environ(), "PIPELINEGEN_RUN=pr"), "proposed-write")
 
 	var v map[string]string
-	if err := json.Unmarshal(readTestFile(t, filepath.Join(work, "out", ".git", "resource", "version.json")), &v); err != nil {
+	if err := json.Unmarshal(readTestFile(t, filepath.Join(work, "handoff", ".git", "resource", "version.json")), &v); err != nil {
 		t.Fatal(err)
 	}
 
-	return v, string(readTestFile(t, filepath.Join(work, "out", ".git", "resource", "metadata.json")))
+	return v, string(readTestFile(t, filepath.Join(work, "handoff", ".git", "resource", "metadata.json")))
 }
 
 // A random fraction in "committed" makes two plans of one head two versions.
@@ -268,30 +264,14 @@ func TestEveryHandOffIsAVersionOfItsOwn(t *testing.T) {
 	}
 }
 
-func runScript(t *testing.T, work, script string, env ...string) []byte {
-	t.Helper()
-
-	cmd := exec.CommandContext(t.Context(), "sh", "-ec", script)
-	cmd.Dir = work
-
-	cmd.Env = append(os.Environ(), env...)
-
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("%v\n%s", err, out)
-	}
-
-	return out
-}
-
 func TestAProposedChangeIsPlannedInTwoSteps(t *testing.T) {
 	work := t.TempDir()
 	writeTestFile(t, filepath.Join(work, "trigger", ".git", "resource", "version.json"), `{"commit":"abc","pr":"7"}`)
 	writeTestFile(t, filepath.Join(work, "base", "README"), "base\n")
 	writeFakeTool(t, work, "#!/bin/sh\necho \"$* ${SECRET_OF_PREPARE:-none}\" >> called\n")
 
-	runScript(t, work, planLib+proposedPlan, "PIPELINEGEN_RUN=pr", "SECRET_OF_PREPARE=s",
-		"PIPELINEGEN_PLANNER_ENV=SECRET_OF_PREPARE", `PIPELINEGEN_PREPARE=echo "$SECRET_OF_PREPARE" > prepared`)
+	mustStep(t, work, append(os.Environ(), "PIPELINEGEN_RUN=pr", "SECRET_OF_PREPARE=s",
+		"PIPELINEGEN_PLANNER_ENV=SECRET_OF_PREPARE", `PIPELINEGEN_PREPARE=echo "$SECRET_OF_PREPARE" > prepared`), "proposed-plan")
 
 	if got := strings.TrimSpace(string(readTestFile(t, filepath.Join(work, "base", "prepared")))); got != "s" {
 		t.Errorf("prepare in the base: %q", got)
@@ -316,7 +296,7 @@ func TestAProposedChangeIsPlannedInTwoSteps(t *testing.T) {
 	for _, gate := range []string{`["1"]`, `[]`} {
 		writeFakeTool(t, work, "#!/bin/sh\necho \"$* ${SECRET_OF_PREPARE:-none}\" > called\nmkdir -p \"${13}\"\necho '"+gate+"' > \"${13}/gate.json\"\n")
 
-		runScript(t, work, planLib+proposedWrite, "PIPELINEGEN_RUN=pr")
+		mustStep(t, work, append(os.Environ(), "PIPELINEGEN_RUN=pr"), "proposed-write")
 
 		if got := string(readTestFile(t, filepath.Join(work, "called"))); got != "plan --run pr --trigger trigger --root trigger --cache write-cache --from plan --gate handoff none\n" {
 			t.Errorf("second step: %q", got)
@@ -420,7 +400,7 @@ esac
 		`PIPELINEGEN_PREPARE=echo "$SECRET_OF_PREPARE" >> prepared`,
 	}
 
-	runScript(t, work, planLib+sweepScript, env...)
+	mustStep(t, work, append(os.Environ(), env...), "sweep")
 
 	if got := strings.TrimSpace(string(readTestFile(t, filepath.Join(work, "gate", "gate.json")))); got != `["1"]` {
 		t.Fatalf("gate %s", got)
@@ -433,7 +413,7 @@ esac
 		t.Fatalf("%v %s", err, out)
 	}
 
-	runScript(t, work, planLib+sweepPlan, env...)
+	mustStep(t, work, append(os.Environ(), env...), "sweep-plan")
 
 	if got := strings.TrimSpace(string(readTestFile(t, filepath.Join(work, "base", "prepared")))); got != strings.Repeat("s\n", 2)+"s" {
 		t.Errorf("prepare in the base, once per head: %q", got)
@@ -447,7 +427,7 @@ esac
 		t.Fatalf("%v %s", err, out)
 	}
 
-	runScript(t, work, planLib+sweepWrite, "PIPELINEGEN_RUN=pr")
+	mustStep(t, work, append(os.Environ(), "PIPELINEGEN_RUN=pr"), "sweep-write")
 
 	want := `--out {"commit":"c10","pr":"10"} none
 --out {"commit":"c7","pr":"7"} none
@@ -485,7 +465,7 @@ esac
 	}
 
 	writeFakeTool(t, work, "#!/bin/sh\nmkdir -p sweep\n")
-	runScript(t, work, planLib+sweepScript, "PIPELINEGEN_RUN=pr")
+	mustStep(t, work, append(os.Environ(), "PIPELINEGEN_RUN=pr"), "sweep")
 
 	if got := strings.TrimSpace(string(readTestFile(t, filepath.Join(work, "gate", "gate.json")))); got != "[]" {
 		t.Errorf("nothing to take up: gate %s", got)
@@ -640,7 +620,7 @@ func TestAPullRequestsPlanningBeginsWithItsRecord(t *testing.T) {
 
 	work := t.TempDir()
 	writeFakeTool(t, work, "#!/bin/sh\necho \"$*\" > called\n")
-	runScript(t, work, proposedBegin, "PIPELINEGEN_RUN=pr")
+	mustStep(t, work, append(os.Environ(), "PIPELINEGEN_RUN=pr"), "begin")
 
 	if got := string(readTestFile(t, filepath.Join(work, "called"))); got != "plan --begin --run pr --trigger trigger --root trigger --cache write-cache\n" {
 		t.Errorf("begin calls %q", got)

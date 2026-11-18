@@ -2,7 +2,6 @@ package concourse
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -60,15 +59,9 @@ func TestAContinuousBuildDecidesBeforeItsPrepare(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			cmd := exec.CommandContext(t.Context(), "sh", "-ec", planLib+continuousPlanFor(60))
-			cmd.Dir = work
-
-			cmd.Env = append(os.Environ(), "PIPELINEGEN_RUN=full", "PIPELINEGEN_LIMIT=limits.plan=90",
-				"PIPELINEGEN_PLANNER_ENV=PREPARE_SECRET", "PREPARE_SECRET=s3", "PIPELINEGEN_PREPARE=echo prepared > prepared")
-
-			if out, err := cmd.CombinedOutput(); err != nil {
-				t.Fatalf("%v\n%s", err, out)
-			}
+			mustStep(t, work, append(os.Environ(), "PIPELINEGEN_RUN=full", "PIPELINEGEN_LIMIT=limits.plan=90",
+				"PIPELINEGEN_PLANNER_ENV=PREPARE_SECRET", "PREPARE_SECRET=s3", "PIPELINEGEN_PREPARE=echo prepared > prepared"),
+				"continuous-plan", "--plan-minutes", "60")
 
 			if _, err := os.Stat(filepath.Join(work, "trigger", "prepared")); (err == nil) != c.prepared {
 				t.Fatalf("prepared: %v, want %v", err == nil, c.prepared)

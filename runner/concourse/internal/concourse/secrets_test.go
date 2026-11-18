@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -136,14 +135,9 @@ func TestStaleCheck(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		cmd := exec.CommandContext(t.Context(), "sh", "-ec", staleScript)
-		cmd.Dir = work
-
-		cmd.Env = append(os.Environ(), staleHash+"="+want, "PIPELINEGEN_PIPELINE=fixture", "GITHUB_TOKEN=secret-value")
-
-		out, err := cmd.CombinedOutput()
-		if (err == nil) != c.ok {
-			t.Errorf("%s: %v\n%s", c.name, err, out)
+		out, code := runStep(t, work, append(os.Environ(), staleHash+"="+want, "PIPELINEGEN_PIPELINE=fixture", "GITHUB_TOKEN=secret-value"), "stale")
+		if (code == 0) != c.ok {
+			t.Errorf("%s: exit %d\n%s", c.name, code, out)
 		}
 
 		if strings.Contains(string(out), "secret-value") || strings.Contains(string(out), "jobs:") {

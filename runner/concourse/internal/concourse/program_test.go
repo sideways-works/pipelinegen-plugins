@@ -117,19 +117,10 @@ func TestBootstrapFetchesARenamedRepositorysProgram(t *testing.T) {
 		asks = nil
 		mu.Unlock()
 
-		cmd := exec.CommandContext(t.Context(), "sh", "-ec", bootstrapScript)
-		cmd.Dir = work
-		cmd.Env = cleanEnv(t, "GITHUB_TOKEN=x", "PIPELINEGEN_GITHUB_API="+srv.URL, "PIPELINEGEN_BAZELISK_BASE="+srv.URL+"/bazelisk",
+		return mustStep(t, work, cleanEnv(t, "GITHUB_TOKEN=x", "PIPELINEGEN_GITHUB_API="+srv.URL, "PIPELINEGEN_BAZELISK_BASE="+srv.URL+"/bazelisk",
 			"PIPELINEGEN_TOOL_REPOSITORY=o/pipelinegen", "PIPELINEGEN_TOOL_VERSION=v1", "PIPELINEGEN_TOOL_SHA256="+sum,
 			"PIPELINEGEN_TOOL_COMMIT=", "PIPELINEGEN_BAZELISK_VERSION=v1.27.0", "PIPELINEGEN_BAZELISK_SHA256="+sum,
-			"PIPELINEGEN_PLUGINS="+plugins, "PIPELINEGEN_PRIVATE=")
-
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			t.Fatalf("bootstrap: %v\n%s", err, out)
-		}
-
-		return out
+			"PIPELINEGEN_PLUGINS="+plugins, "PIPELINEGEN_PRIVATE="), "tools")
 	}
 
 	run("go o/go-sbom v1 " + sum + " -\nreact o/pipelinegen-correlator-react v1 " + hex.EncodeToString(ssum[:]) + " -\n")
@@ -249,17 +240,11 @@ func TestBootstrapBuildsARenamedRepositorysProgram(t *testing.T) {
 	srv := releases(t, binary)
 	work := t.TempDir()
 
-	cmd := exec.CommandContext(t.Context(), "sh", "-ec", bootstrapScript)
-	cmd.Dir = work
-	cmd.Env = cleanEnv(t, "PATH="+gobin+string(os.PathListSeparator)+os.Getenv("PATH"), "GIT_CONFIG_GLOBAL="+gitconfig, "GOTOOLCHAIN=local",
+	mustStep(t, work, cleanEnv(t, "PATH="+gobin+string(os.PathListSeparator)+os.Getenv("PATH"), "GIT_CONFIG_GLOBAL="+gitconfig, "GOTOOLCHAIN=local",
 		"GOPROXY=off", "GITHUB_TOKEN=x", "PIPELINEGEN_GITHUB_API="+srv.URL, "PIPELINEGEN_BAZELISK_BASE="+srv.URL+"/bazelisk",
 		"PIPELINEGEN_TOOL_REPOSITORY=o/pipelinegen", "PIPELINEGEN_TOOL_VERSION=v1", "PIPELINEGEN_TOOL_SHA256="+sum,
 		"PIPELINEGEN_TOOL_COMMIT=", "PIPELINEGEN_BAZELISK_VERSION=v1.27.0", "PIPELINEGEN_BAZELISK_SHA256="+sum,
-		"PIPELINEGEN_PLUGINS=go o/pipelinegen-sbom-go - - "+commit+"\n", "PIPELINEGEN_PRIVATE=")
-
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("bootstrap: %v\n%s", err, out)
-	}
+		"PIPELINEGEN_PLUGINS=go o/pipelinegen-sbom-go - - "+commit+"\n", "PIPELINEGEN_PRIVATE="), "tools")
 
 	built := filepath.Join(work, "cache", "go-sbom-commit-"+commit, "go-sbom")
 

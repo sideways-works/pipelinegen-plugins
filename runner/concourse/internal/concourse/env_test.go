@@ -409,14 +409,8 @@ func TestPlannerEnvStaysWithThePrepare(t *testing.T) {
 			names += " GITHUB_TOKEN"
 		}
 
-		cmd := exec.CommandContext(t.Context(), "sh", "-ec", planLib+planScript)
-		cmd.Dir = work
-		cmd.Env = cleanEnv(t, "PIPELINEGEN_RUN=pr", "GITHUB_TOKEN=pipeline-token", "GOPRIVATE=github.com/o/*", "GO_TOKEN=go-token",
-			"PIPELINEGEN_PLANNER_ENV="+names, "PIPELINEGEN_GIT_TOKEN=GO_TOKEN", "PIPELINEGEN_PREPARE=env > ../prepare.env")
-
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("%v\n%s", err, out)
-		}
+		mustStep(t, work, cleanEnv(t, "PIPELINEGEN_RUN=pr", "GITHUB_TOKEN=pipeline-token", "GOPRIVATE=github.com/o/*", "GO_TOKEN=go-token",
+			"PIPELINEGEN_PLANNER_ENV="+names, "PIPELINEGEN_GIT_TOKEN=GO_TOKEN", "PIPELINEGEN_PREPARE=env > ../prepare.env"), "plan")
 
 		prepare, plan := readEnv(t, filepath.Join(work, "prepare.env")), readEnv(t, filepath.Join(work, "plan.env"))
 
@@ -544,14 +538,10 @@ func TestCurlTakesItsHeaderFromStdin(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cmd := exec.CommandContext(t.Context(), "sh", "-ec", fallbackScript)
-	cmd.Dir = work
-	cmd.Env = cleanEnv(t, "GITHUB_TOKEN=secret-value", "PIPELINEGEN_GITHUB_API="+srv.URL, "REPOSITORY=o/r",
-		"SUITE_CONTEXT=p/pr/e2e", "RUN_CONTEXT=p/pr", "TARGET_URL=https://ci.example/jobs/x")
-
-	out, err := cmd.CombinedOutput()
-	if err != nil || strings.Contains(string(out), "secret-value") {
-		t.Fatalf("report-error: %v\n%s", err, out)
+	out, code := runStep(t, work, cleanEnv(t, "GITHUB_TOKEN=secret-value", "PIPELINEGEN_GITHUB_API="+srv.URL, "REPOSITORY=o/r",
+		"SUITE_CONTEXT=p/pr/e2e", "RUN_CONTEXT=p/pr", "TARGET_URL=https://ci.example/jobs/x"), "report-error")
+	if code != 0 || strings.Contains(string(out), "secret-value") {
+		t.Fatalf("report-error: exit %d\n%s", code, out)
 	}
 
 	work = t.TempDir()
@@ -565,15 +555,12 @@ func TestCurlTakesItsHeaderFromStdin(t *testing.T) {
 
 	hex := hex.EncodeToString(sum[:])
 
-	cmd = exec.CommandContext(t.Context(), "sh", "-ec", bootstrapScript)
-	cmd.Dir = work
-	cmd.Env = cleanEnv(t, "GITHUB_TOKEN=secret-value", "PIPELINEGEN_GITHUB_API="+srv.URL,
+	out, code = runStep(t, work, cleanEnv(t, "GITHUB_TOKEN=secret-value", "PIPELINEGEN_GITHUB_API="+srv.URL,
 		"PIPELINEGEN_TOOL_REPOSITORY=o/pipelinegen", "PIPELINEGEN_TOOL_VERSION=v1", "PIPELINEGEN_TOOL_SHA256="+hex,
 		"PIPELINEGEN_TOOL_COMMIT=", "PIPELINEGEN_BAZELISK_VERSION=v1.27.0", "PIPELINEGEN_BAZELISK_SHA256="+hex,
-		"PIPELINEGEN_PLUGINS=go o/go-sbom v1 "+hex+" -\n", "PIPELINEGEN_PRIVATE=")
-
-	if out, err := cmd.CombinedOutput(); err != nil || strings.Contains(string(out), "secret-value") {
-		t.Fatalf("bootstrap: %v\n%s", err, out)
+		"PIPELINEGEN_PLUGINS=go o/go-sbom v1 "+hex+" -\n", "PIPELINEGEN_PRIVATE="), "tools")
+	if code != 0 || strings.Contains(string(out), "secret-value") {
+		t.Fatalf("bootstrap: exit %d\n%s", code, out)
 	}
 
 	for _, p := range []string{"tools/pipelinegen", "tools/plugins/go"} {

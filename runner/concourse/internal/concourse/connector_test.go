@@ -95,26 +95,10 @@ func TestAHandOffReachesTheTriggerAsItWasWritten(t *testing.T) {
 	dir := t.TempDir()
 	runJSON := `{"run":"pr","change":"git/branch-review%2Fcart","commit":"0123456789abcdef0123456789abcdef01234567","handed":"2026-11-14T10:00:00Z-ab"}` + "\n"
 
-	if err := os.MkdirAll(filepath.Join(dir, "sweep", "head"), 0o750); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := os.WriteFile(filepath.Join(dir, "sweep", "head", "run.json"), []byte(runJSON), 0o600); err != nil {
-		t.Fatal(err)
-	}
-
-	sh := func(script string) {
-		t.Helper()
-
-		cmd := exec.CommandContext(t.Context(), "sh", "-ec", script)
-		cmd.Dir = dir
-
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("%v: %s", err, out)
-		}
-	}
-
-	sh(planLib + connectorHandOff + `handoff sweep/head handoffs/x`)
+	writeTestFile(t, filepath.Join(dir, "sweep", "plan", "x", "run.json"), runJSON)
+	writeTestFile(t, filepath.Join(dir, "plans", "x", "plan.json"), "{}\n")
+	writeFakeTool(t, dir, "#!/bin/sh\nmkdir -p \"${13}\"\necho '[\"1\"]' > \"${13}/gate.json\"\n")
+	mustStep(t, dir, append(os.Environ(), "PIPELINEGEN_RUN=pr"), "sweep-write", "--connector")
 
 	data, err := os.ReadFile(filepath.Join(dir, "handoffs", "x", "run.json"))
 	if err != nil || string(data) != runJSON {
@@ -139,7 +123,12 @@ func TestAHandOffReachesTheTriggerAsItWasWritten(t *testing.T) {
 
 	script, _ := args[1].(string) //nolint:errcheck // an empty script copies nothing, and the check below fails
 
-	sh(script)
+	cmd := exec.CommandContext(t.Context(), "sh", "-ec", script)
+	cmd.Dir = dir
+
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("%v: %s", err, out)
+	}
 
 	if got, err := os.ReadFile(filepath.Join(dir, "trigger", "run.json")); err != nil || string(got) != runJSON {
 		t.Fatalf("the trigger's run.json %q %v", got, err)

@@ -379,20 +379,13 @@ func TestBootstrapPlacesPluginsFromTheCache(t *testing.T) {
 		{Name: "go", Kind: plugin.KindSBOM, Repository: "o/go-sbom", Commit: "def"},
 	}}
 
-	cmd := exec.CommandContext(t.Context(), "sh", "-ec", bootstrapScript)
-	cmd.Dir = work
-
-	cmd.Env = cleanEnv(t,
+	mustStep(t, work, cleanEnv(t,
 		"GITHUB_TOKEN=x",
 		"PIPELINEGEN_TOOL_REPOSITORY=o/pipelinegen", "PIPELINEGEN_TOOL_COMMIT=abc",
 		"PIPELINEGEN_TOOL_VERSION=", "PIPELINEGEN_TOOL_SHA256=",
 		"PIPELINEGEN_BAZELISK_VERSION=v1.27.0", "PIPELINEGEN_BAZELISK_SHA256="+sum,
 		"PIPELINEGEN_PLUGINS="+pluginLines(s), "PIPELINEGEN_PRIVATE="+privateModules(s),
-	)
-
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("bootstrap: %v\n%s", err, out)
-	}
+	), "tools")
 
 	for _, p := range []string{"tools/pipelinegen", "tools/bazelisk", "tools/plugins/concourse", "tools/plugins/go"} {
 		if _, err := os.Stat(filepath.Join(work, p)); err != nil {
@@ -472,14 +465,7 @@ func TestPlanRunsThePrepareFirst(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	cmd := exec.CommandContext(t.Context(), "sh", "-ec", planLib+planScript)
-	cmd.Dir = work
-
-	cmd.Env = append(os.Environ(), "PIPELINEGEN_RUN=pr", `PIPELINEGEN_PREPARE=echo "$GOMODCACHE" > prepared`)
-
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("%v\n%s", err, out)
-	}
+	mustStep(t, work, append(os.Environ(), "PIPELINEGEN_RUN=pr", `PIPELINEGEN_PREPARE=echo "$GOMODCACHE" > prepared`), "plan")
 
 	prepared, err := os.ReadFile(filepath.Join(work, "trigger", "prepared"))
 	if err != nil || strings.TrimSpace(string(prepared)) != filepath.Join(work, "plan-cache", "caches", "gomodcache") {

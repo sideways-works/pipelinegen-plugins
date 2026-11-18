@@ -86,12 +86,9 @@ func TestASupersededCommitRunsNothing(t *testing.T) {
 
 	env := cleanEnv(t, "PIPELINEGEN_RUN=full", "PIPELINEGEN_TRIGGER=trigger", "PIPELINEGEN_JOB_URL=https://ci/builds/1")
 
-	plan := exec.CommandContext(t.Context(), "sh", "-ec", planLib+planScript)
-	plan.Dir, plan.Env = work, env
-
-	out, err := plan.CombinedOutput()
-	if err != nil || !strings.Contains(string(out), "superseded by "+tip[:12]) {
-		t.Fatalf("the plan step: %v\n%s", err, out)
+	out, code := runStep(t, work, env, "plan")
+	if code != 0 || !strings.Contains(string(out), "superseded by "+tip[:12]) {
+		t.Fatalf("the plan step: exit %d\n%s", code, out)
 	}
 
 	for _, d := range []string{"batches", "gate", "source"} {
@@ -102,12 +99,7 @@ func TestASupersededCommitRunsNothing(t *testing.T) {
 
 	suiteEnv := append(slices.Clone(env), "PIPELINEGEN_SUITE=e2e")
 
-	start := exec.CommandContext(t.Context(), "sh", "-ec", startScript)
-	start.Dir, start.Env = work, suiteEnv
-
-	if out, err := start.CombinedOutput(); err != nil {
-		t.Fatalf("the start task: %v\n%s", err, out)
-	}
+	mustStep(t, work, suiteEnv, "start")
 
 	data, err := os.ReadFile(filepath.Join(work, "batches", "batches.json"))
 	if err != nil || strings.TrimSpace(string(data)) != "[]" {

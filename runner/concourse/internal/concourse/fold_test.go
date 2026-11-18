@@ -286,12 +286,7 @@ func TestTheStartTask(t *testing.T) {
 		work := t.TempDir()
 		fakeTool(t, work, c.open)
 
-		cmd := exec.CommandContext(t.Context(), "sh", "-ec", startScript)
-		cmd.Dir, cmd.Env = work, cleanEnv(t, "PIPELINEGEN_RUN=main", "PIPELINEGEN_SUITE=e2e")
-
-		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("%+v: %v\n%s", c, err, out)
-		}
+		mustStep(t, work, cleanEnv(t, "PIPELINEGEN_RUN=main", "PIPELINEGEN_SUITE=e2e"), "start")
 
 		if got := calls(t, work); !slices.Equal(got, c.want) {
 			t.Errorf("%+v: calls %v", c, got)
@@ -334,12 +329,8 @@ func TestTheEndTask(t *testing.T) {
 			}
 		}
 
-		cmd := exec.CommandContext(t.Context(), "sh", "-ec", endTaskScript())
-		cmd.Dir, cmd.Env = work, cleanEnv(t)
-
-		out, err := cmd.CombinedOutput()
-		if code := cmd.ProcessState.ExitCode(); code != c.code {
-			t.Errorf("%+v: exit %d (%v)\n%s", c, code, err, out)
+		if out, code := runStep(t, work, cleanEnv(t), "end"); code != c.code {
+			t.Errorf("%+v: exit %d\n%s", c, code, out)
 		}
 
 		if got := calls(t, work); !slices.Equal(got, c.want) {
@@ -415,12 +406,8 @@ func TestTheErrorReportEndsTheSuite(t *testing.T) {
 		work := t.TempDir()
 		fakeTool(t, work, true, c.failing...)
 
-		cmd := exec.CommandContext(t.Context(), "sh", "-ec", fallbackScript)
-		cmd.Dir, cmd.Env = work, cleanEnv(t, "PIPELINEGEN_GITHUB_API=http://127.0.0.1:1")
-
-		out, err := cmd.CombinedOutput()
-		if code := cmd.ProcessState.ExitCode(); code != c.code {
-			t.Errorf("%+v: exit %d (%v)\n%s", c, code, err, out)
+		if out, code := runStep(t, work, cleanEnv(t, "PIPELINEGEN_GITHUB_API=http://127.0.0.1:1"), "report-error"); code != c.code {
+			t.Errorf("%+v: exit %d\n%s", c, code, out)
 		}
 
 		if got := calls(t, work); !slices.Equal(got, []string{"report suite"}) {

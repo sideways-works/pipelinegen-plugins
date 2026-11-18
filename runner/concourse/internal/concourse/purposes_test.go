@@ -144,14 +144,10 @@ func TestTheScriptsTakeTheirPurposesToken(t *testing.T) {
 	work := t.TempDir()
 	writeTestFile(t, filepath.Join(work, "trigger", ".git", "resource", "version.json"), `{"pr":"3","commit":"abc123"}`)
 
-	cmd = exec.CommandContext(t.Context(), "sh", "-ec", fallbackScript)
-	cmd.Dir = work
-	cmd.Env = cleanEnv(t, "GITHUB_TOKEN=one-token-value", "PIPELINEGEN_REPORT_TOKEN=report-token-value",
-		"PIPELINEGEN_GITHUB_API="+srv.URL, "REPOSITORY=o/r", "SUITE_CONTEXT=p/pr/e2e", "RUN_CONTEXT=p/pr", "TARGET_URL=https://ci/x")
-
-	out, err := cmd.CombinedOutput()
-	if err != nil || strings.Contains(string(out), "token-value") {
-		t.Fatalf("report-error: %v\n%s", err, out)
+	out, code := runStep(t, work, cleanEnv(t, "GITHUB_TOKEN=one-token-value", "PIPELINEGEN_REPORT_TOKEN=report-token-value",
+		"PIPELINEGEN_GITHUB_API="+srv.URL, "REPOSITORY=o/r", "SUITE_CONTEXT=p/pr/e2e", "RUN_CONTEXT=p/pr", "TARGET_URL=https://ci/x"), "report-error")
+	if code != 0 || strings.Contains(string(out), "token-value") {
+		t.Fatalf("report-error: exit %d\n%s", code, out)
 	}
 
 	if len(auth) != 2 || auth[0] != "Bearer report-token-value" || auth[1] != auth[0] {
