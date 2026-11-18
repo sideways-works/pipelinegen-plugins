@@ -93,6 +93,8 @@ linters:
       require-specific: true
       allow-unused: false
   exclusions:
+    presets:
+      - comments
     generated: lax
     rules:
       # Tests repeat literal fixtures on purpose, and table-driven tests are
