@@ -8,7 +8,7 @@ sbom template lists, spelled by the same small `note` package. It
 answers `describe`, `detect` and `links`, each per file.
 
 It passes pipelinegen's conformance kit on its fixture,
-`testdata/kit`, and is the starting point for a new correlator: the root
+`testdata/kit`. Start a new correlator from it: the root
 [README](../../README.md#adding-a-plugin) says how to make a plugin of it.
 
 ```sh

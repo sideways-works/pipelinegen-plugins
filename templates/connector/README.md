@@ -9,7 +9,7 @@ the core sends its requests, with the token in the header `describe`
 names.
 
 It passes pipelinegen's conformance kit on its fixture,
-`testdata/kit`, and is the starting point for a new connector: the root
+`testdata/kit`. Start a new connector from it: the root
 [README](../../README.md#adding-a-plugin) says how to make a plugin of it.
 
 ```sh

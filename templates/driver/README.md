@@ -8,7 +8,7 @@ script exits 0. It judges by the exit code alone (`results: exit`) and
 records nothing.
 
 It passes pipelinegen's conformance kit on its fixture,
-`testdata/kit`, and is the starting point for a new driver: the root
+`testdata/kit`. Start a new driver from it: the root
 [README](../../README.md#adding-a-plugin) says how to make a plugin of it.
 
 ```sh

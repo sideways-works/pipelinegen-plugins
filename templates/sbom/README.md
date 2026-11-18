@@ -7,7 +7,7 @@ every note (a `*.note` file whose first line is `# note`) as a unit,
 answers `describe`, `detect` and `units`, each per file.
 
 It passes pipelinegen's conformance kit on its fixture,
-`testdata/kit`, and is the starting point for a new sbom: the root
+`testdata/kit`. Start a new sbom from it: the root
 [README](../../README.md#adding-a-plugin) says how to make a plugin of it.
 
 ```sh
