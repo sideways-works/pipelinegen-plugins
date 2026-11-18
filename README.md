@@ -125,7 +125,6 @@ build writes `dist/<program>.mjs`, and `.node-version` naming the Node
 
 ## Licence
 
-The plugins are licensed under the [Apache License 2.0](LICENSE), Copyright
-2026 Sideways Works UG (haftungsbeschränkt). See [NOTICE](NOTICE),
-[AUTHORS](AUTHORS), [CONTRIBUTING](CONTRIBUTING.md) and
-[SECURITY](SECURITY.md).
+The plugins are Sideways Works' and licensed under the
+[Apache License 2.0](LICENSE). See [NOTICE](NOTICE), [AUTHORS](AUTHORS),
+[CONTRIBUTING](CONTRIBUTING.md) and [SECURITY](SECURITY.md).
