@@ -3,7 +3,7 @@
 // of both trees with the narrowing on and off, and compares the walk with
 // the plan the release before made of the same change.
 //
-//	go run ./cmd/proof -repo <repository> -base <commit> -head <commit> \
+//	go run ./tools/proof -repo <repository> -base <commit> -head <commit> \
 //	  -lists <lists> -plan <plan.json> [-modules backend] [-json walk.json]
 package main
 

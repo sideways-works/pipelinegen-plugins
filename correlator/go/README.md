@@ -542,7 +542,7 @@ coverage of the repository's code doesn't show.
 
 A narrowing is judged on a real pull request of a repository that records
 its slices, against the plan the release before made of the same change.
-`cmd/proof` reads both commits from the repository with `git archive`,
+`tools/proof` reads both commits from the repository with `git archive`,
 takes every link set of each tree (`Tree.LinkSets` and `Names.Set`) and
 go-sbom's units (`decls.Read`), and walks each recorded slice as the
 planner does: from the units of its list and of its own test file, along
@@ -554,7 +554,7 @@ once with the narrowing on and once with it off, and compares both with
 the release's plan:
 
 ```sh
-go run ./cmd/proof -repo <repository> -base <base commit> -head <head commit> \
+go run ./tools/proof -repo <repository> -base <base commit> -head <head commit> \
   -lists <lists> -plan <plan.json> -modules backend -json walk.json
 ```
 
@@ -590,7 +590,7 @@ both select the same slices, slice for slice. The measure leaves
 out what no Go plugin decides: the repository's own plan of the change
 also selects 113 browser specs through a changed frontend target, and 8
 backend test files and 33 browser specs have no recording yet, so they run
-on any change. `cmd/proof` on the same change, against that plan, counts
+on any change. `tools/proof` on the same change, against that plan, counts
 127 backend test files and 152 browser specs in all, of which 23 and 146
 for those reasons.
 
