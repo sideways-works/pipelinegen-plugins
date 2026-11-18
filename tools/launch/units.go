@@ -366,19 +366,15 @@ func (l *Launch) Hooks(ctx context.Context) error {
 	return nil
 }
 
-// Templates builds every template under templates/ and runs pipelinegen's conformance kit on it with
-// its fixture, testdata/kit, and the config block testdata/kit/config.json when there is one.
+// Templates builds every template under templates/ and runs pipelinegen's conformance kit on it, the
+// kit of the pipelinegen the template's go.mod requires (go tool pipelinegen), with its fixture,
+// testdata/kit, and the config block testdata/kit/config.json when there is one.
 func (l *Launch) Templates(ctx context.Context) error {
 	dir, done, err := l.scratch("plugins-templates-")
 	if err != nil {
 		return err
 	}
 	defer done()
-
-	pipelinegen, err := l.tool(ctx, dir, "github.com/sideways-works/pipelinegen/cmd/pipelinegen")
-	if err != nil {
-		return err
-	}
 
 	templates, err := filepath.Glob(filepath.Join(l.workspace, "templates", "*", "go.mod"))
 	if err != nil || len(templates) == 0 {
@@ -406,12 +402,12 @@ func (l *Launch) Templates(ctx context.Context) error {
 			return err
 		}
 
-		args := []string{"plugin", cmdTest, exe, "--tree", filepath.Join(abs, "testdata", "kit")}
+		args := []string{"tool", "pipelinegen", "plugin", cmdTest, exe, "--tree", filepath.Join(abs, "testdata", "kit")}
 		// a runner's fixture is the config block the kit writes its pipelines with
 		if config := filepath.Join(abs, "testdata", "kit", "config.json"); exists(config) {
 			args = append(args, "--config", config)
 		}
 
-		return l.run(ctx, abs, pipelinegen, args...)
+		return l.run(ctx, abs, l.goTool, args...)
 	})
 }
