@@ -9,19 +9,14 @@ from this repository.
 ## Before the first release
 
 `:release` runs pipelinegen's release command at the version
-`tools/go.mod` requires. The command can release a module that sits in a
-directory of a repository only from the first pipelinegen release that
-has this. Until that release exists, set
-`PIPELINEGEN_SOURCE=<a pipelinegen checkout that has it>` in the
-environment of `bazel run` to build the command from that checkout. Once
-it exists, move `tools/go.mod` to it before the first release.
+`tools/go.mod` requires, v0.4.0-rc.1 or later: the first release that
+releases a module in a directory of a repository.
 
-Every plugin requires pipelinegen v0.3.1 or later. runner/concourse
-builds and passes its tests with v0.3.1, but its conformance kit needs a
-pipelinegen whose kit runs the runner's own step program. v0.3.1's kit
-looks for the tool's calls in the task scripts, and the runner no longer
-writes those. Move its `go.mod` to that pipelinegen release before
-releasing runner/concourse.
+runner/concourse requires pipelinegen v0.4.0-rc.1, whose conformance kit
+runs the runner's own step program; v0.3.1's kit looked for the tool's
+calls in task scripts, which the runner no longer writes. Every other
+plugin requires v0.3.1, since a plugin doesn't require a prerelease, and
+moves to the first v0.4.0 of pipelinegen when it is out.
 
 ## The first releases: v0.4.0
 
@@ -43,17 +38,17 @@ its own repository. The commits those older releases were cut from hold
 | correlator/sql | sbom/pg |
 | correlator/react | sbom/ts, from the npm workspace at the same commit |
 
-The Go requirements still name the old modules,
-`github.com/sideways-works/pipelinegen-sbom-<name>` v0.2.0. Every other
-plugin requires none of the others.
+The Go requirements still name the sbom plugins' modules by the paths
+they had before they moved here, at v0.2.0. Every other plugin requires
+none of the others.
 
 ## The order
 
 1. The sbom plugins: sbom/go, sbom/pg, sbom/locale, sbom/openapi,
    sbom/npm and sbom/ts, each `v0.4.0`. With them, every plugin that
    requires no other: connector/git, connector/github, driver/bazel,
-   driver/go, driver/playwright, driver/shell, runner/concourse (once its
-   pipelinegen is out) and correlator/react, which bundles ts-sbom from the
+   driver/go, driver/playwright, driver/shell, runner/concourse and
+   correlator/react, which bundles ts-sbom from the
    same commit.
 2. In one commit, move each correlator that requires an sbom's module to
    `github.com/sideways-works/pipelinegen-plugins/sbom/<name>` `v0.4.0`:

@@ -78,15 +78,15 @@ and each is pinned by its directory and its release:
 plugins:
   - repository: https://github.com/sideways-works/pipelinegen-plugins
     with:
-      - {name: go, kind: driver, path: driver/go, release: {version: v0.4.0, sha256: ...}}
-      - {name: go-sbom, kind: sbom, path: sbom/go, release: {version: v0.4.0, sha256: ...}}
+      - {name: go, kind: driver, path: driver/go, release: {version: v0.4.0, sums: …}}
+      - {name: go-sbom, kind: sbom, path: sbom/go, release: {version: v0.4.0, sums: …}}
 ```
 
 `version` is the plugin's own version; here that is the release tagged
-`driver/go/v0.4.0`. The checksum is the line of the release's
-`SHA256SUMS` for the platform's program (`go-driver-linux-amd64`), or,
-as `sums`, the checksum of `SHA256SUMS` itself. Each plugin's settings
-are in its README.
+`driver/go/v0.4.0`. `sums` is the checksum of the release's `SHA256SUMS`,
+so one pin serves every platform; `sha256:` with one program's line
+(`go-driver-linux-amd64`) in its place pins that file alone. Each
+plugin's settings are in its README.
 
 ## Releases
 
