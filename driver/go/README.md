@@ -48,24 +48,25 @@ Its settings, under `with`:
 | `must_run` | Tests that must run, not skip: a map from a test file, as the slices name it, to a regular expression of the top-level tests it holds. None by default. |
 | `uncached` | Test files, by pattern as the slices name them (`api/git_test.go`, `**/*_clock_test.go`), whose tests run every time: their `go test` never takes a result from Go's result cache, and runs on its own when the step bundles. None by default. |
 
-The driver reads its settings before it runs anything and refuses the
-step when one is wrong, naming where: a key it doesn't take
+The driver reads its settings before it runs anything, so that no wrong
+setting is silently ignored. It refuses the step when one is wrong and
+names where: a key it doesn't take
 (`timout: unknown key; the keys of go-driver's settings are ...`), a value
 of another type or with no value at all, a `timeout` of zero or less
 (`go test` reads 0 as no limit), a cap below 0, a `module` outside the
-tree, and a `must_run` key that is no test file of the tree as the slices
-name it (`dir/name_test.go`) or whose pattern is empty, and an `uncached` pattern that can name no test file. A setting the
-driver ignored would leave the step running without it, unseen.
+tree, a `must_run` key that is no test file of the tree as the slices
+name it (`dir/name_test.go`) or whose pattern is empty, and an `uncached`
+pattern that can name no test file.
 
-`describe` says it takes the files `**/*_test.go`, that it needs `go`, that
+`describe` says it takes the files `**/*_test.go` and needs `go`, that
 a bundle keeps recordings apart, and that its recordings are Go
 coverprofiles.
 
 ## Tests that must run
 
-A skipped test passes its file, which is right for most tests and wrong
-for a few: an access check that skips without its database proves
-nothing. `must_run` names those tests and the file that holds them:
+A skipped test passes its file. For most tests that is right, but an
+access check that skips without its database proves nothing. `must_run`
+names such tests and the file that holds them:
 
 ```yaml
 with:
@@ -82,11 +83,11 @@ names fails when it holds no test its pattern matches, with a failure
 named `(must_run)`: a test renamed, or moved to another file, can't fall
 out of the setting unnoticed.
 
-A file that `must_run` names and the tree doesn't hold fails nothing:
-each run says so on its log, and its pattern holds no test until
+A file that `must_run` names and the tree doesn't hold fails nothing.
+Each run says so on its log, and the pattern holds no test until
 `must_run` names the file's new place. In a proposed change's run the
 setting comes from the trusted config while the tree is the change's, so
-a change that moves the file could never pass if that failed.
+if a missing file failed, a change that moves the file could never pass.
 `pipelinegen check` can't tell either, since the tree isn't what it
 checks the setting against. For the same reason, move or rename a test
 the setting holds in two changes: first widen `must_run` to both places
@@ -97,10 +98,10 @@ move or rename the test and narrow `must_run`.
 
 Go's test cache serves a passed result again when the test binary, its
 flags, the files the test opened inside the module and the environment
-variables it read are unchanged. That is right for almost every test. A
-test that reads anything else, such as git history, the network, a clock
-or a service the test didn't start, can be served a pass that no longer
-holds. Name its file in `uncached`, and only that file runs every time:
+variables it read are unchanged, which suits almost every test. A test
+that reads anything else, such as git history, the network, a clock or a
+service the test didn't start, can be served a pass that no longer holds.
+Name its file in `uncached`, and only that file runs every time:
 
 ```yaml
 with:
@@ -128,21 +129,22 @@ A recording run builds with coverage (`-cover -covermode=atomic` and the
 `coverpkg` setting) and writes each slice's coverprofile into its
 recording. Not bundled, that is the slice's own `go test`. Bundled, the
 driver builds each package's test binary once with `go test -c` and runs
-it once per file, as `go test` runs a binary, each with its own
-coverprofile and coverage directory. So every file keeps its own
-recording, a child process the test starts with a cut-down environment
-included. In a recorded stack suite the files run one at a time, and the
-driver marks each file's start and stop, so that the stack's coverage is
-collected for each file on its own. A suite with a
-stack always runs its tests (`-count=1`): the servers they talk to are no
-input of go test's cache.
+it once per file, as `go test` runs a binary, each run with its own
+coverprofile and coverage directory. Every file thus keeps its own
+recording, including what a child process the test starts with a
+cut-down environment covers. In a recorded stack suite the files run one
+at a time, and the driver marks each file's start and stop, so that the
+stack's coverage is collected for each file on its own. A suite with a
+stack always runs its tests (`-count=1`), because the servers they talk
+to are no input of go test's cache.
 
 Each recorded coverprofile keeps its mode line, every block that ran, and
 for a file none of whose blocks ran its first block, so it still names
 every file the build covered. A full profile of a large module is
-megabytes of zeros per test file; the cut keeps what go-correlator reads:
-it binds a slice to the declarations around the blocks that ran, and reads
-the zero blocks only to know which files the coverage holds. A profile
+megabytes of zeros per test file. The cut keeps what go-correlator reads:
+go-correlator binds a slice to the declarations around the blocks that
+ran, and reads the zero blocks only to know which files the coverage
+holds. A profile
 with a line the driver can't read stays whole.
 
 The request's variables reach every `go test`, and Go's build and module
