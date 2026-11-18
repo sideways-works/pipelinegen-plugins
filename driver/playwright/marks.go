@@ -9,18 +9,15 @@ import (
 	"path/filepath"
 )
 
-// MarksName is the module's file name.
 const MarksName = "marks.mjs"
 
 //go:embed marks.mjs
 var marks []byte
 
-// Marks returns a copy of the embedded marks.mjs.
 func Marks() []byte {
 	return append([]byte(nil), marks...)
 }
 
-// WriteMarks writes marks.mjs into dir, creating dir, and returns its path.
 func WriteMarks(dir string) (string, error) {
 	if err := os.MkdirAll(dir, 0o750); err != nil {
 		return "", fmt.Errorf("writing %s: %w", MarksName, err)

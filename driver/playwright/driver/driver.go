@@ -1,6 +1,5 @@
-// Package driver is playwright-driver: it runs a suite's Playwright spec
-// files, each a slice, and reads each file's result from Playwright's JSON
-// report.
+// Package driver runs each Playwright spec file as a slice and reads its result from
+// Playwright's JSON report.
 package driver
 
 import (
@@ -19,10 +18,8 @@ import (
 	"github.com/sideways-works/pipelinegen/plugin"
 )
 
-// Version is the driver's version, set by its release build.
 var Version = "dev"
 
-// Settings are what a step's with block may hold.
 type Settings struct {
 	// Dir is the Playwright project's directory in the tree (default the
 	// tree's root).
@@ -38,7 +35,6 @@ type Settings struct {
 	Flags   []string `json:"flags"`
 }
 
-// Handlers are the driver's verbs.
 func Handlers(log io.Writer) plugin.DriverHandlers {
 	return plugin.DriverHandlers{
 		Describe: describe,

@@ -1,5 +1,3 @@
-// Command playwright-driver is a pipelinegen driver for Playwright spec
-// files. Its own `marks <dir>` call writes marks.mjs into a directory.
 package main
 
 import (
