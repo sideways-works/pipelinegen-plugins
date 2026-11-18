@@ -163,7 +163,9 @@ every pinned plugin but the other runners.
 
 A placement rule that names another runner's run places nothing here and
 isn't refused, so a run can move to another runner without an edit to
-this block. The rule's form is still checked: its `for` and its `tags`.
+this block. Neither is a rule that names a suite only other runners' runs
+have: the spec names those runs and not their suites, so a suite none of
+this runner's runs has counts as theirs. The rule's form is still checked: its `for` and its `tags`.
 A runner left with no runs writes the `pipeline` job alone, and its rules
 for planning, suites and bookkeeping place nothing without being refused
 for it.

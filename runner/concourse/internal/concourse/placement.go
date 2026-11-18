@@ -284,10 +284,20 @@ func (p placer) checkRules(spec plugin.Spec, bad func(string, ...any)) {
 	}
 }
 
-// elsewhere says the rule names a run another runner's pipeline holds, so
-// it places nothing here and is no mistake.
+// elsewhere says the rule names a run another runner's pipeline holds, or
+// a suite only such runs have, so it places nothing here and is no mistake.
+// The spec names the other runs and not their suites: a suite none of this
+// runner's runs has is taken for theirs.
 func elsewhere(spec plugin.Spec, r rule) bool {
-	return r.Run != "" && slices.Contains(spec.OtherRuns, r.Run)
+	if r.Run != "" {
+		return slices.Contains(spec.OtherRuns, r.Run)
+	}
+
+	return r.Suite != "" && len(spec.OtherRuns) > 0 &&
+		slices.ContainsFunc(spec.Suites, func(s plugin.SpecSuite) bool { return s.Name == r.Suite }) &&
+		!slices.ContainsFunc(spec.Runs, func(run plugin.SpecRun) bool {
+			return slices.ContainsFunc(run.Suites, func(rs plugin.SpecRunSuite) bool { return rs.Suite == r.Suite })
+		})
 }
 
 // inRuns says the rule places steps a run's jobs hold, which a pipeline

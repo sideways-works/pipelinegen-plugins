@@ -148,6 +148,43 @@ func TestAnotherRunnersRunIsItsToPlace(t *testing.T) {
 	}
 }
 
+// A suite that only another runner's runs have is that runner's to place.
+func TestASuiteOnlyAnotherRunnersRunsHaveIsItsToPlace(t *testing.T) {
+	spec, root := twoRunners(t)
+
+	slow := spec.Suites[suiteIndex(t, spec, "e2e")]
+	slow.Name = "slow"
+	spec.Suites = append(spec.Suites, slow)
+
+	rule := on(forSuite, []any{"slow"}, "suite", "slow")
+
+	got, err := Text(generated(t, spec, root, placementOf([]any{"small"}, rule, on(forBookkeeping, []any{"tiny"}, "suite", "slow"))))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	want, err := Text(generated(t, spec, root, placementOf([]any{"small"})))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if string(got) != string(want) {
+		t.Error("a rule for another runner's suite changed this pipeline")
+	}
+
+	// with one runner it is a suite in no run, and the rule a mistake
+	spec.OtherRuns = nil
+	if _, err := GenerateWith(spec, root, placementOf(nil, rule)); !errors.Is(err, ErrPlacement) || !strings.Contains(err.Error(), "places nothing: the pipeline has no such step") {
+		t.Errorf("one runner: %v", err)
+	}
+
+	// a suite no config has is still refused
+	spec.OtherRuns = []string{"nightly"}
+	if _, err := GenerateWith(spec, root, placementOf(nil, on(forSuite, []any{"x"}, "suite", "lint"))); !errors.Is(err, ErrPlacement) || !strings.Contains(err.Error(), "no suite lint") {
+		t.Errorf("an unknown suite: %v", err)
+	}
+}
+
 // A runner whose every run another runner owns writes the pipeline job
 // alone, and the placement it had keeps.
 func TestARunnerWithoutRuns(t *testing.T) {
