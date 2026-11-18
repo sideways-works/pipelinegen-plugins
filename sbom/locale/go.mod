@@ -1,4 +1,4 @@
-module github.com/sideways-works/pipelinegen-sbom-locale
+module github.com/sideways-works/pipelinegen-plugins/sbom/locale
 
 go 1.27.1
 

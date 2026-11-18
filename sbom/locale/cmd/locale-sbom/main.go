@@ -14,7 +14,7 @@ import (
 
 	"github.com/sideways-works/pipelinegen/plugin"
 
-	"github.com/sideways-works/pipelinegen-sbom-locale/catalog"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/locale/catalog"
 )
 
 var Version = "dev"
