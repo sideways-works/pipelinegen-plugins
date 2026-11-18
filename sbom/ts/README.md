@@ -371,18 +371,13 @@ builds twice and fails on any difference. The compressed bytes come from
 Node's brotli encoder, so they follow the Node version in `.node-version`.
 The unpacked bytes don't.
 
-To check that a released file holds the code of its tag, check out the
-tag, install, and run the checker on the downloaded file. It unpacks the
-embedded part and compares it byte for byte with a fresh build of the
-sources:
+To check that a release holds the code of its tag, build the tag afresh
+and compare: the check downloads the release and fails unless every file,
+`ts-sbom.mjs` included, is byte for byte the fresh build:
 
 ```sh
-git checkout vX.Y.Z && npm ci
-node scripts/check-release.ts path/to/ts-sbom.mjs
+bazel run //sbom/ts:release -- check vX.Y.Z
 ```
-
-The tests run the checker on a fresh build, and on a build whose embedded
-part was swapped for other code, which it must refuse.
 
 ## Developing
 

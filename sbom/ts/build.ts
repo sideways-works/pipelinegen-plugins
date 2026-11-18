@@ -4,11 +4,11 @@
 //
 // The command is one file: a small entry answers describe and detect, and the rest, TypeScript
 // included, is a CommonJS bundle compressed with brotli and embedded as base64, since loading the
-// parser takes about a quarter of a second. scripts/check-release.ts compares a release's embedded
-// part with a fresh build.
+// parser takes about a quarter of a second. `bazel run //sbom/ts:release -- check`
+// compares a published release with a fresh build of its tag.
 import { chmodSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { brotliCompressSync, brotliDecompressSync, constants } from "node:zlib";
+import { brotliCompressSync, constants } from "node:zlib";
 import { build, formatMessagesSync, type Plugin } from "esbuild";
 
 const root = import.meta.dirname;
@@ -57,11 +57,6 @@ export function compress(code: Uint8Array): string {
       [constants.BROTLI_PARAM_LGWIN]: 24,
     },
   }).toString("base64");
-}
-
-export function unpack(command: string): Buffer | undefined {
-  const m = new RegExp(`"${embeddedTag.replace(/\+/g, "\\+")}([A-Za-z0-9+/=]*)"`).exec(command);
-  return m?.[1] === undefined ? undefined : brotliDecompressSync(Buffer.from(m[1], "base64"));
 }
 
 // The module the entry's `import("./cli.ts")` becomes: it runs the embedded part as Node runs a
