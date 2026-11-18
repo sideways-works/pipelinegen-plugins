@@ -25,7 +25,7 @@ plugins:
       - name: shell
         kind: driver
         path: driver/shell
-        release: {version: <tag>, sha256: <the release's checksum>}
+        release: {version: v0.4.0, sums: …}
 
 suites:
   unit:
@@ -386,26 +386,31 @@ recording run, so recordings never mix. In a recording run of a suite
 with a stack, the driver runs a bundle's slices one at a time and marks
 each slice's start and stop, as pipelinegen asks.
 
-## Testing and releasing
-
-`go test ./...` runs the driver's tests and pipelinegen's conformance kit
-on `driver/testdata/sh`. A release is built and published like every
-pipelinegen plugin: static binaries, the driver's `describe` answer as
-`plugin.json`, and `SHA256SUMS`.
-
 ## Developing
 
-The tests and the lint run with the Go, golangci-lint and Node that the
-repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
-other commands run in this directory. The tests need `sh` and `bash` on
-your `PATH`.
+`bazel run //driver/shell:test` runs the tests and `bazel run
+//driver/shell:lint` the lint, with the Go, golangci-lint and Node the
+repository pins in `MODULE.bazel`
+([CONTRIBUTING](../../CONTRIBUTING.md)). The tests need `sh` and `bash`
+on your `PATH`. They include pipelinegen's conformance kit, with the
+pipelinegen `go.mod` requires as a tool, on the fixture in
+`driver/testdata/sh`, which runs every verb the driver declares.
+
+By hand, in this directory:
 
 ```sh
-bazel run //driver/shell:test
-bazel run //driver/shell:lint
+go build -trimpath -o shell-driver ./cmd/shell-driver
+go tool pipelinegen plugin test ./shell-driver --tree driver/testdata/sh
 ```
 
-The tests include pipelinegen's conformance kit (`go tool pipelinegen
-plugin test`) on the fixture in `driver/testdata/sh`, which runs every
-verb the driver declares. A change to what the driver does comes with its
-test and its paragraph in the README.
+`bazel run //driver/shell:release` releases it from a tag
+`driver/shell/vX.Y.Z` on `main`, as
+[CONTRIBUTING](../../CONTRIBUTING.md#releases) describes: static
+`shell-driver-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (its own `describe` answer), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. Its first release here is `v0.4.0`
+([RELEASING](../../RELEASING.md)), and a published release never
+changes.
+
+A change to what the driver does comes with its test and its paragraph
+in this README.
