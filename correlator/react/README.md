@@ -54,17 +54,18 @@ plugins:
       - name: ts
         kind: sbom
         path: sbom/ts
-        release: {version: vX.Y.Z, sha256: ...}
+        release: {version: v0.4.0, sums: …}
       - name: react
         kind: correlator
         path: correlator/react
-        release: {version: vX.Y.Z, sha256: ...}
+        release: {version: v0.4.0, sums: …}
 ```
 
-The checksum is the `react-correlator.mjs` line of the release's
-`SHA256SUMS`. A new pin selects nothing by itself. List `pipelinegen.yaml`
-under `everything_on`, so that a pin change, like any other change to the
-config, runs every slice.
+`sums` is the checksum of the release's `SHA256SUMS`, whose line for
+`react-correlator.mjs` checks the command; `sha256:` with that line in
+place of `sums` pins the file alone. A new pin selects nothing by
+itself. List `pipelinegen.yaml` under `everything_on`, so that a pin
+change, like any other change to the config, runs every slice.
 
 Recording also needs the Playwright fixture in the test setup, and the
 build has two requirements:
@@ -403,14 +404,15 @@ import { withCoverage } from "../tools/react-correlator/playwright.mjs";
 The file brings no type declarations; TypeScript reads it as untyped
 JavaScript (`allowJs`, or a one-line `declare module`).
 
-The file is an ES module. In a Playwright project, a test or
-fixture file imports it with `import` whether the project is an ES module
-or CommonJS: Playwright's loader takes it on every Node 22 release (tried
-on 22.11.0, 22.12.0, 22.13.0 and 26.10.0). A plain `require()` from
-CommonJS that Playwright doesn't load needs Node 22.12.0 or later; 22.12
-prints an ExperimentalWarning, and from 22.13.0 it loads quietly.
-`import()` works on every Node 22, but it returns a promise, so it doesn't
-suit a fixture that a module defines when it loads.
+The file is an ES module built for Node 22 and later. In a Playwright
+project, a test or fixture file imports it with `import` whether the
+project is an ES module or CommonJS: Playwright's loader takes it on
+Node 22 and later (it was tried on 22.11.0, 22.12.0, 22.13.0 and
+26.10.0). A plain `require()` from CommonJS that Playwright doesn't load
+needs Node 22.12.0 or later; 22.12 prints an ExperimentalWarning, and
+from 22.13.0 it loads quietly. `import()` works on every Node 22, but it
+returns a promise, so it doesn't suit a fixture that a module defines
+when it loads.
 
 Wrap the repository's Playwright `test` with it and run each batch with one
 worker, so spec files run one after another:
@@ -418,7 +420,7 @@ worker, so spec files run one after another:
 ```ts
 import { execFileSync } from "node:child_process";
 import { test as base } from "@playwright/test";
-import { withCoverage } from "@sideways-works/react-correlator/playwright";
+import { withCoverage } from "../tools/react-correlator/playwright.mjs";
 
 const pipelinegen = (...args: string[]) => execFileSync("tools/pipelinegen", args, { stdio: "inherit" });
 
@@ -670,10 +672,13 @@ the file in `files`.
 
 ### `observe`
 
-`observe` runs in the batch task, while the build exists. It takes the
+`observe` runs where pipelinegen calls it, in the step that ends the
+batch ([where observe
+runs](#where-observe-runs-and-what-it-needs-there)), which has the
+source and the coverage output but not the build. It takes the
 directories one spec file left, named from the task's working directory:
-the setup's first, told by its place in `dirs` and never by its name, then
-the slice's. It reads every part in each and adds them up:
+the setup's first, told by its place in `dirs` and never by its name,
+then the slice's. It reads every part in each and adds them up:
 
 ```sh
 echo '{"protocol": 1, "tree": ".", "slice": "e2e/editor.spec.ts", "dirs": ["coverage/_setup/react", "coverage/e2e/editor.spec.ts/react"]}' | react-correlator observe
@@ -711,57 +716,71 @@ the stack check under [When it can't tell](#when-it-cant-tell) applies to
 ]}
 ```
 
-## Developing and releasing
+## Developing
 
-```sh
-npm install
-npx playwright install chromium   # the browser test runs a real Chromium
-npm test                          # node:test, with fixtures in testdata
-npm run lint                      # Biome and tsc --noEmit
-npm run build                     # dist/react-correlator.mjs, and the committed dist/playwright.mjs
-```
+`bazel run //correlator/react:test` installs the npm workspace at the
+root with `npm ci` and runs `npm test` here, and `bazel run
+//correlator/react:lint` runs `npm run lint` (Biome and `tsc --noEmit`),
+both with the Node `MODULE.bazel` pins
+([CONTRIBUTING](../../CONTRIBUTING.md)). The build runs on that Node,
+the version in `.node-version`; npm refuses another one (`devEngines` in
+`package.json`), so a release builds the same bytes on any machine.
+Running the built command needs Node 22.18 or later. esbuild's install
+script stays off (`allowScripts` in the root `package.json`): the build
+calls esbuild's JavaScript API, which finds its platform binary without
+that script, and a release installs with every script off. ts-sbom, a
+dependency, is [sbom/ts](../../sbom/ts) of the same commit, which the
+workspace links.
 
-The build runs on the Node version in `.node-version`; npm refuses another
-one (`devEngines` in `package.json`), so a release builds the same bytes
-on any machine. Running the built command needs Node 22.18 or later.
-
-esbuild's install script stays off (`allowScripts` in `package.json`). The
-build calls esbuild's JavaScript API, which finds its platform binary
-without that script, and a release installs with every script off.
-
-The browser tests run the fixture site built two ways: by esbuild
-(`test/browser.test.ts`), and by Vite with rolldown at Vite's defaults plus
-`--sourcemap` (`test/rolldown.test.ts`), once split by route and once as
-one script, so rolldown's lazy wrappers, its CommonJS helpers and its
-map-less runtime chunk (`rolldown-runtime-*.js`) are real output. Both
-are pinned devDependencies; bump them to the versions the apps a recording
-serves are built with.
+The tests use no network. The browser tests run a real Chromium (`npx
+playwright install chromium` once), on the fixture site built two ways:
+by esbuild (`test/browser.test.ts`: minified, code-split, with source
+maps), and by Vite with rolldown at Vite's defaults plus `--sourcemap`
+(`test/rolldown.test.ts`), once split by route and once as one script,
+so rolldown's lazy wrappers, its CommonJS helpers and its map-less
+runtime chunk (`rolldown-runtime-*.js`) are real output. They serve it
+through Playwright's routing with no server, run spec files with the
+fixture, and check what `observe` says each one touched. esbuild, Vite
+and rolldown are pinned devDependencies; bump them to the versions the
+apps a recording serves are built with.
 
 `test/command.test.ts` fails when `describe`, `collect` or a `detect`
-without a tsconfig loads TypeScript or the linker, and checks the built
-file as pipelinegen runs it. The browser test builds a small site from
-testdata with esbuild (minified, code-split, with source maps), serves it
-through Playwright's routing with no server and no network, runs two spec
-files with the fixture, and checks what `observe` says each one touched.
+without a tsconfig loads TypeScript or the linker, so keep those calls
+in the small entry, `src/main.ts`, and it checks the built file as
+pipelinegen runs it. `dist/playwright.mjs`, the fixture a repository's
+tests import, is committed: after a change to its sources, build it and
+commit it. A test fails when it differs from a fresh build, and so does
+the release.
 
-The conformance kit checks the plugin the way pipelinegen calls it, on the
-fixture tree in `testdata/tree`:
+pipelinegen's conformance kit calls the built command the way
+pipelinegen does, on the fixture tree in `testdata/tree`, with ts-sbom's
+command beside it as `--sbom`, which says which claimed files hold
+units. The commands below build both and run the kit from this directory
+with the pipelinegen that `tools/go.mod` pins:
 
 ```sh
-pipelinegen plugin test dist/react-correlator.mjs --tree testdata/tree
+npm ci
+npm run build
+(cd ../../sbom/ts && npm run build)
+go -C ../../tools tool pipelinegen plugin test "$PWD/dist/react-correlator.mjs" --tree "$PWD/testdata/tree" --sbom "$PWD/../../sbom/ts/dist/ts-sbom.mjs"
 ```
 
-Releases are built and published with
-`bazel run //correlator/react:release`, which runs pipelinegen's release
-command as its [release
-guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
-describes. For a tag `correlator/react/vX.Y.Z` on `main` it publishes
-`react-correlator.mjs`, `plugin.json` (the plugin's own `describe`),
+`bazel run //correlator/react:release` releases it from a tag
+`correlator/react/vX.Y.Z` on `main`, as
+[CONTRIBUTING](../../CONTRIBUTING.md#releases) describes:
+`react-correlator.mjs`, `plugin.json` (its own `describe` answer),
 `playwright.mjs` (the fixture, named in `package.json` under
-`pipelinegen.release`), `LICENSE`, `NOTICE` and `SHA256SUMS`. The release
-script fails unless the fixture it built is byte for byte the
-committed file. A published release never changes; a wrong one gets a new
-version.
+`pipelinegen.release`), `LICENSE`, `NOTICE` and `SHA256SUMS`. The
+release fails unless the fixture it built is byte for byte the committed
+file. Its first release here is `v0.4.0`
+([RELEASING](../../RELEASING.md)), and a published release never
+changes. To check that a release holds the code of its tag, `bazel run
+//correlator/react:release -- check vX.Y.Z` builds the tag afresh,
+downloads the release and fails unless every file,
+`react-correlator.mjs` included, is byte for byte the fresh build.
+
+A change to what react-correlator records comes with its docs, so this
+README describes react-correlator as it is on `main`.
 
 ### How the command file is built
 
@@ -795,47 +814,3 @@ two builds of one commit give the same bytes, and pipelinegen's release
 script builds twice and fails on any difference. The compressed bytes come
 from Node's brotli encoder, so they follow the Node version in
 `.node-version`, while the unpacked bytes don't.
-
-To check that a release holds the code of its tag, build the tag afresh
-and compare: the check downloads the release and fails unless every file,
-`react-correlator.mjs` included, is byte for byte the fresh build:
-
-```sh
-bazel run //correlator/react:release -- check vX.Y.Z
-```
-
-## Developing
-
-The tests and the lint run with the Go, golangci-lint and Node that the
-repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
-other commands run in this directory. ts-sbom, a dependency, is
-[sbom/ts](../../sbom/ts) of the same commit, which the npm workspace at
-the root links; the browser tests run a real Chromium (`npx playwright
-install chromium`).
-
-```sh
-bazel run //correlator/react:test
-bazel run //correlator/react:lint
-npm ci
-npm run build                     # dist/react-correlator.mjs and dist/playwright.mjs
-npm run build
-pipelinegen plugin test dist/react-correlator.mjs --tree testdata/tree --sbom <ts-sbom.mjs>
-```
-
-- The tests use no network: the browser tests serve the fixture sites in
-  `testdata` through Playwright's routing, built by esbuild and by Vite
-  with rolldown.
-- `dist/playwright.mjs`, the fixture a repository's tests import, is
-  committed: after a change to its sources, build it and commit it. A
-  test fails when it differs from a fresh build, and so does the release.
-- The last line runs pipelinegen's conformance kit, which calls the built
-  command the way pipelinegen does, on the fixture tree in
-  `testdata/tree`, with ts-sbom's command beside it as `--sbom`, which says
-  which claimed files hold units. Take `pipelinegen` from
-  [its releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md)
-  and `ts-sbom.mjs` from a release of ts-sbom or its own build.
-- `test/command.test.ts` fails when `describe`, `collect` or a `detect`
-  without a tsconfig loads TypeScript: keep those calls in the small
-  entry, `src/main.ts`.
-- A change to what react-correlator records comes with its docs: the
-  README describes react-correlator as it is on `main`.
