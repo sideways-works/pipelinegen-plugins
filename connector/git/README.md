@@ -44,7 +44,7 @@ A `plugins` entry named `git` pins another release:
 plugins:
   - repository: https://github.com/sideways-works/pipelinegen-plugins
     with:
-      - {name: git, kind: connector, path: connector/git, release: {version: v0.1.0, sums: ...}}
+      - {name: git, kind: connector, path: connector/git, release: {version: v0.4.0, sums: …}}
 ```
 
 ## What it answers
@@ -80,19 +80,29 @@ without forks; the kit test allows exactly that one failure.
 
 ## Developing
 
-The tests and the lint run with the Go, golangci-lint and Node that the
-repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
-other commands run in this directory.
+`bazel run //connector/git:test` runs the tests and `bazel run
+//connector/git:lint` the lint, with the Go, golangci-lint and Node the
+repository pins in `MODULE.bazel`
+([CONTRIBUTING](../../CONTRIBUTING.md)). The tests include pipelinegen's
+conformance kit: `TestTheKit` builds git-connector and runs it through
+the kit with the fixture in `connector/testdata/kit`, using the
+pipelinegen that `go.mod` requires as a tool.
+
+By hand, in this directory:
 
 ```sh
-bazel run //connector/git:test
-bazel run //connector/git:lint
+go build -trimpath -o git-connector ./cmd/git-connector
+go tool pipelinegen plugin test ./git-connector --tree connector/testdata/kit
 ```
 
-- The tests include pipelinegen's conformance kit: `TestTheKit` builds
-  the connector and runs `go tool pipelinegen plugin test` on it with the
-  fixture in `connector/testdata/kit`, with the pipelinegen that `go.mod` requires as
-  a tool. By hand:
-  `pipelinegen plugin test ./git-connector --tree connector/testdata/kit`.
-- A change to what git-connector answers comes with its docs: the README
-  describes git-connector as it is on `main`.
+`bazel run //connector/git:release` releases it from a tag
+`connector/git/vX.Y.Z` on `main`, as
+[CONTRIBUTING](../../CONTRIBUTING.md#releases) describes: static
+`git-connector-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (its own `describe` answer), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. Its first release here is `v0.4.0`
+([RELEASING](../../RELEASING.md)), and a published release never
+changes.
+
+A change to what git-connector answers comes with its docs, so this
+README describes git-connector as it is on `main`.
