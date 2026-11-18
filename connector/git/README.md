@@ -14,16 +14,16 @@ flowchart LR
   conn -- "the proposed changes" --> core
 ```
 
-The connector sends nothing and holds no token: pipelinegen lists the
+The connector sends nothing and holds no token. pipelinegen lists the
 remote's branches with git and hands them in as `heads`, and the connector
-picks the changes among them. It reports nowhere. A run's state is in its
+picks the changes among them. It reports nowhere; a run's state is in its
 records, which `pipelinegen status <commit or branch>` reads.
 
 ## Using it
 
-A config's `connectors` entry of plugin `git` uses it with no line of its
-own: pipelinegen pins a release of it and fetches that release, checked by
-its checksum.
+A config's `connectors` entry with plugin `git` uses it, and needs no
+line of its own for it: pipelinegen pins a release of it and fetches that
+release, checked by its checksum.
 
 ```yaml
 git:
@@ -53,17 +53,17 @@ plugins:
 |---|---|
 | `describe` | the capabilities changes and forks; no API host and no token |
 | `identify` | the configured remote and no other |
-| `changes` | the branches among `heads` whose names match one of `branches` (`path.Match`), but the base, in branch order, each `branch-<name>` with the name written as one ref part (`branch-review%2Fcart`), as pipelinegen's records name it |
+| `changes` | the branches among `heads` whose names match one of `branches` (`path.Match`), except the base, in branch order, each `branch-<name>` with the name written as one ref part (`branch-review%2Fcart`), as pipelinegen's records name it |
 | `links` | the config's `links` template with `{commit}`, `{branch}` and `{path}` filled in; nothing without one |
 
-`status`, `statuses`, `comment` and `subject` are refused: a plain git
-server keeps no statuses or comments, and pipelinegen's config refuses a
-run that asks for them, or filters on drafts, labels or readiness, with
-this connector.
+It refuses `status`, `statuses`, `comment` and `subject`, since a plain
+git server keeps no statuses or comments. With this connector,
+pipelinegen's config refuses a run that asks for them or that filters on
+drafts, labels or readiness.
 
-A plain git server has no forks: every branch is the repository's own, so
-every change comes from it (`same`). pipelinegen runs a change only at a
-branch it listed itself, at the commit it saw.
+A plain git server has no forks. Every branch is the repository's own,
+so every change comes from it (`same`). pipelinegen runs a change only on
+a branch it listed itself, at the commit it saw.
 
 ## Checking it
 
@@ -72,8 +72,8 @@ go test ./...
 ```
 
 runs pipelinegen's conformance kit on the built connector with the fixture
-in `connector/testdata/kit`, whose config holds the `heads` pipelinegen
-would list and whose `no_forks` says why it names no fork. By hand:
+in `connector/testdata/kit`. Its config holds the `heads` pipelinegen
+would list, and its `no_forks` says why it names no fork. By hand:
 `pipelinegen plugin test <the built executable> --tree connector/testdata/kit`.
 A pipelinegen whose kit predates `no_forks` fails its fork check on a host
 without forks; the kit test allows exactly that one failure.
