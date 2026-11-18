@@ -17,14 +17,14 @@ flowchart LR
 It sends nothing itself and never sees a token. Each call answers with the
 requests it wants sent, as data. pipelinegen checks them, adds the token
 for the call's purpose, sends them only to the API host the step names,
-retries, and hands back the responses, round by round, until the
-connector gives its answer.
+retries, and hands back the responses. This goes round by
+round until the connector gives its answer.
 
 ## Using it
 
-A config with a `github` section uses it with no line of its own:
-pipelinegen pins a release of it and fetches that release, checked by its
-checksum. A `plugins` entry named `github` pins another:
+A config with a `github` section uses it, and needs no line of its own
+for it: pipelinegen pins a release of it and fetches that release, checked
+by its checksum. A `plugins` entry named `github` pins another release:
 
 ```yaml
 plugins:
@@ -48,11 +48,11 @@ API (`https://git.example.com/api/v3`).
 | `comment` | keeps one comment on a pull request: the oldest whose body starts with the marker, on a line of its own or alone, is updated when its text differs, one is made when there is none, and the others that start with the marker are deleted. A comment that only quotes the marker further down is someone else's and stays |
 | `links` | a commit's, a file's and a pull request's page |
 
-A pull request runs only when its head's repository is the base
-repository by id. A fork, or a repository deleted and made again under
-the same name by someone else, has another id and is reported as a fork; a
-pull request whose head repository is gone is reported as unknown. Neither
-runs.
+A pull request runs only when its head's repository has the base
+repository's id. A fork has another id, and so does a repository deleted
+and made again under the same name by someone else; both are reported as
+a fork. A pull request whose head repository is gone is reported as
+unknown. Neither runs.
 
 ## Checking it
 
@@ -65,8 +65,8 @@ in `connector/testdata/kit`: two pull requests, one of them from a fork, a
 status, a commit and an empty comment thread. By hand:
 `pipelinegen plugin test <the built executable> --tree connector/testdata/kit`.
 
-The requests pipelinegen's own GitHub clients sent before this connector
-replaced them are kept in `connector/testdata/requests.json`; a test holds
+`connector/testdata/requests.json` keeps the requests pipelinegen's own
+GitHub clients sent before this connector replaced them, and a test holds
 the connector to them, request by request.
 
 ## Developing
