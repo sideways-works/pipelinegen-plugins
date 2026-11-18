@@ -28,6 +28,7 @@ const (
 	cmdAll   = "all"
 	cmdBuild = "build"
 	cmdLint  = "lint"
+	cmdTest  = "test"
 	toolGo   = "go"
 	toolNode = "node"
 	toolGh   = "gh"
@@ -84,7 +85,7 @@ func (l *Launch) main(ctx context.Context, args []string) (int, error) {
 
 func (l *Launch) dispatch(ctx context.Context, args []string) (int, error) {
 	switch {
-	case args[0] == "test" && len(args) > 1:
+	case args[0] == cmdTest && len(args) > 1:
 		return 0, l.each(args[1:], func(dir string) error { return l.Test(ctx, dir) })
 	case args[0] == cmdLint && len(args) > 1 && l.lint != "":
 		if err := l.versions(ctx); err != nil {
@@ -92,7 +93,7 @@ func (l *Launch) dispatch(ctx context.Context, args []string) (int, error) {
 		}
 
 		return 0, l.each(args[1:], func(dir string) error { return l.Lint(ctx, dir) })
-	case args[0] == cmdAll && len(args) == 2 && args[1] == "test":
+	case args[0] == cmdAll && len(args) == 2 && args[1] == cmdTest:
 		return 0, l.All(ctx, false)
 	case args[0] == cmdAll && len(args) == 2 && args[1] == cmdLint && l.lint != "":
 		return 0, l.All(ctx, true)

@@ -363,7 +363,7 @@ func (l *Launch) Hooks(ctx context.Context) error {
 }
 
 // Templates builds every template under templates/ and runs pipelinegen's conformance kit on it with
-// its fixture, testdata/kit.
+// its fixture, testdata/kit, and the config block testdata/kit/config.json when there is one.
 func (l *Launch) Templates(ctx context.Context) error {
 	dir, done, err := l.scratch("plugins-templates-")
 	if err != nil {
@@ -402,6 +402,12 @@ func (l *Launch) Templates(ctx context.Context) error {
 			return err
 		}
 
-		return l.run(ctx, abs, pipelinegen, "plugin", "test", exe, "--tree", filepath.Join(abs, "testdata", "kit"))
+		args := []string{"plugin", cmdTest, exe, "--tree", filepath.Join(abs, "testdata", "kit")}
+		// a runner's fixture is the config block the kit writes its pipelines with
+		if config := filepath.Join(abs, "testdata", "kit", "config.json"); exists(config) {
+			args = append(args, "--config", config)
+		}
+
+		return l.run(ctx, abs, pipelinegen, args...)
 	})
 }
