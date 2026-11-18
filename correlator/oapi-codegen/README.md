@@ -53,8 +53,8 @@ plugins:
         release: {version: vX.Y.Z, sha256: ...}
 ```
 
-The checksum is the `oapi-codegen-correlator-linux-amd64` line of the release's
-`SHA256SUMS`. Or pin the release by the checksum of its `SHA256SUMS`
+The checksum is the `oapi-codegen-correlator-linux-amd64` line of the
+release's `SHA256SUMS`. Or pin the release by the checksum of its `SHA256SUMS`
 itself, `sums: ...` in place of `sha256`: one pin then serves every
 platform, a Mac's binary checked by its own line of the list.
 A new pin selects nothing by itself. List
@@ -91,8 +91,8 @@ type from that generated package.
 
 ### Config
 
-`request_log` and `request_log_lines` describe the run; `readers` and
-`per_operation` record what only a person can say; the rest are
+`request_log` and `request_log_lines` describe the run, and `readers` and
+`per_operation` record what only a person can say. The rest are
 overrides.
 
 ```yaml
@@ -181,11 +181,7 @@ constants, or a `switch` over operation ids; list such code under
 ### Digests taken from the contract
 
 The declarations generated from the whole document take their digest from
-what every operation shares, not from their own content. The `links`
-answer's set relates them in its `digest_from`, under the
-`generated-from-source` narrowing. pipelinegen reads a set's
-`digest_from` from its v0.1.9 on; an older pipelinegen ignores it, and
-the declarations keep their own digests, as with the narrowing off:
+what every operation shares, not from their own content. They are:
 
 - the embedded document (`swaggerSpec`, `rawSpec`);
 - the server interfaces (`ServerInterface`, `StrictServerInterface`, one
@@ -194,6 +190,11 @@ the declarations keep their own digests, as with the narrowing off:
 - the functions that register one route per operation (`Handler`,
   `HandlerWithOptions`, `RegisterHandlers`, `NewStrictHandler` and their
   variants).
+
+The `links` answer's set relates them in its `digest_from`, under the
+`generated-from-source` narrowing. pipelinegen reads a set's
+`digest_from` from its v0.1.9 on. An older pipelinegen ignores it, and
+the declarations keep their own digests, as with the narrowing off.
 
 Each takes its digest from the document's top-level units
 (`api:<file>#/servers`, `api:<file>#/openapi`, `api:<file>#/paths`), the
@@ -243,8 +244,8 @@ the document for that package.
 
 `observe` turns the requests a slice made into the operations they
 reached. It reads `requests.txt` (one request per line: the method and
-the URL or path, or the route pattern) and HAR files (a browser's network log) in the slice's
-directories, `coverage/<slice>/<plugin>`, where `<plugin>` is the plugin
+the URL or path, or the route pattern) and HAR files (a browser's network
+log) in the slice's directories, `coverage/<slice>/<plugin>`, where `<plugin>` is the plugin
 entry's name (`api-uses` above).
 
 ### What the task must do
@@ -256,9 +257,9 @@ matched (`GET /api/notes/{id}`). In a Go server on `net/http`'s
 `ServeMux`, a middleware finds that pattern in the request's `Pattern`
 field once the mux has routed the request. pipelinegen's `slice start` and
 `slice end` call `collect`, which cuts that log into each slice's
-directory: at `setup-end` and `slice-end` it copies what the log holds to
-`requests.txt` and empties the log, and at `slice-start` it empties it, so
-requests between slices count for neither.
+directory. At `setup-end` and `slice-end` it copies what the log holds to
+`requests.txt` and empties the log, and at `slice-start` it empties it,
+so requests between slices count for neither.
 
 When the server can't log, a browser suite can write the same log from the
 browser's side. With Playwright, a fixture appends every request of every
@@ -279,11 +280,12 @@ export const test = base.extend({
 Here `REQUEST_LOG` holds the same path as `request_log`. Create the file
 before the batch starts (`: > "$REQUEST_LOG"`), since `collect` fails
 when the log is missing, and the browser writes it only at its first
-request. A browser log
-misses requests made outside a page: Playwright's `request` fixture and
-`page.request` (an API login in a spec's setup, say) go through no page,
-and so do other services the server calls. The server's own log sees them
-all, so prefer it where you can. HAR files (Playwright's `recordHar`) are
+request.
+
+A browser log misses requests made outside a page. Playwright's `request`
+fixture and `page.request` (an API login in a spec's setup, say) go
+through no page, and neither do other services the server calls. The
+server's own log sees them all, so prefer it where you can. HAR files (Playwright's `recordHar`) are
 read too, but Playwright writes one per browser context, so a spec that
 opens a context per test overwrites its HAR test by test unless each
 context gets a path of its own. A HAR file goes into the slice's
@@ -295,12 +297,13 @@ before `{id}.txt` before `{id}`. A URL that matches no operation (a page,
 a script, another service, a 404) touches nothing. A logged pattern counts
 when it is an operation's method and route, the base and the template,
 whatever its parameters are called; `HEAD` counts for the `GET` route, as
-`ServeMux` serves it. HAR files always hold URLs. The matching is openapi-sbom's router; observing requests doesn't
-depend on oapi-codegen, so any repository with a contract can use it.
+`ServeMux` serves it. HAR files always hold URLs. The matching uses
+openapi-sbom's router, and observing requests doesn't depend on
+oapi-codegen, so any repository with a contract can use it.
 
 ### When it can't tell
 
-An empty `requests.txt` is positive evidence: the recording finished and
+An empty `requests.txt` is positive evidence. The recording finished and
 the slice made no request, so the answer is an empty list. `observe`
 answers "can't tell" (exit 3) when one of the slice's own directories
 doesn't exist, or holds neither a requests file nor a HAR file, which is
@@ -372,9 +375,9 @@ from the nightly run, which runs everything.
 - A request that matched no route (a 404) touches no operation. The test
   that made it started the server, so it is bound to the route
   registration, whose digest takes every routing table, and a template
-  that starts matching that URL selects it. With pipelinegen's setup split on, the
-  registration runs in the batch's setup, so such a test runs only when
-  the setup's sample picks it.
+  that starts matching that URL selects it. With pipelinegen's setup split
+  on, the registration runs in the batch's setup, so such a test runs only
+  when the setup's sample picks it.
 - `collect` copies the request log at a slice's end and empties it. A
   request written between the copy and the truncate is lost, which is why
   a batch runs no background work during its slices.
@@ -392,9 +395,9 @@ from the nightly run, which runs everything.
 
 The requests and answers follow pipelinegen's
 [plugin protocol](https://github.com/sideways-works/pipelinegen/blob/main/docs/plugins.md).
-This section adds what is particular to oapi-codegen-correlator. Its
-capabilities are `detect`, `links`, `observe`, `collect` and `why`;
-`inputs` declares `detect` per file and `links` per set. It declares no
+What follows is particular to oapi-codegen-correlator. Its capabilities
+are `detect`, `links`, `observe`, `collect` and `why`, and `inputs`
+declares `detect` per file and `links` per set. It declares no
 namespace.
 
 ### `detect`
@@ -410,17 +413,19 @@ $ echo '{"protocol":1,"tree":".","paths":["server/gen/notesgen/notes.gen.go","se
 
 `links` reads only the files pipelinegen passes in `claimed` and answers
 them as one set whose `inputs` are those files, since a wrapper in one
-file and its users in others make each file matter to the rest. A
-contract may keep its paths in other files (`/notes: $ref:
+file and its users in others make each file matter to the rest.
+
+A contract may keep its paths in other files (`/notes: $ref:
 notes/notes.yaml#/paths/~1notes`, one file per part of the API, bundled
-into one file only for the generators); the operations are then read out
+into one file only for the generators). The operations are then read out
 of those files, and every file the contract was read from is an input
 too, so an edit to any of them asks about the set again.
+
 With `paths`, it answers the set when one of them is an input or no
-longer in the tree, and no set otherwise. Run by hand without `claimed`
-or `paths`, it detects the files in the tree itself. The set carries the
-digest relations in its `digest_from`, so they are cached with the set's
-files, and the answer has no other key:
+longer in the tree, and no set otherwise. When run by hand without
+`claimed` or `paths`, it detects the files in the tree itself. The set
+carries the digest relations in its `digest_from`, so they are cached
+with the set's files, and the answer has no other key:
 
 ```console
 $ echo '{"protocol":1,"tree":".","config":{...},"claimed":[{"path":"server/gen/notesgen/notes.gen.go","role":"generated"}, ...]}' | oapi-codegen-correlator links
@@ -497,11 +502,15 @@ and declares the narrowings they carry. `correlate/testdata/split` holds a
 contract whose root lists its paths as refs into one file per context,
 with a recording against it.
 
-Releases are built and published with `bazel run //correlator/oapi-codegen:release`, which
-runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
-describes: static `oapi-codegen-correlator-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
-`-darwin-arm64`, `plugin.json` (the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `correlator/oapi-codegen/vX.Y.Z` on `main`. A published release never
-changes; a wrong one gets a new version.
+Releases are built and published with
+`bazel run //correlator/oapi-codegen:release`, which runs pipelinegen's
+release command as its [release
+guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+describes. For a tag `correlator/oapi-codegen/vX.Y.Z` on `main` it
+publishes static `oapi-codegen-correlator-linux-amd64`, `-linux-arm64`,
+`-darwin-amd64` and `-darwin-arm64`, `plugin.json` (the plugin's own
+`describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`. A published release
+never changes; a wrong one gets a new version.
 
 ## Developing
 
@@ -524,7 +533,7 @@ pipelinegen plugin test ./oapi-codegen-correlator --tree correlate/testdata/spli
   the generator and the generated code's modules. The tests read those
   from the module cache, so fill it once (`go mod download` in
   `correlate/testdata/repo`); after that they use no network.
-- The last two lines are pipelinegen's conformance kit. It calls the
+- The last two lines run pipelinegen's conformance kit, which calls the
   oapi-codegen-correlator you built the way pipelinegen does, on the
   fixture with the recording its `.pipelinegen-kit.json` names, and on
   `correlate/testdata/split`, a contract split into one file per
