@@ -51,18 +51,18 @@ plugins:
       - name: sql
         kind: correlator
         path: correlator/sql
-        release: {version: vX.Y.Z, sha256: ...}
+        release: {version: v0.4.0, sums: …}
         config:
           log: /var/log/postgresql-tests
 ```
 
-The checksum is the `sql-correlator-linux-amd64` line of the release's
-`SHA256SUMS`. Or pin the release by the checksum of its `SHA256SUMS`
-itself, `sums: ...` in place of `sha256`: one pin then serves every
-platform, a Mac's binary checked by its own line of the list.
-A new pin selects nothing by itself. List `pipelinegen.yaml`
-under `everything_on`, so that a pin change, like any other change to the
-config, runs every slice.
+`sums` is the checksum of the release's `SHA256SUMS`, so one pin serves
+every platform and each binary is checked by its own line of that list.
+To pin one binary alone, put `sha256:` with its line
+(`sql-correlator-linux-amd64`) in place of `sums`. A new pin selects
+nothing by itself. List `pipelinegen.yaml` under `everything_on`, so
+that a pin change, like any other change to the config, runs every
+slice.
 
 sql-correlator reads no files of the tree, so it has no candidates and no
 `detect`. The tests' server must be set up to log; see
@@ -413,52 +413,36 @@ echo '{"protocol":1,"work":"w","cache":"c","slice":"api/notes_test.go",
 `dirs` holds the batch's setup directory first, then the slice's and any
 further parts.
 
-## Developing and releasing
-
-The Go version and golangci-lint version are in `.tool-versions`. Before a
-push, run `go test ./...` and `golangci-lint run`. Tests use small
-logs in `testdata` and need no database.
-
-The conformance kit checks the plugin the way pipelinegen calls it. The
-plugin reads no files of the tree, but the kit needs one, and
-`testdata/.pipelinegen-kit.json` names a recording in it (the statements
-of a setup and of one slice under `testdata/coverage`), which the kit
-observes:
-
-```sh
-go build -trimpath -o sql-correlator ./cmd/sql-correlator
-pipelinegen plugin test ./sql-correlator --tree testdata
-```
-
-Releases are built and published with
-`bazel run //correlator/sql:release`, which runs pipelinegen's release
-command as its [release
-guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
-describes. For a tag `correlator/sql/vX.Y.Z` on `main` it publishes static
-`sql-correlator-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
-`-darwin-arm64`, `plugin.json` (the plugin's own `describe`), `LICENSE`,
-`NOTICE` and `SHA256SUMS`. A published release never changes; a wrong one
-gets a new version.
-
 ## Developing
 
-The tests and the lint run with the Go, golangci-lint and Node that the
-repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
-other commands run in this directory.
+`bazel run //correlator/sql:test` runs the tests and `bazel run
+//correlator/sql:lint` the lint, with the Go, golangci-lint and Node the
+repository pins in `MODULE.bazel`
+([CONTRIBUTING](../../CONTRIBUTING.md)). The tests read the small
+statement logs in `testdata` and need no database and no network. Ids
+come from pg-sbom's `pgid` package ([sbom/pg](../../sbom/pg)), so both
+plugins name a database object the same way.
+
+pipelinegen's conformance kit calls the sql-correlator you built the way
+pipelinegen does. The plugin reads no file of the tree, but the kit
+needs one, and `testdata/.pipelinegen-kit.json` names a recording in it
+(the statements of a setup and of one slice under `testdata/coverage`),
+which the kit observes. The commands below run it from this directory
+with the pipelinegen that `tools/go.mod` pins:
 
 ```sh
-bazel run //correlator/sql:test
-bazel run //correlator/sql:lint
 go build -trimpath -o sql-correlator ./cmd/sql-correlator
-pipelinegen plugin test ./sql-correlator --tree testdata
+go -C ../../tools tool pipelinegen plugin test "$PWD/sql-correlator" --tree "$PWD/testdata"
 ```
 
-- Tests read the small statement logs in `testdata`, need no database
-  and use no network.
-- The last line runs pipelinegen's conformance kit on the recording that
-  `testdata/.pipelinegen-kit.json` names, as described above. Take `pipelinegen` from [its
-  releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
-- Ids come from pg-sbom's `pgid` package, so both plugins name a
-  database object the same way.
-- A change to what sql-correlator observes comes with its docs: the
-  README describes sql-correlator as it is on `main`.
+`bazel run //correlator/sql:release` releases it from a tag
+`correlator/sql/vX.Y.Z` on `main`, as
+[CONTRIBUTING](../../CONTRIBUTING.md#releases) describes: static
+`sql-correlator-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (its own `describe` answer), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. Its first release here is `v0.4.0`
+([RELEASING](../../RELEASING.md)), and a published release never
+changes.
+
+A change to what sql-correlator observes comes with its docs, so this
+README describes sql-correlator as it is on `main`.
