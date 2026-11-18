@@ -310,7 +310,7 @@ test("a build_root the observing step wasn't given is named once, with what to d
   assert.equal(r.code, 3);
   assert.match(
     r.err ?? "",
-    /^build_root prepared\/tree does not exist here \(.+\): the step that observes must be given the built files: see https:\/\/github.com\/sideways-works\/pipelinegen-correlator-react#where-observe-runs-and-what-it-needs-there$/,
+    /^build_root prepared\/tree does not exist here \(.+\): the step that observes must be given the built files: see https:\/\/github.com\/sideways-works\/pipelinegen-plugins\/tree\/main\/correlator\/react#where-observe-runs-and-what-it-needs-there$/,
   );
 });
 

@@ -50,7 +50,7 @@ export interface ObserveConfig {
 export class CannotTell extends Error {}
 
 const whereObserveRuns =
-  "https://github.com/sideways-works/pipelinegen-correlator-react#where-observe-runs-and-what-it-needs-there";
+  "https://github.com/sideways-works/pipelinegen-plugins/tree/main/correlator/react#where-observe-runs-and-what-it-needs-there";
 
 function isDir(p: string): boolean {
   try {
