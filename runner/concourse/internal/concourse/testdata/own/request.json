@@ -1,0 +1,296 @@
+{
+  "config": {
+    "placement": {
+      "default": [
+        "cloud-1"
+      ],
+      "rules": [
+        {
+          "for": "pipeline",
+          "tags": []
+        },
+        {
+          "for": "planning",
+          "tags": []
+        },
+        {
+          "for": "bookkeeping",
+          "tags": []
+        }
+      ]
+    }
+  },
+  "spec": {
+    "pipeline": "pipelinegen",
+    "github": {
+      "repository": "sideways-works/pipelinegen",
+      "token_var": "github_token",
+      "status_prefix": "pipelinegen"
+    },
+    "ci": {
+      "branch": "main",
+      "include": "ci/root.yml",
+      "planner": {
+        "bootstrap": {
+          "bazelisk": {
+            "sha256": "a248ae2b2b62b5baebb748f6fba7203bff1a27e5d01b55399a8406744cb539e8",
+            "version": "v1.30.0"
+          },
+          "commit": "",
+          "release": {
+            "sha256": "43c0903adfd82be0d50835d5aeec9bfaf9028d503ce1707fd14ecb2f98b1c076",
+            "sums": "",
+            "version": "v0.1.13-rc.6"
+          },
+          "repository": "sideways-works/pipelinegen"
+        },
+        "digest": "sha256:162be5298a40ed317005c8339c6de4d10d3eef336d66dc8e9259b03ab9d3a6d2",
+        "image": {
+          "repository": "golang",
+          "tag": "1.27.1"
+        },
+        "prepare": "go mod download"
+      },
+      "pull_requests": {},
+      "repository": {
+        "password": "((github_token))",
+        "uri": "https://github.com/sideways-works/pipelinegen.git",
+        "username": "x-access-token"
+      },
+      "self_set": false,
+      "team": "sideways-works",
+      "url": "https://ci.example"
+    },
+    "runs": [
+      {
+        "name": "main",
+        "trigger": {
+          "kind": "continuous",
+          "branch": "main"
+        },
+        "suites": [
+          {
+            "suite": "go",
+            "records": true,
+            "minutes": 120,
+            "minutes_key": "suites.go.minutes"
+          },
+          {
+            "suite": "go-whole",
+            "records": false,
+            "minutes": 120,
+            "minutes_key": "suites.go-whole.minutes"
+          },
+          {
+            "suite": "lint",
+            "records": false,
+            "minutes": 120,
+            "minutes_key": "suites.lint.minutes"
+          },
+          {
+            "suite": "proof",
+            "params": {
+              "PROOF_TOOL": "source"
+            },
+            "records": false,
+            "minutes": 120,
+            "minutes_key": "suites.proof.minutes",
+            "secrets": {
+              "batch": {
+                "GITHUB_TOKEN": "github_token"
+              }
+            }
+          },
+          {
+            "suite": "smoke",
+            "params": {
+              "EXAMPLE_DIR": "example"
+            },
+            "records": false,
+            "minutes": 120,
+            "minutes_key": "suites.smoke.minutes"
+          },
+          {
+            "suite": "unit",
+            "params": {
+              "EXAMPLE_DIR": "example"
+            },
+            "records": false,
+            "minutes": 120,
+            "minutes_key": "suites.unit.minutes"
+          }
+        ],
+        "wait_minutes": 480
+      },
+      {
+        "name": "newest",
+        "trigger": {
+          "kind": "timer",
+          "branch": "main",
+          "timer": {
+            "start": "4:00",
+            "stop": "5:00",
+            "location": "Europe/Berlin"
+          }
+        },
+        "suites": [
+          {
+            "suite": "proof",
+            "params": {
+              "PROOF_NEWEST": "true"
+            },
+            "records": false,
+            "minutes": 120,
+            "minutes_key": "suites.proof.minutes",
+            "secrets": {
+              "batch": {
+                "GITHUB_TOKEN": "github_token"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "nightly",
+        "trigger": {
+          "kind": "timer",
+          "branch": "main",
+          "timer": {
+            "start": "3:00",
+            "stop": "4:00",
+            "location": "Europe/Berlin"
+          }
+        },
+        "suites": [
+          {
+            "suite": "go",
+            "records": true,
+            "minutes": 120,
+            "minutes_key": "suites.go.minutes"
+          },
+          {
+            "suite": "go-whole",
+            "records": false,
+            "minutes": 120,
+            "minutes_key": "suites.go-whole.minutes"
+          },
+          {
+            "suite": "lint",
+            "records": false,
+            "minutes": 120,
+            "minutes_key": "suites.lint.minutes"
+          },
+          {
+            "suite": "proof",
+            "records": false,
+            "minutes": 120,
+            "minutes_key": "suites.proof.minutes",
+            "secrets": {
+              "batch": {
+                "GITHUB_TOKEN": "github_token"
+              }
+            }
+          },
+          {
+            "suite": "smoke",
+            "params": {
+              "EXAMPLE_DIR": "example"
+            },
+            "records": false,
+            "minutes": 120,
+            "minutes_key": "suites.smoke.minutes"
+          },
+          {
+            "suite": "unit",
+            "params": {
+              "EXAMPLE_DIR": "example"
+            },
+            "records": false,
+            "minutes": 120,
+            "minutes_key": "suites.unit.minutes"
+          }
+        ]
+      }
+    ],
+    "suites": [
+      {
+        "name": "go",
+        "run_slice": "ci/go-test.yml",
+        "parallel": 4
+      },
+      {
+        "name": "go-whole",
+        "run_slice": "ci/go-test.yml",
+        "parallel": 4
+      },
+      {
+        "name": "lint",
+        "run_slice": "ci/lint.yml",
+        "parallel": 4
+      },
+      {
+        "name": "proof",
+        "run_slice": "ci/proof/task.yml",
+        "parallel": 4
+      },
+      {
+        "name": "smoke",
+        "prepare": "example/ci/smoke-prepare.yml",
+        "run_slice": "example/ci/smoke-slices.yml",
+        "parallel": 4
+      },
+      {
+        "name": "unit",
+        "run_slice": "example/ci/unit-slices.yml",
+        "parallel": 4
+      }
+    ],
+    "tools": [
+      {
+        "name": "pipelinegen",
+        "kind": "pipelinegen",
+        "repository": "sideways-works/pipelinegen",
+        "version": "v0.1.13-rc.6",
+        "sha256": "43c0903adfd82be0d50835d5aeec9bfaf9028d503ce1707fd14ecb2f98b1c076"
+      },
+      {
+        "name": "bazelisk",
+        "kind": "bazelisk",
+        "version": "v1.30.0",
+        "sha256": "a248ae2b2b62b5baebb748f6fba7203bff1a27e5d01b55399a8406744cb539e8"
+      },
+      {
+        "name": "go-sbom",
+        "kind": "sbom",
+        "repository": "sideways-works/go-sbom",
+        "version": "v0.1.3-rc.3",
+        "sha256": "fd95aa5ad762e5fb145e16aff50c608d7b43969a01509106dc70a7de8f64573f"
+      },
+      {
+        "name": "go-correlator",
+        "kind": "correlator",
+        "repository": "sideways-works/go-correlator",
+        "version": "v0.1.8-rc.9",
+        "sha256": "70bcc88c61194abea16be29370e778e1d3978e17acec305f32c7bdd511b001da"
+      },
+      {
+        "name": "concourse",
+        "kind": "runner",
+        "repository": "sideways-works/concourse-runner",
+        "version": "v0.1.9-rc.4",
+        "sha256": "f31bec594a504ade596f52d5031293496ee4d049c726891b42f38ed37c9acc35"
+      }
+    ],
+    "config_files": [
+      "pipelinegen.yaml",
+      "ci/root.yml"
+    ],
+    "branch": "main",
+    "trusted": "{\"ssh_key\":{\"read\":\"\",\"store\":\"\"},\"github_repository\":\"sideways-works/pipelinegen\",\"github_token\":\"github_token\",\"github_tokens\":{\"read\":\"\",\"changes\":\"\",\"report\":\"\",\"store\":\"\"},\"github_status_prefix\":\"pipelinegen\",\"bazel_diff\":{\"version\":\"\",\"sha256\":null,\"url\":\"\"},\"bazel_bazelisk\":\"bazelisk\",\"plugins\":[{\"name\":\"concourse\",\"repository\":\"sideways-works/concourse-runner\",\"release\":{\"version\":\"v0.1.9-rc.4\",\"sha256\":\"f31bec594a504ade596f52d5031293496ee4d049c726891b42f38ed37c9acc35\"}},{\"name\":\"go-correlator\",\"repository\":\"sideways-works/go-correlator\",\"release\":{\"version\":\"v0.1.8-rc.9\",\"sha256\":\"70bcc88c61194abea16be29370e778e1d3978e17acec305f32c7bdd511b001da\"}},{\"name\":\"go-sbom\",\"repository\":\"sideways-works/go-sbom\",\"release\":{\"version\":\"v0.1.3-rc.3\",\"sha256\":\"fd95aa5ad762e5fb145e16aff50c608d7b43969a01509106dc70a7de8f64573f\"}}],\"concourse_planner_bootstrap\":{\"repository\":\"sideways-works/pipelinegen\",\"release\":{\"version\":\"v0.1.13-rc.6\",\"sha256\":\"43c0903adfd82be0d50835d5aeec9bfaf9028d503ce1707fd14ecb2f98b1c076\"},\"commit\":\"\",\"bazelisk\":{\"version\":\"v1.30.0\",\"sha256\":\"a248ae2b2b62b5baebb748f6fba7203bff1a27e5d01b55399a8406744cb539e8\"}},\"locks\":{\"suites\":{}},\"concourse_branch\":\"main\",\"run_suites\":{\"main\":[\"go\",\"go-whole\",\"lint\",\"proof\",\"smoke\",\"unit\"],\"newest\":[\"proof\"],\"nightly\":[\"go\",\"go-whole\",\"lint\",\"proof\",\"smoke\",\"unit\"]},\"runner_config\":{\"placement\":{\"default\":[\"cloud-1\"],\"rules\":[{\"for\":\"pipeline\",\"tags\":[]},{\"for\":\"planning\",\"tags\":[]},{\"for\":\"bookkeeping\",\"tags\":[]}]}}}",
+    "limits": {
+      "plan": 120,
+      "steps": 20,
+      "lock_wait": 240
+    }
+  }
+}

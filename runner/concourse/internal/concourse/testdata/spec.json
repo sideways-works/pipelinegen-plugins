@@ -1,0 +1,182 @@
+{
+  "pipeline": "fixture",
+  "github": {
+    "repository": "owner/fixture",
+    "token_var": "github_token",
+    "status_prefix": "pipelinegen"
+  },
+  "ci": {
+    "branch": "main",
+    "include": "",
+    "planner": {
+      "bootstrap": {
+        "bazelisk": {
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "version": "v1.27.0"
+        },
+        "commit": "0123456789abcdef0123456789abcdef01234567",
+        "release": null,
+        "repository": "sideways-works/pipelinegen"
+      },
+      "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "image": {
+        "repository": "golang",
+        "tag": "1.27.1"
+      },
+      "params": {
+        "GOPRIVATE": "github.com/owner/*"
+      },
+      "secrets": {
+        "GO_TOKEN": "go_token"
+      },
+      "git_token": "GO_TOKEN"
+    },
+    "pull_requests": {},
+    "repository": {
+      "password": "((github_token))",
+      "uri": "https://github.com/owner/fixture.git"
+    },
+    "team": "fixture",
+    "url": "https://ci.example"
+  },
+  "runs": [
+    {
+      "name": "main",
+      "trigger": {
+        "kind": "branch",
+        "branch": "main"
+      },
+      "suites": [
+        {
+          "suite": "backend",
+          "records": false
+        },
+        {
+          "suite": "e2e",
+          "params": {
+            "PROJECTS": "phone"
+          },
+          "records": true,
+          "secrets": {
+            "prepare": {
+              "NPM_TOKEN": "npm_token"
+            },
+            "whole": {
+              "REPORT_KEY": "report_key"
+            },
+            "batch": {
+              "GITHUB_TOKEN": "github_token"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "nightly",
+      "trigger": {
+        "kind": "timer",
+        "branch": "main",
+        "timer": {
+          "start": "3:00",
+          "stop": "4:00",
+          "location": "Europe/Berlin"
+        }
+      },
+      "suites": [
+        {
+          "suite": "backend",
+          "records": false
+        },
+        {
+          "suite": "e2e",
+          "params": {
+            "PROJECTS": "all"
+          },
+          "records": true,
+          "secrets": {
+            "prepare": {
+              "NPM_TOKEN": "npm_token"
+            },
+            "whole": {
+              "REPORT_KEY": "report_key"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "pr",
+      "trigger": {
+        "kind": "pull_requests",
+        "base": "main",
+        "draft": false,
+        "labels_without": [
+          "batch"
+        ]
+      },
+      "suites": [
+        {
+          "suite": "backend",
+          "records": false
+        },
+        {
+          "suite": "e2e",
+          "params": {
+            "PROJECTS": "phone"
+          },
+          "records": true,
+          "secrets": {
+            "prepare": {
+              "NPM_TOKEN": "npm_token"
+            },
+            "whole": {
+              "REPORT_KEY": "report_key"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "suites": [
+    {
+      "name": "backend",
+      "run_slice": "ci/backend-slice.yml",
+      "parallel": 2
+    },
+    {
+      "name": "e2e",
+      "prepare": "ci/e2e-prepare.yml",
+      "run_slice": "ci/e2e-slice.yml",
+      "parallel": 4,
+      "whole_suite": [
+        {
+          "name": "reconcile",
+          "task": "ci/reconcile.yml"
+        }
+      ]
+    },
+    {
+      "name": "specs",
+      "run_slice": "ci/e2e-slice.yml",
+      "parallel": 4
+    }
+  ],
+  "tools": [
+    {
+      "name": "pipelinegen",
+      "kind": "pipelinegen",
+      "repository": "sideways-works/pipelinegen",
+      "commit": "0123456789abcdef0123456789abcdef01234567"
+    },
+    {
+      "name": "bazelisk",
+      "kind": "bazelisk",
+      "version": "v1.27.0",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  ],
+  "config_files": [
+    "pipelinegen.yaml"
+  ],
+  "branch": "main"
+}
