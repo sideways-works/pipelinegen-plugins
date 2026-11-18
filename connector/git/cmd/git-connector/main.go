@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/sideways-works/pipelinegen-connector-git/connector"
+	"github.com/sideways-works/pipelinegen-plugins/connector/git/connector"
 	"github.com/sideways-works/pipelinegen/plugin"
 )
 
