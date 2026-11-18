@@ -20,7 +20,7 @@ import (
 const usage = `usage: launch --go=RLOCATION [--lint=RLOCATION] [--node=RLOCATION] [--gh=RLOCATION] COMMAND
   test DIR... | lint DIR... | all test|lint | all release build OUT | checks | templates | hooks | subjects
   release DIR build OUT [VERSION] | release DIR notice | release DIR publish VERSION OUT | release DIR check VERSION
-  release DIR patch VERSION OUT | release DIR tagged OUT CONTEXT...`
+  release DIR patch VERSION OUT | release DIR tagged OUT CONTEXT [CONTEXT]`
 
 var errUsage = errors.New(usage)
 

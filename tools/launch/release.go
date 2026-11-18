@@ -2,6 +2,7 @@ package launch
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"regexp"
@@ -18,7 +19,7 @@ const EnvPipelinegenSource = "PIPELINEGEN_SOURCE"
 
 var version = regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?$`)
 
-var errNoVersion = fmt.Errorf("release: no version (v1.2.3, or v1.2.3-rc.1 for a candidate)")
+var errNoVersion = errors.New("release: no version (v1.2.3, or v1.2.3-rc.1 for a candidate)")
 
 // Release runs one form of a plugin's release with pipelinegen's release command, which releases the
 // module in the plugin's directory from its tag KIND/NAME/VERSION:
@@ -44,43 +45,9 @@ func (l *Launch) Release(ctx context.Context, dir string, args []string) (int, e
 		return 2, err
 	}
 
-	var forward []string
-
-	switch {
-	case args[0] == cmdBuild && (len(args) == 2 || len(args) == 3):
-		tag, err := l.tag(ctx, dir, args[2:])
-		if err != nil {
-			return 2, err
-		}
-
-		forward = []string{cmdBuild, abs, tag, l.abs(args[1])}
-	case args[0] == "notice" && len(args) == 1:
-		forward = []string{"notice", abs}
-	case args[0] == "publish" && len(args) == 3:
-		tag, err := l.tag(ctx, dir, args[1:2])
-		if err != nil {
-			return 2, err
-		}
-
-		forward = []string{"publish", Repository, tag, l.abs(args[2])}
-	case args[0] == "check" && len(args) == 2:
-		tag, err := l.tag(ctx, dir, args[1:2])
-		if err != nil {
-			return 2, err
-		}
-
-		forward = []string{"check", abs, Repository, tag}
-	case args[0] == "patch" && len(args) == 3:
-		tag, err := l.tag(ctx, dir, args[1:2])
-		if err != nil {
-			return 2, err
-		}
-
-		forward = []string{"patch", abs, Repository, tag, l.abs(args[2])}
-	case args[0] == "tagged" && len(args) >= 3:
-		forward = append([]string{"tagged", abs, Repository, l.abs(args[1])}, args[2:]...)
-	default:
-		return 2, errUsage
+	forward, err := l.forms(ctx, dir, abs, args)
+	if err != nil {
+		return 2, err
 	}
 
 	work, done, err := l.scratch("plugins-release-")
@@ -97,12 +64,47 @@ func (l *Launch) Release(ctx context.Context, dir string, args []string) (int, e
 	return 0, l.run(ctx, l.working, tool, forward...)
 }
 
+// forms are the release command's arguments for a form of the target's: the plugin's directory, its
+// tag and this repository in place of the version.
+func (l *Launch) forms(ctx context.Context, dir, abs string, args []string) ([]string, error) {
+	var version string
+
+	switch {
+	case args[0] == cmdBuild && (len(args) == 2 || len(args) == 3):
+		if len(args) == 3 {
+			version = args[2]
+		}
+
+		tag, err := l.tag(ctx, dir, version)
+
+		return []string{cmdBuild, abs, tag, l.abs(args[1])}, err
+	case args[0] == "notice" && len(args) == 1:
+		return []string{"notice", abs}, nil
+	case args[0] == "publish" && len(args) == 3:
+		tag, err := l.tag(ctx, dir, args[1])
+
+		return []string{"publish", Repository, tag, l.abs(args[2])}, err
+	case args[0] == "check" && len(args) == 2:
+		tag, err := l.tag(ctx, dir, args[1])
+
+		return []string{"check", abs, Repository, tag}, err
+	case args[0] == "patch" && len(args) == 3:
+		tag, err := l.tag(ctx, dir, args[1])
+
+		return []string{"patch", abs, Repository, tag, l.abs(args[2])}, err
+	case args[0] == "tagged" && len(args) >= 3:
+		return append([]string{"tagged", abs, Repository, l.abs(args[1])}, args[2:]...), nil
+	}
+
+	return nil, errUsage
+}
+
 // tag is the plugin's tag of the version given, or without one its newest tag on HEAD.
-func (l *Launch) tag(ctx context.Context, dir string, given []string) (string, error) {
-	if len(given) == 1 {
-		v := strings.TrimPrefix(given[0], dir+"/")
+func (l *Launch) tag(ctx context.Context, dir, given string) (string, error) {
+	if given != "" {
+		v := strings.TrimPrefix(given, dir+"/")
 		if !version.MatchString(v) {
-			return "", fmt.Errorf("%w: %s", errNoVersion, given[0])
+			return "", fmt.Errorf("%w: %s", errNoVersion, given)
 		}
 
 		return dir + "/" + v, nil
