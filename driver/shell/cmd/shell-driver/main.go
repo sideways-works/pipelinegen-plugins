@@ -1,4 +1,3 @@
-// Command shell-driver is a pipelinegen driver for steps written as shell.
 package main
 
 import (

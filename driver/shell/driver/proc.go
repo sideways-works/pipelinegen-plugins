@@ -54,6 +54,7 @@ func (t *tail) Write(p []byte) (int, error) {
 
 func (t *tail) keep(line string) {
 	t.lines = append(t.lines, line)
+	// Trimmed in bulk, so an append stays cheap.
 	if len(t.lines) > 4*tailLines {
 		t.lines = t.lines[len(t.lines)-tailLines:]
 	}

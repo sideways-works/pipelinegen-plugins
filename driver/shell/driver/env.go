@@ -10,7 +10,6 @@ import (
 	"github.com/sideways-works/pipelinegen/plugin"
 )
 
-// The variables the driver gives a script beyond its environment.
 const (
 	EnvTree = "PIPELINEGEN_TREE"
 	// EnvPrepared is the directory a prepare step fills and later steps read.

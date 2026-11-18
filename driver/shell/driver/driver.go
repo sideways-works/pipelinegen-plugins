@@ -1,5 +1,3 @@
-// Package driver is shell-driver: it runs a suite's steps written as shell,
-// so a repository needs no task scripts of its own.
 package driver
 
 import (
@@ -15,10 +13,8 @@ import (
 	"github.com/sideways-works/pipelinegen/plugin"
 )
 
-// Version is the driver's version, set by its release build.
 var Version = "dev"
 
-// Settings are what a step's with block may hold.
 type Settings struct {
 	// Script runs by Shell from a file of its own.
 	Script string `json:"script"`
@@ -48,7 +44,6 @@ type Settings struct {
 
 func (*Settings) settingNoun() string { return "shell-driver's settings" }
 
-// Handlers are the driver's verbs.
 func Handlers(log io.Writer) plugin.DriverHandlers {
 	return plugin.DriverHandlers{
 		Describe: describe,
@@ -64,7 +59,6 @@ func Handlers(log io.Writer) plugin.DriverHandlers {
 	}
 }
 
-// Describe is the driver's describe answer.
 func Describe() plugin.Description {
 	d, _ := describe() //nolint:errcheck // describe never fails
 

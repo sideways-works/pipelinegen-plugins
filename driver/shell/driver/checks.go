@@ -13,8 +13,7 @@ import (
 	"github.com/sideways-works/pipelinegen/plugin"
 )
 
-// Check is a named check of a run step, with its own time limit and result.
-// A slice passes when every check passes.
+// Check runs as a test of its slice; a slice passes when every check passes.
 type Check struct {
 	// Name is the test's name in the slice's result.
 	Name string `json:"name"`

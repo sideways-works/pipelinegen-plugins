@@ -17,10 +17,8 @@ import (
 	"github.com/sideways-works/pipelinegen/plugin"
 )
 
-// The units a cache is trimmed by.
 const (
-	// UnitFiles trims the least lately changed files first, for caches such as
-	// Go's build cache.
+	// UnitFiles trims the least lately changed files first (Go's build cache).
 	UnitFiles = "files"
 	// UnitEntries trims whole top-level entries, oldest newest-file first.
 	UnitEntries = "entries"
@@ -47,7 +45,7 @@ type Cache struct {
 	MB int `json:"mb"`
 	// Age removes what has gone unused for longer: a Go duration or days (14d).
 	Age string `json:"age"`
-	// Unit is UnitFiles (default), UnitEntries or UnitWhole.
+	// Unit defaults to UnitFiles.
 	Unit string `json:"unit"`
 
 	maxAge time.Duration
