@@ -12,12 +12,11 @@ to WebAssembly by [go-pgquery](https://github.com/wasilibs/go-pgquery), so
 no C toolchain is needed). It starts no database, connects to nothing and
 needs no container.
 
-It records what exists. Which tests touched which objects is a
-correlator's knowledge:
-[sql-correlator](../../correlator/sql) reads
-it from the tests' statement log, and
-[gorm-correlator](../../correlator/gorm) links
-Go code to the tables it reaches through GORM. All of them build ids with
+It records what exists. Which tests touched which objects is for a
+correlator to find out: [sql-correlator](../../correlator/sql) reads it
+from the tests' statement log, and
+[gorm-correlator](../../correlator/gorm) links Go code to the tables it
+reaches through GORM. All of them build ids with
 pg-sbom's `pgid` package and read SQL with its `sqlref` package, so they
 name things the same way.
 
@@ -65,8 +64,9 @@ The checksum is the `pg-sbom-linux-amd64` line of the release's
 `SHA256SUMS`. Or pin the release by the checksum of its `SHA256SUMS`
 itself, `sums: ...` in place of `sha256`: one pin then serves every
 platform, a Mac's binary checked by its own line of the list.
-A new pin selects nothing by itself. List `pipelinegen.yaml`
-under `everything_on`, so that a pin change, like any other change to the
+
+A new pin selects nothing by itself. List `pipelinegen.yaml` under
+`everything_on`, so that a pin change, like any other change to the
 config, runs every slice.
 
 ### The files it claims
@@ -96,7 +96,7 @@ marker, never run in a test's database setup, so they make no units:
 depends on one through the build graph keeps depending on the whole file.
 
 Anything else (a Sqitch plan, files ordered by a list in code, a directory
-mixing layouts) isn't read: the directory is reported on stderr and makes
+mixing layouts) isn't read. The directory is reported on stderr and makes
 no units, so a test that depends on its files keeps depending on each file
 whole.
 
@@ -154,7 +154,7 @@ overload of tag_count`. The `public` schema is left out. A label is at most
 80 characters and the same on every machine, and nothing hashes, caches or
 compares it.
 
-The two aliases are for code that can't know more. A query names a
+The two aliases are for code that can't be more precise. A query names a
 relation without saying whether it is a table or a view, and a call names
 a function without its argument types. An alias has no digest of its own:
 it answers `digest_from` with the units it stands for, and links to them.
@@ -308,7 +308,7 @@ Parsing about 400 files takes about two seconds.
 
 The requests and answers follow pipelinegen's
 [plugin protocol](https://github.com/sideways-works/pipelinegen/blob/main/docs/plugins.md).
-This section adds what is particular to pg-sbom. Its capabilities are
+What is particular to pg-sbom: its capabilities are
 `detect` and `units`; its namespace is `pg`; `inputs` declares `detect`
 per file and `units` per set.
 
@@ -375,19 +375,21 @@ curl -sfL https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/
 install the extensions into an empty database of the versions to describe
 and run `model/extensions.sql` there; the file says how.
 
-Releases are built and published with `bazel run //sbom/pg:release`, which
-runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
-describes: static `pg-sbom-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
-`-darwin-arm64`, `plugin.json`
-(the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `sbom/pg/vX.Y.Z` on `main`. A published release never changes; a wrong one gets a new
-version.
+Releases are built and published with `bazel run //sbom/pg:release`,
+which runs pipelinegen's release command as its
+[release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+describes. For a tag `sbom/pg/vX.Y.Z` on `main` it makes static
+`pg-sbom-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (the plugin's own `describe`), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. A published release never changes; a wrong one
+gets a new version.
 
 ## Developing
 
 The tests and the lint run with the Go, golangci-lint and Node that the
 repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
-other commands run in this directory. No C toolchain and no database:
-PostgreSQL's parser comes compiled to WebAssembly.
+other commands run in this directory. They need no C toolchain and no
+database, since PostgreSQL's parser comes compiled to WebAssembly.
 
 ```sh
 bazel run //sbom/pg:test
