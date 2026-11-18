@@ -15,7 +15,7 @@ import (
 
 	"golang.org/x/tools/go/packages"
 
-	"github.com/sideways-works/pipelinegen-correlator-gorm/internal/sqlrefs"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/gorm/internal/sqlrefs"
 	"github.com/sideways-works/pipelinegen-sbom-go/goid"
 )
 

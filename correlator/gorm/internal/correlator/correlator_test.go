@@ -15,7 +15,7 @@ import (
 
 	"github.com/sideways-works/pipelinegen/plugin"
 
-	"github.com/sideways-works/pipelinegen-correlator-gorm/internal/analysis"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/gorm/internal/analysis"
 )
 
 const tree = "../analysis/testdata"

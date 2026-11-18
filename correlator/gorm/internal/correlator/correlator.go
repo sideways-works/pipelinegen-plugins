@@ -13,8 +13,8 @@ import (
 
 	"github.com/sideways-works/pipelinegen/plugin"
 
-	"github.com/sideways-works/pipelinegen-correlator-gorm/internal/analysis"
-	"github.com/sideways-works/pipelinegen-correlator-gorm/internal/sqlrefs"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/gorm/internal/analysis"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/gorm/internal/sqlrefs"
 )
 
 const Name = "gorm-correlator"

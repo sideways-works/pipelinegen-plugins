@@ -1,4 +1,4 @@
-module github.com/sideways-works/pipelinegen-correlator-gorm
+module github.com/sideways-works/pipelinegen-plugins/correlator/gorm
 
 go 1.27.1
 

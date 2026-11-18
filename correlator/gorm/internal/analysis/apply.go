@@ -5,7 +5,7 @@ import (
 	"go/types"
 	"strings"
 
-	"github.com/sideways-works/pipelinegen-correlator-gorm/internal/sqlrefs"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/gorm/internal/sqlrefs"
 )
 
 // Names GORM uses for a method and a type alike.

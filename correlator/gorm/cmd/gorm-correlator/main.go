@@ -6,7 +6,7 @@ import (
 
 	"github.com/sideways-works/pipelinegen/plugin"
 
-	"github.com/sideways-works/pipelinegen-correlator-gorm/internal/correlator"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/gorm/internal/correlator"
 )
 
 // Version stays "dev" outside a release build, and a dev build keeps no parse cache.

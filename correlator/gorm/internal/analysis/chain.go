@@ -5,7 +5,7 @@ import (
 	"go/token"
 	"go/types"
 
-	"github.com/sideways-works/pipelinegen-correlator-gorm/internal/sqlrefs"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/gorm/internal/sqlrefs"
 )
 
 type ref struct {
