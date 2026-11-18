@@ -1,11 +1,19 @@
 package concourse
 
 import (
+	"bytes"
 	"errors"
+	"flag"
+	"net/http"
 	"os/exec"
 	"strconv"
 	"testing"
+	"time"
+
+	"github.com/sideways-works/pipelinegen-runner-concourse/internal/runstep"
 )
+
+var stepsAs = flag.String("steps", "go", "run the steps as the runner's (go) or as the pipeline's scripts (sh)")
 
 // stepScript is the script a step's task runs, as the pipeline holds it
 // without the bootstrap before it.
@@ -68,6 +76,19 @@ var errExit = errors.New("exit")
 // and returns what it printed and its exit code.
 func runStep(t *testing.T, work string, env []string, name string, args ...string) ([]byte, int) {
 	t.Helper()
+
+	if *stepsAs == "go" {
+		var out bytes.Buffer
+
+		task := &runstep.Task{
+			Dir: work, Env: env, Stdout: &out, Stderr: &out,
+			Fetch: name == "tools", HTTP: &http.Client{}, Now: time.Now,
+		}
+
+		code := task.Run(append([]string{name}, args...))
+
+		return out.Bytes(), code
+	}
 
 	cmd := exec.CommandContext(t.Context(), "sh", "-ec", stepScript(t, name, args...))
 	cmd.Dir, cmd.Env = work, env
