@@ -801,9 +801,9 @@ bazel run //correlator/react:release -- check vX.Y.Z
 The tests and the lint run with the Go, golangci-lint and Node that the
 repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
 other commands run in this directory. ts-sbom, a dependency, is
-installed by git from its repository, so git needs read access to it;
-the browser tests run a real Chromium (`npx playwright install
-chromium`).
+[sbom/ts](../../sbom/ts) of the same commit, which the npm workspace at
+the root links; the browser tests run a real Chromium (`npx playwright
+install chromium`).
 
 ```sh
 bazel run //correlator/react:test

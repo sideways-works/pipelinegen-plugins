@@ -16,7 +16,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
     "@playwright/test": "1.63.0",
-    "@sideways-works/ts-sbom": "github:sideways-works/pipelinegen-sbom-ts#e70210d9c64d4194cce6eeb87e969a7b50a44864",
+    "@sideways-works/ts-sbom": "0.1.2",
     "@types/node": "24.19.1",
     "esbuild": "0.28.2",
     "rolldown": "1.2.13",
@@ -50,9 +50,6 @@
       "onFail": "error"
     }
   },
-  "allowScripts": {
-    "esbuild": false
-  },
   "pipelinegen": {
     "release": [
       "dist/playwright.mjs"
@@ -64,7 +61,7 @@
         ],
         "format": "cjs",
         "srcAlias": {
-          "@sideways-works/ts-sbom": "node_modules/@sideways-works/ts-sbom/src"
+          "@sideways-works/ts-sbom": "../../node_modules/@sideways-works/ts-sbom/src"
         }
       },
       {
@@ -73,7 +70,7 @@
         ],
         "format": "esm",
         "srcAlias": {
-          "@sideways-works/ts-sbom": "node_modules/@sideways-works/ts-sbom/src"
+          "@sideways-works/ts-sbom": "../../node_modules/@sideways-works/ts-sbom/src"
         }
       },
       {

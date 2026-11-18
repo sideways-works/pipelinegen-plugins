@@ -2,6 +2,7 @@
 # and the Node plugins' installed packages. Every other fixture is a file of its plugin's package.
 ignore_directories([
     "driver/bazel/cmd/bazel-driver/testdata/workspace",
+    "node_modules",
     "correlator/react/node_modules",
     "sbom/ts/node_modules",
 ])

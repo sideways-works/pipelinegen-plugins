@@ -44,9 +44,6 @@
       "onFail": "error"
     }
   },
-  "allowScripts": {
-    "esbuild": false
-  },
   "pipelinegen": {
     "notice": [
       {

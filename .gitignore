@@ -9,3 +9,6 @@ go.work.sum
 /correlator/locale/locale-correlator
 /driver/bazel/bazel-driver
 /driver/shell/shell-driver
+
+# the Node workspace's installed packages
+/node_modules/

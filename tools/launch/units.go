@@ -168,8 +168,12 @@ func (l *Launch) Lint(ctx context.Context, dir string) error {
 }
 
 // npmCI installs the Node package's locked dependencies, as the release build does: without their
-// install scripts.
+// install scripts, and for every package of the npm workspace at the root when there is one.
 func (l *Launch) npmCI(ctx context.Context, dir string) error {
+	if exists(filepath.Join(l.workspace, "package.json")) {
+		dir = l.workspace
+	}
+
 	return l.run(ctx, dir, "npm", "ci", "--ignore-scripts", "--no-audit", "--no-fund")
 }
 

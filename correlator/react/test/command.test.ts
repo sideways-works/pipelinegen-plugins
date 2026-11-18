@@ -74,6 +74,8 @@ function loads(name: string): { src: string[]; packages: string[] } {
   const r = node(["--import", "./test/trace-loads.ts", "src/main.ts", call], input);
   const urls = [...r.stderr.matchAll(/^loaded (.*)$/gm)].map((m) => m[1] as string);
   const prefix = new URL(`file://${root}/`).href;
+  // the workspace links ts-sbom to sbom/ts, which Node loads by its real path
+  const tsSbom = new URL(`file://${join(root, "..", "..", "sbom", "ts")}/`).href;
   return {
     src: urls
       .filter((u) => u.startsWith(`${prefix}src/`))
@@ -81,7 +83,10 @@ function loads(name: string): { src: string[]; packages: string[] } {
       .sort(),
     packages: [
       ...new Set(
-        urls.filter((u) => u.includes("/node_modules/")).map((u) => u.split("/node_modules/")[1]),
+        urls
+          .map((u) => u.replace(tsSbom, "file:///node_modules/@sideways-works/ts-sbom/"))
+          .filter((u) => u.includes("/node_modules/"))
+          .map((u) => u.split("/node_modules/")[1]),
       ),
     ].sort() as string[],
   };

@@ -14,11 +14,11 @@ import { build, formatMessagesSync, type Plugin } from "esbuild";
 
 const root = import.meta.dirname;
 const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
-// ts-sbom is bundled from its sources, so the command holds exactly the pinned commit's code.
+// ts-sbom is bundled from its sources, sbom/ts of the same commit, where the workspace links it.
 const tsSbom: Plugin = {
   name: "ts-sbom-sources",
   setup(b) {
-    const src = join(root, "node_modules/@sideways-works/ts-sbom/src");
+    const src = join(root, "../../node_modules/@sideways-works/ts-sbom/src");
     b.onResolve({ filter: /^@sideways-works\/ts-sbom(?:\/detect)?$/ }, (a) => ({
       path: join(src, a.path.endsWith("/detect") ? "detect.ts" : "index.ts"),
     }));

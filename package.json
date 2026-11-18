@@ -1,0 +1,19 @@
+{
+  "name": "pipelinegen-plugins",
+  "private": true,
+  "description": "The Node plugins' workspace: one install, and correlator/react takes ts-sbom from sbom/ts.",
+  "workspaces": [
+    "correlator/react",
+    "sbom/ts"
+  ],
+  "allowScripts": {
+    "esbuild": false
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "26.10.0",
+      "onFail": "error"
+    }
+  }
+}
