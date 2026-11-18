@@ -57,13 +57,13 @@ plugins:
       - name: pg
         kind: sbom
         path: sbom/pg
-        release: {version: vX.Y.Z, sha256: ...}
+        release: {version: v0.4.0, sums: …}
 ```
 
-The checksum is the `pg-sbom-linux-amd64` line of the release's
-`SHA256SUMS`. Or pin the release by the checksum of its `SHA256SUMS`
-itself, `sums: ...` in place of `sha256`: one pin then serves every
-platform, a Mac's binary checked by its own line of the list.
+`sums` is the checksum of the release's `SHA256SUMS`, so one pin serves
+every platform and each binary is checked by its own line of that list.
+To pin one binary alone, put `sha256:` with its line
+(`pg-sbom-linux-amd64`) in place of `sums`.
 
 A new pin selects nothing by itself. List `pipelinegen.yaml` under
 `everything_on`, so that a pin change, like any other change to the
@@ -349,19 +349,28 @@ echo '{"protocol":1,"tree":"'$PWD'"}' | pg-sbom units
   }]}
 ```
 
-## Developing and releasing
+## Developing
 
-The Go version and golangci-lint version are in `.tool-versions`. Before a
-push, run `go test ./...` and `golangci-lint run`. Tests use the
-small migration trees in `testdata` and need no database.
+`bazel run //sbom/pg:test` runs the tests and `bazel run //sbom/pg:lint`
+the lint, with the Go, golangci-lint and Node the repository pins in
+`MODULE.bazel` ([CONTRIBUTING](../../CONTRIBUTING.md)). The tests read
+the small migration trees in `testdata` and need no C toolchain, no
+database and no network: PostgreSQL's parser comes compiled to
+WebAssembly.
 
-The conformance kit checks the plugin the way pipelinegen calls it, on a
-fixture tree:
+pipelinegen's conformance kit calls the pg-sbom you built the way
+pipelinegen does, on a fixture tree. The commands below run it from this
+directory with the pipelinegen that `tools/go.mod` pins. The go on your
+`PATH` must be at least as new as `go.mod` asks.
 
 ```sh
 go build -trimpath -o pg-sbom ./cmd/pg-sbom
-pipelinegen plugin test ./pg-sbom --tree testdata/notes
+go -C ../../tools tool pipelinegen plugin test "$PWD/pg-sbom" --tree "$PWD/testdata/notes"
 ```
+
+The ids the `pgid` package makes are what sql-correlator and
+gorm-correlator name database objects by, so a change to an id's form is
+a change to those plugins too.
 
 `sqlref/builtins.txt` holds PostgreSQL 17's built-in function names. For
 another major version:
@@ -371,43 +380,17 @@ curl -sfL https://raw.githubusercontent.com/postgres/postgres/REL_18_STABLE/src/
   go run ./sqlref/genbuiltins -version 18 > sqlref/builtins.txt
 ```
 
-`model/extensions.txt` lists what each extension provides. To refresh it,
-install the extensions into an empty database of the versions to describe
-and run `model/extensions.sql` there; the file says how.
+`model/extensions.txt` lists what each extension provides. To refresh
+it, install the extensions into an empty database of the versions to
+describe and run `model/extensions.sql` there; the file says how.
 
-Releases are built and published with `bazel run //sbom/pg:release`,
-which runs pipelinegen's release command as its
-[release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
-describes. For a tag `sbom/pg/vX.Y.Z` on `main` it makes static
-`pg-sbom-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
-`-darwin-arm64`, `plugin.json` (the plugin's own `describe`), `LICENSE`,
-`NOTICE` and `SHA256SUMS`. A published release never changes; a wrong one
-gets a new version.
+`bazel run //sbom/pg:release` releases it from a tag `sbom/pg/vX.Y.Z` on
+`main`, as [CONTRIBUTING](../../CONTRIBUTING.md#releases) describes:
+static `pg-sbom-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (its own `describe` answer), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. Its first release here is `v0.4.0`
+([RELEASING](../../RELEASING.md)), and a published release never
+changes.
 
-## Developing
-
-The tests and the lint run with the Go, golangci-lint and Node that the
-repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
-other commands run in this directory. They need no C toolchain and no
-database, since PostgreSQL's parser comes compiled to WebAssembly.
-
-```sh
-bazel run //sbom/pg:test
-bazel run //sbom/pg:lint
-go build -trimpath -o pg-sbom ./cmd/pg-sbom
-pipelinegen plugin test ./pg-sbom --tree testdata/notes
-```
-
-- Tests read the small migration trees in `testdata`, need no database
-  and use no network.
-- The last line is pipelinegen's conformance kit. It calls the pg-sbom
-  you built the way pipelinegen does, on the fixture tree. Take
-  `pipelinegen` from [its
-  releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
-- The ids made by the `pgid` package are what sql-correlator and
-  gorm-correlator name database objects by, so a change to an id's form
-  is a change to those plugins too.
-- `sqlref/builtins.txt` and `model/extensions.txt` are generated; the
-  README says how to refresh them.
-- A change to what pg-sbom lists comes with its docs: the README
-  describes pg-sbom as it is on `main`.
+A change to what pg-sbom lists comes with its docs, so this README
+describes pg-sbom as it is on `main`.
