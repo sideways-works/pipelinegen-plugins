@@ -53,16 +53,16 @@ plugins:
       - name: gorm
         kind: correlator
         path: correlator/gorm
-        release: {version: vX.Y.Z, sha256: ...}
+        release: {version: v0.4.0, sums: …}
 ```
 
-The checksum is the `gorm-correlator-linux-amd64` line of the release's
-`SHA256SUMS`. Or pin the release by the checksum of its `SHA256SUMS`
-itself, `sums: ...` in place of `sha256`: one pin then serves every
-platform, a Mac's binary checked by its own line of the list.
-A new pin selects nothing by itself. List `pipelinegen.yaml`
-under `everything_on`, so that a pin change, like any other change to the
-config, runs every slice.
+`sums` is the checksum of the release's `SHA256SUMS`, so one pin serves
+every platform and each binary is checked by its own line of that list.
+To pin one binary alone, put `sha256:` with its line
+(`gorm-correlator-linux-amd64`) in place of `sums`. A new pin selects
+nothing by itself. List `pipelinegen.yaml` under `everything_on`, so
+that a pin change, like any other change to the config, runs every
+slice.
 
 ### The files it claims
 
@@ -372,63 +372,41 @@ read or parse to stderr.
 gorm-correlator inspect < request.json | jq .stats
 ```
 
-## Developing and releasing
-
-The Go version and golangci-lint version are in `.tool-versions`. Before a
-push, run `go test ./...` and `golangci-lint run`. The tests load
-small modules under `internal/analysis/testdata` and need GORM in the
-module cache (`go mod download` once); they use no network.
-
-The conformance kit checks the plugin the way pipelinegen calls it, on the
-fixture module `internal/analysis/testdata/app`. The kit gives the plugin
-its own module cache, so fill one with the fixture's modules first:
-
-```sh
-go build -trimpath -o gorm-correlator ./cmd/gorm-correlator
-kit=$(mktemp -d)
-(cd internal/analysis/testdata/app && GOMODCACHE=$kit/gomodcache go mod download)
-pipelinegen plugin test ./gorm-correlator --tree internal/analysis/testdata/app --cache "$kit"
-```
-
-Releases are built and published with
-`bazel run //correlator/gorm:release`, which runs pipelinegen's release
-command as its [release
-guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
-describes. For a tag `correlator/gorm/vX.Y.Z` on `main` it publishes
-static `gorm-correlator-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
-`-darwin-arm64`, `plugin.json` (the plugin's own `describe`), `LICENSE`,
-`NOTICE` and `SHA256SUMS`. A published release never changes; a wrong one
-gets a new version.
-
 ## Developing
 
-The tests and the lint run with the Go, golangci-lint and Node that the
-repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
-other commands run in this directory. go-sbom
-([sbom/go](../../sbom/go)), built or taken from a release, runs beside
-it in the conformance kit.
+`bazel run //correlator/gorm:test` runs the tests and `bazel run
+//correlator/gorm:lint` the lint, with the Go, golangci-lint and Node
+the repository pins in `MODULE.bazel`
+([CONTRIBUTING](../../CONTRIBUTING.md)). The tests type-check the small
+modules under `internal/analysis/testdata`, which require GORM, so the
+first run fills the module cache with them (`go mod download` in
+`internal/analysis/testdata/app`); after that they use no network.
+
+pipelinegen's conformance kit calls the gorm-correlator you built the
+way pipelinegen does, on the fixture module
+`internal/analysis/testdata/app`, with a module cache of its own that
+you fill first. With go-sbom ([sbom/go](../../sbom/go)) beside it as
+`--sbom`, the kit also checks that each link changes only when one of
+its ends does; pg-sbom ([sbom/pg](../../sbom/pg)) works the same way.
+The commands below run it from this directory with the pipelinegen that
+`tools/go.mod` pins:
 
 ```sh
-bazel run //correlator/gorm:test
-bazel run //correlator/gorm:lint
 go build -trimpath -o gorm-correlator ./cmd/gorm-correlator
+go build -C ../../sbom/go -trimpath -o "$PWD/go-sbom" ./cmd/go-sbom
 kit=$(mktemp -d)
 (cd internal/analysis/testdata/app && GOMODCACHE=$kit/gomodcache go mod download)
-pipelinegen plugin test ./gorm-correlator --tree internal/analysis/testdata/app --cache "$kit" --sbom <go-sbom>
+go -C ../../tools tool pipelinegen plugin test "$PWD/gorm-correlator" --tree "$PWD/internal/analysis/testdata/app" --cache "$kit" --sbom "$PWD/go-sbom"
 ```
 
-- The tests type-check the small modules under
-  `internal/analysis/testdata`, which require GORM, so fill the module
-  cache once (`go mod download` in `internal/analysis/testdata/app`);
-  after that they use no network.
-- The last lines run pipelinegen's conformance kit, which calls the
-  gorm-correlator you built the way pipelinegen does, on the fixture
-  module, with a module cache of its own that you fill first. With
-  go-sbom beside it as `--sbom` (built from [its
-  repository](https://github.com/sideways-works/pipelinegen-sbom-go) or
-  taken from a release), the kit also checks that each link changes only
-  when one of its ends does; pg-sbom does the same. Take `pipelinegen`
-  from [its
-  releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
-- A change to what gorm-correlator links comes with its docs: the README
-  describes gorm-correlator as it is on `main`.
+`bazel run //correlator/gorm:release` releases it from a tag
+`correlator/gorm/vX.Y.Z` on `main`, as
+[CONTRIBUTING](../../CONTRIBUTING.md#releases) describes: static
+`gorm-correlator-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (its own `describe` answer), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. Its first release here is `v0.4.0`
+([RELEASING](../../RELEASING.md)), and a published release never
+changes.
+
+A change to what gorm-correlator links comes with its docs, so this
+README describes gorm-correlator as it is on `main`.
