@@ -1,0 +1,177 @@
+{
+  "DELETE /repos/o/r/issues/comments/{n}": {
+    "body": "",
+    "headers": {
+      "Accept": "application/vnd.github+json",
+      "Authorization": "Bearer a-token-for-the-fake-host",
+      "X-Github-Api-Version": "2022-11-28"
+    },
+    "method": "DELETE",
+    "path": "/repos/o/r/issues/comments/41",
+    "query": {}
+  },
+  "GET /repos/o/r/commits/{sha}": {
+    "body": "",
+    "headers": {
+      "Accept": "application/vnd.github+json",
+      "Authorization": "Bearer a-token-for-the-fake-host",
+      "X-Github-Api-Version": "2022-11-28"
+    },
+    "method": "GET",
+    "path": "/repos/o/r/commits/1111111111111111111111111111111111111111",
+    "query": {}
+  },
+  "GET /repos/o/r/commits/{sha}/status": {
+    "body": "",
+    "headers": {
+      "Accept": "application/vnd.github+json",
+      "Authorization": "Bearer a-token-for-the-fake-host",
+      "X-Github-Api-Version": "2022-11-28"
+    },
+    "method": "GET",
+    "path": "/repos/o/r/commits/1111111111111111111111111111111111111111/status",
+    "query": {
+      "page": [
+        "1"
+      ],
+      "per_page": [
+        "100"
+      ]
+    }
+  },
+  "GET /repos/o/r/commits/{sha}/statuses": {
+    "body": "",
+    "headers": {
+      "Accept": "application/vnd.github+json",
+      "Authorization": "Bearer a-token-for-the-fake-host"
+    },
+    "method": "GET",
+    "path": "/repos/o/r/commits/2222222222222222222222222222222222222222/statuses",
+    "query": {
+      "per_page": [
+        "100"
+      ]
+    }
+  },
+  "GET /repos/o/r/issues/{n}/comments": {
+    "body": "",
+    "headers": {
+      "Accept": "application/vnd.github+json",
+      "Authorization": "Bearer a-token-for-the-fake-host",
+      "X-Github-Api-Version": "2022-11-28"
+    },
+    "method": "GET",
+    "path": "/repos/o/r/issues/7/comments",
+    "query": {
+      "page": [
+        "1"
+      ],
+      "per_page": [
+        "100"
+      ]
+    }
+  },
+  "GET /repos/o/r/issues/{n}/timeline": {
+    "body": "",
+    "headers": {
+      "Accept": "application/vnd.github+json",
+      "Authorization": "Bearer a-token-for-the-fake-host"
+    },
+    "method": "GET",
+    "path": "/repos/o/r/issues/7/timeline",
+    "query": {
+      "page": [
+        "1"
+      ],
+      "per_page": [
+        "100"
+      ]
+    }
+  },
+  "GET /repos/o/r/pulls": {
+    "body": "",
+    "headers": {
+      "Accept": "application/vnd.github+json",
+      "Authorization": "Bearer a-token-for-the-fake-host"
+    },
+    "method": "GET",
+    "path": "/repos/o/r/pulls",
+    "query": {
+      "base": [
+        "main"
+      ],
+      "page": [
+        "1"
+      ],
+      "per_page": [
+        "100"
+      ],
+      "state": [
+        "open"
+      ]
+    }
+  },
+  "GET /repos/o/r/pulls/{n}": {
+    "body": "",
+    "headers": {
+      "Accept": "application/vnd.github+json",
+      "Authorization": "Bearer a-token-for-the-fake-host"
+    },
+    "method": "GET",
+    "path": "/repos/o/r/pulls/7",
+    "query": {}
+  },
+  "GET /repos/o/r/pulls/{n}/commits": {
+    "body": "",
+    "headers": {
+      "Accept": "application/vnd.github+json",
+      "Authorization": "Bearer a-token-for-the-fake-host"
+    },
+    "method": "GET",
+    "path": "/repos/o/r/pulls/7/commits",
+    "query": {
+      "page": [
+        "1"
+      ],
+      "per_page": [
+        "100"
+      ]
+    }
+  },
+  "PATCH /repos/o/r/issues/comments/{n}": {
+    "body": "{\"body\":\"\\u003c!-- m --\\u003e body\"}",
+    "headers": {
+      "Accept": "application/vnd.github+json",
+      "Authorization": "Bearer a-token-for-the-fake-host",
+      "Content-Type": "application/json",
+      "X-Github-Api-Version": "2022-11-28"
+    },
+    "method": "PATCH",
+    "path": "/repos/o/r/issues/comments/42",
+    "query": {}
+  },
+  "POST /repos/o/r/issues/{n}/comments": {
+    "body": "{\"body\":\"\\u003c!-- m --\\u003e body\"}",
+    "headers": {
+      "Accept": "application/vnd.github+json",
+      "Authorization": "Bearer a-token-for-the-fake-host",
+      "Content-Type": "application/json",
+      "X-Github-Api-Version": "2022-11-28"
+    },
+    "method": "POST",
+    "path": "/repos/o/r/issues/7/comments",
+    "query": {}
+  },
+  "POST /repos/o/r/statuses/{sha}": {
+    "body": "{\"state\":\"pending\",\"context\":\"pipelinegen/pr\",\"description\":\"planning\",\"target_url\":\"https://ci.example.test/b/1\"}",
+    "headers": {
+      "Accept": "application/vnd.github+json",
+      "Authorization": "Bearer a-token-for-the-fake-host",
+      "Content-Type": "application/json",
+      "X-Github-Api-Version": "2022-11-28"
+    },
+    "method": "POST",
+    "path": "/repos/o/r/statuses/1111111111111111111111111111111111111111",
+    "query": {}
+  }
+}
