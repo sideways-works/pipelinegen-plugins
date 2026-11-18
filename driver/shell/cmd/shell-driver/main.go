@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/sideways-works/pipelinegen-driver-shell/driver"
+	"github.com/sideways-works/pipelinegen-plugins/driver/shell/driver"
 	"github.com/sideways-works/pipelinegen/plugin"
 )
 

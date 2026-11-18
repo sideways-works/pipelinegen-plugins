@@ -1,4 +1,4 @@
-module github.com/sideways-works/pipelinegen-driver-shell
+module github.com/sideways-works/pipelinegen-plugins/driver/shell
 
 go 1.27.1
 
