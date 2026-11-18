@@ -8,8 +8,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	playwrightdriver "github.com/sideways-works/pipelinegen-driver-playwright"
-	"github.com/sideways-works/pipelinegen-driver-playwright/driver"
+	playwrightdriver "github.com/sideways-works/pipelinegen-plugins/driver/playwright"
+	"github.com/sideways-works/pipelinegen-plugins/driver/playwright/driver"
 	"github.com/sideways-works/pipelinegen/plugin"
 )
 

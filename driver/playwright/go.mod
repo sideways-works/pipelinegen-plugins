@@ -1,4 +1,4 @@
-module github.com/sideways-works/pipelinegen-driver-playwright
+module github.com/sideways-works/pipelinegen-plugins/driver/playwright
 
 go 1.27.1
 
