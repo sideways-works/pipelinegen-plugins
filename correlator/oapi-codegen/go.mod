@@ -1,4 +1,4 @@
-module github.com/sideways-works/pipelinegen-correlator-oapi-codegen
+module github.com/sideways-works/pipelinegen-plugins/correlator/oapi-codegen
 
 go 1.27.1
 

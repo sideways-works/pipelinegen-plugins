@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/sideways-works/pipelinegen-correlator-oapi-codegen/internal/cli"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/oapi-codegen/internal/cli"
 )
 
 var Version = "dev"

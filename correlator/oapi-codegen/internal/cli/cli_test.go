@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sideways-works/pipelinegen-correlator-oapi-codegen/correlate"
+	"github.com/sideways-works/pipelinegen-plugins/correlator/oapi-codegen/correlate"
 )
 
 const tree = "../../correlate/testdata/repo"
