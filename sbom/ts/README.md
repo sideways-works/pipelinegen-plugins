@@ -10,9 +10,8 @@ changes when what the code does can change, and stays the same when only
 comments or formatting do.
 
 It records what exists. Which units a test ran and which units use which
-is [react-correlator](../../correlator/react)'s
-job, and npm packages are
-[npm-sbom](../npm)'s. Both ts-sbom and
+is for [react-correlator](../../correlator/react) to find out, and npm
+packages are left to [npm-sbom](../npm). Both ts-sbom and
 react-correlator name units through this package's library, so they can't
 disagree about an id.
 
@@ -32,8 +31,8 @@ ts-sbom lists them as `ts:src/money.ts#fn:format` and
 `ts:src/money.ts#const:RATES`, plus `ts:src/money.ts#init` for the
 module's own top-level code.
 
-Reformatting the file, rewording a comment or switching its quotes
-from single to double changes no digest, so no slice runs. Adding a type
+Reformatting the file, rewording a comment or switching its quotes from
+single to double changes no digest, so no slice runs. Adding a type
 annotation to `format` changes no runtime digest either, since the build
 erases types before any test runs them. A change to the body of `format`
 changes that one digest, and only the slices bound to `format` run.
@@ -168,9 +167,9 @@ whitespace around braces, semicolons, commas, colons and `>` collapsed.
 The answer's `complete` names the scripts whose units hold everything a
 test can observe of them when they run as code: every statement is in a
 unit whose digest covers it, and the text the digests leave out is
-comments no tool reads and layout. pipelinegen takes a change to such a
+comments no tool reads and layout. pipelinegen treats a change to such a
 file that keeps every digest (another layout, a JSDoc description, a
-comment) for no change to the tests bound by recording; the checks that
+comment) as no change for the tests bound by recording. The checks that
 read the text still run. A file of types and their docs, such as a client
 generated from an API contract, is covered whole, and so is ordinary code.
 
@@ -201,13 +200,13 @@ A script is left out when one of these holds:
 - an abstract property, which the build drops while it emits a plain one
   as a field: the digests leave both modifiers out.
 
-Stylesheets are never named: nothing here says what else a test sees of
-one.
+Stylesheets are never named there, since nothing here says what else a
+test sees of one.
 
 ### Links
 
-None. A unit's file is its group, so the answer holds no links among the
-units; who uses whom is react-correlator's.
+ts-sbom answers none. A unit's file is its group, so the answer holds no
+links among the units, and who uses whom is for react-correlator to say.
 
 ## Narrowings
 
@@ -245,9 +244,9 @@ react-correlator's `ts-functions` narrowing.
 
 The requests and answers follow pipelinegen's
 [plugin protocol](https://github.com/sideways-works/pipelinegen/blob/main/docs/plugins.md).
-This section adds what is particular to ts-sbom. Its capabilities are
-`detect` and `units`; its namespaces are `ts` and `css`; `inputs` declares
-both calls per file, since a file's units depend on that file alone.
+What follows is particular to ts-sbom. Its capabilities are `detect` and
+`units`, and its namespaces are `ts` and `css`. `inputs` declares both
+calls per file, since a file's units depend on that file alone.
 
 ### `detect`
 
@@ -287,9 +286,9 @@ characters and the same on every machine, and nothing hashes, caches or
 compares it.
 
 `complete` is left out when no script is covered whole. An answer larger
-than 32 MB goes into `units.jsonl` in the work
-directory, one unit a line, and the answer names the file in `files`. On a
-frontend of about 6,000 units a full call takes a few seconds.
+than 32 MB goes into `units.jsonl` in the work directory, one unit a line,
+and the answer names the file in `files`. On a frontend of about 6,000
+units a full call takes a few seconds.
 
 ### The library
 
@@ -333,13 +332,14 @@ fixture tree in `testdata/app`:
 pipelinegen plugin test dist/ts-sbom.mjs --tree testdata/app
 ```
 
-Releases are built and published with `bazel run //sbom/ts:release`, which
-runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
-describes: `ts-sbom.mjs`, `plugin.json` (the plugin's own `describe`),
-`LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `sbom/ts/vX.Y.Z` on `main`.
-Of the code, the release holds only the bundled command; packages that
-use the library install it from git. A published release never changes; a
-wrong one gets a new version.
+Releases are built and published with `bazel run //sbom/ts:release`,
+which runs pipelinegen's release command as its [release
+guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+describes. For a tag `sbom/ts/vX.Y.Z` on `main` it publishes
+`ts-sbom.mjs`, `plugin.json` (the plugin's own `describe`), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. The only code in the release is the bundled
+command; packages that use the library install it from git. A published
+release never changes; a wrong one gets a new version.
 
 ### How the command file is built
 
@@ -366,10 +366,10 @@ the embedded part. On a frontend of about 6,000 units the call takes about
 3 s either way.
 
 Every compression setting is fixed and the build writes no timestamps, so
-two builds of one commit give the same bytes; pipelinegen's release script
-builds twice and fails on any difference. The compressed bytes come from
-Node's brotli encoder, so they follow the Node version in `.node-version`.
-The unpacked bytes don't.
+two builds of one commit give the same bytes, and pipelinegen's release
+script builds twice and fails on any difference. The compressed bytes come
+from Node's brotli encoder, so they follow the Node version in
+`.node-version`, while the unpacked bytes don't.
 
 To check that a release holds the code of its tag, build the tag afresh
 and compare: the check downloads the release and fails unless every file,
@@ -403,7 +403,7 @@ pipelinegen plugin test dist/ts-sbom.mjs --tree testdata/app
   change to an id's form is a change to both plugins.
 - `test/command.test.ts` fails when `describe` or `detect` loads the
   parser: keep those calls in the small entry, `src/main.ts`.
-- The last line is pipelinegen's conformance kit. It calls the built
+- The last line runs pipelinegen's conformance kit, which calls the built
   command the way pipelinegen does, on the fixture tree in `testdata/app`.
   Take `pipelinegen` from
   [its releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
