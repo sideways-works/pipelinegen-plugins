@@ -54,7 +54,9 @@ func newRunnerReleases(t *testing.T, body []byte) *runnerReleases {
   {"url": "%[1]s/repos/o/pipelinegen-runner-concourse/releases/assets/4", "id": 4, "name": "concourse-runner-linux-amd64"}]}`, r.srv.URL)
 		case "/repos/o/pipelinegen-runner-concourse/releases/tags/v2":
 			out = []byte(`{"assets": []}`)
-		case "/repos/o/pipelinegen-runner-concourse/releases/assets/4":
+		case "/repos/o/plugins/releases/tags/runner/concourse/v1":
+			out = fmt.Appendf(nil, `{"assets": [{"url": "%[1]s/repos/o/plugins/releases/assets/5", "id": 5, "name": "concourse-runner-linux-amd64"}]}`, r.srv.URL)
+		case "/repos/o/pipelinegen-runner-concourse/releases/assets/4", "/repos/o/plugins/releases/assets/5":
 			out = r.body
 		default:
 			w.WriteHeader(http.StatusNotFound)
@@ -174,6 +176,37 @@ func TestTheBootstrapRunsThePinnedRunnersStep(t *testing.T) {
 	}
 }
 
+// A runner in a directory of a repository holding several is tagged
+// <path>/<version>, and cached as any release of its program is.
+func TestTheBootstrapFetchesARunnerTaggedInItsDirectory(t *testing.T) {
+	if _, err := exec.LookPath("curl"); err != nil {
+		t.Skip("no curl")
+	}
+
+	rel := newRunnerReleases(t, []byte(fakeRunner))
+	work := t.TempDir()
+	env := cleanEnv(t, runnerPins(rel.srv, "v1", sha256Hex(fakeRunner), "PIPELINEGEN_RUNNER_REPOSITORY=o/plugins", "PIPELINEGEN_RUNNER_PATH=runner/concourse")...)
+
+	if out, code := bootstrap(t, work, env, "start"); code != 0 {
+		t.Fatalf("exit %d\n%s", code, out)
+	}
+
+	if got := rel.asked(); len(got) != 2 || got[0] != "/repos/o/plugins/releases/tags/runner/concourse/v1 Bearer secret-token-value" {
+		t.Errorf("asked %v", got)
+	}
+
+	for _, p := range []string{"cache/concourse-runner-release-v1/concourse-runner", "tools/plugins/concourse"} {
+		if got, err := os.ReadFile(filepath.Join(work, p)); err != nil || string(got) != fakeRunner {
+			t.Errorf("%s: %q %v", p, got, err)
+		}
+	}
+
+	env = cleanEnv(t, runnerPins(rel.srv, "v2", sha256Hex(fakeRunner), "PIPELINEGEN_RUNNER_REPOSITORY=o/plugins", "PIPELINEGEN_RUNNER_PATH=runner/concourse")...)
+	if out, code := bootstrap(t, t.TempDir(), env, "start"); code == 0 || !strings.Contains(out, "release runner/concourse/v2 of o/plugins") {
+		t.Errorf("a release that isn't there: exit %d\n%s", code, out)
+	}
+}
+
 func TestTheBootstrapRefusesAWrongRunner(t *testing.T) {
 	if _, err := exec.LookPath("curl"); err != nil {
 		t.Skip("no curl")
@@ -237,39 +270,51 @@ func TestTheBootstrapOfTheEnd(t *testing.T) {
 // A runner pinned by its commit is built with git and go, which see none of
 // the planner's params or secrets; the step sees them.
 func TestTheBootstrapBuildsARunnersCommit(t *testing.T) {
-	bin := t.TempDir()
-	writeExec(t, filepath.Join(bin, "git"), "#!/bin/sh\necho \"git $*\" >> \"$TOOLS_LOG\"\n[ \"$1\" = init ] && mkdir -p \"$3\"\nexit 0\n")
-	writeExec(t, filepath.Join(bin, "go"), "#!/bin/sh\necho \"go $* GOFLAGS=$GOFLAGS GO_TOKEN=${GO_TOKEN:-} GOPRIVATE=${GOPRIVATE:-}\" >> \"$TOOLS_LOG\"\n"+
-		"cat > \"$3\" <<'EOF'\n"+fakeRunner+"EOF\nchmod +x \"$3\"\n")
+	for _, c := range []struct{ name, path, dir string }{
+		{name: "a repository of its own", dir: "src"},
+		{name: "a directory of a repository", path: "runner/concourse", dir: "src/runner/concourse"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			bin := t.TempDir()
+			writeExec(t, filepath.Join(bin, "git"), "#!/bin/sh\necho \"git $*\" >> \"$TOOLS_LOG\"\n[ \"$1\" = init ] && mkdir -p \"$3/runner/concourse\"\nexit 0\n")
+			writeExec(t, filepath.Join(bin, "go"), "#!/bin/sh\necho \"go $* in ${PWD#$WORK/} GOFLAGS=$GOFLAGS GOWORK=$GOWORK GO_TOKEN=${GO_TOKEN:-} GOPRIVATE=${GOPRIVATE:-}\" >> \"$TOOLS_LOG\"\n"+
+				"cat > \"$3\" <<'EOF'\n"+fakeRunner+"EOF\nchmod +x \"$3\"\n")
 
-	work := t.TempDir()
-	log := filepath.Join(t.TempDir(), "tools.log")
-	env := cleanEnv(t, "PATH="+bin+string(os.PathListSeparator)+os.Getenv("PATH"), "TOOLS_LOG="+log, "GITHUB_TOKEN=x",
-		"PIPELINEGEN_RUNNER=concourse", "PIPELINEGEN_RUNNER_PROGRAM=concourse-runner", "PIPELINEGEN_RUNNER_REPOSITORY=o/pipelinegen-runner-concourse",
-		"PIPELINEGEN_RUNNER_VERSION=", "PIPELINEGEN_RUNNER_SHA256=", "PIPELINEGEN_RUNNER_COMMIT=c0ffee",
-		"PIPELINEGEN_PLANNER_ENV=GO_TOKEN GOPRIVATE", "GO_TOKEN=go-token", "GOPRIVATE=github.com/o/*")
+			work := t.TempDir()
+			log := filepath.Join(t.TempDir(), "tools.log")
+			env := cleanEnv(t, "PATH="+bin+string(os.PathListSeparator)+os.Getenv("PATH"), "TOOLS_LOG="+log, "WORK="+work, "GITHUB_TOKEN=x",
+				"PIPELINEGEN_RUNNER=concourse", "PIPELINEGEN_RUNNER_PROGRAM=concourse-runner", "PIPELINEGEN_RUNNER_REPOSITORY=o/pipelinegen-runner-concourse",
+				"PIPELINEGEN_RUNNER_VERSION=", "PIPELINEGEN_RUNNER_SHA256=", "PIPELINEGEN_RUNNER_COMMIT=c0ffee",
+				"PIPELINEGEN_PLANNER_ENV=GO_TOKEN GOPRIVATE", "GO_TOKEN=go-token", "GOPRIVATE=github.com/o/*")
 
-	if out, code := bootstrap(t, work, env, "plan"); code != 0 {
-		t.Fatalf("exit %d\n%s", code, out)
-	}
+			if c.path != "" {
+				env = append(env, "PIPELINEGEN_RUNNER_PATH="+c.path)
+			}
 
-	want := "git init -q src\ngit -C src fetch -q --depth 1 https://github.com/o/pipelinegen-runner-concourse.git c0ffee\ngit -C src checkout -q FETCH_HEAD\n" +
-		"go build -o ../cache/concourse-runner-commit-c0ffee/concourse-runner ./cmd/concourse-runner GOFLAGS=-trimpath GO_TOKEN= GOPRIVATE=\n"
-	if got := string(readTestFile(t, log)); got != want {
-		t.Errorf("built with\n%s\nwant\n%s", got, want)
-	}
+			if out, code := bootstrap(t, work, env, "plan"); code != 0 {
+				t.Fatalf("exit %d\n%s", code, out)
+			}
 
-	if got := readEnv(t, filepath.Join(work, "runner.env")); got["GO_TOKEN"] != "go-token" || got["GOPRIVATE"] != "github.com/o/*" {
-		t.Error("the step lost the planner's params and secrets")
-	}
+			want := "git init -q src\ngit -C src fetch -q --depth 1 https://github.com/o/pipelinegen-runner-concourse.git c0ffee\ngit -C src checkout -q FETCH_HEAD\n" +
+				"go build -o " + work + "/cache/concourse-runner-commit-c0ffee/concourse-runner ./cmd/concourse-runner in " + c.dir +
+				" GOFLAGS=-trimpath GOWORK=off GO_TOKEN= GOPRIVATE=\n"
+			if got := string(readTestFile(t, log)); got != want {
+				t.Errorf("built with\n%s\nwant\n%s", got, want)
+			}
 
-	// Built once per commit.
-	if err := os.RemoveAll(filepath.Join(work, "tools")); err != nil {
-		t.Fatal(err)
-	}
+			if got := readEnv(t, filepath.Join(work, "runner.env")); got["GO_TOKEN"] != "go-token" || got["GOPRIVATE"] != "github.com/o/*" {
+				t.Error("the step lost the planner's params and secrets")
+			}
 
-	if out, code := bootstrap(t, work, env, "plan"); code != 0 || string(readTestFile(t, log)) != want {
-		t.Errorf("built again: exit %d\n%s", code, out)
+			// Built once per commit.
+			if err := os.RemoveAll(filepath.Join(work, "tools")); err != nil {
+				t.Fatal(err)
+			}
+
+			if out, code := bootstrap(t, work, env, "plan"); code != 0 || string(readTestFile(t, log)) != want {
+				t.Errorf("built again: exit %d\n%s", code, out)
+			}
+		})
 	}
 }
 

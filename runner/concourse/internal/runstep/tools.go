@@ -7,12 +7,14 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 
 	"github.com/sideways-works/pipelinegen/plugin"
+	"github.com/sideways-works/plugkit/pin"
 )
 
 var errUnread = errors.New("unreadable")
@@ -38,7 +40,7 @@ func (t *Task) fetchTools(env []string) int {
 		return code
 	}
 
-	if code := f.fetch(pin{
+	if code := f.fetch(toolPin{
 		repo: getenv(env, "PIPELINEGEN_TOOL_REPOSITORY"), version: getenv(env, "PIPELINEGEN_TOOL_VERSION"),
 		sum: getenv(env, "PIPELINEGEN_TOOL_SHA256"), commit: getenv(env, "PIPELINEGEN_TOOL_COMMIT"),
 	}, tool); code != 0 {
@@ -69,7 +71,7 @@ func (t *Task) fetchEnv(env []string) []string {
 		root = t.Dir
 	}
 
-	private := "github.com/" + getenv(env, "PIPELINEGEN_TOOL_REPOSITORY")
+	private := ModulePath(getenv(env, "PIPELINEGEN_TOOL_REPOSITORY"))
 	if more := getenv(env, "PIPELINEGEN_PRIVATE"); more != "" {
 		private += "," + more
 	}
@@ -82,14 +84,52 @@ func (t *Task) fetchEnv(env []string) []string {
 	)
 }
 
-type pin struct {
+type toolPin struct {
 	name, repo, version, sum, commit string
+	// path is the tool's directory in a repository holding several: its
+	// releases are tagged <path>/<version> and its program is named by it.
+	path string
+}
+
+// program names the tool's files: by its path (driver/go holds go-driver),
+// else by its repository.
+func (p toolPin) program() string {
+	if p.path != "" {
+		return pin.Pin{Path: p.path}.ProgramName()
+	}
+
+	return plugin.Program(p.repo)
+}
+
+func (p toolPin) tag() string { return pin.Pin{Path: p.path, Version: p.version}.Tag() }
+
+// ModulePath is where Go finds a repository's modules: host and project of
+// a git URL, github.com for owner/name.
+func ModulePath(repo string) string {
+	r, err := pin.ParseRepository(repo, nil)
+	if err != nil {
+		return "github.com/" + repo
+	}
+
+	return strings.TrimPrefix(strings.TrimPrefix(r.Origin, "https://"), "http://") + "/" + r.Project
+}
+
+// cloneURL is the repository's https URL, which git's credential helper
+// answers for github.com.
+func cloneURL(repo string) string {
+	r, err := pin.ParseRepository(repo, nil)
+	if err != nil {
+		return "https://github.com/" + repo + ".git"
+	}
+
+	return r.Origin + "/" + r.Project + ".git"
 }
 
 // pluginPins reads the plugins' pins, one per line: name, repository,
-// version, sha256 and commit, "-" for an empty field.
-func pluginPins(lines string) []pin {
-	var out []pin
+// version, sha256, commit and, for a tool in a directory, its path; "-"
+// for an empty field.
+func pluginPins(lines string) []toolPin {
+	var out []toolPin
 
 	for line := range strings.SplitSeq(lines, "\n") {
 		f := strings.Fields(line)
@@ -97,17 +137,17 @@ func pluginPins(lines string) []pin {
 			continue
 		}
 
-		for len(f) < 5 {
+		for len(f) < 6 {
 			f = append(f, "")
 		}
 
-		for i := 2; i < 5; i++ {
+		for i := 2; i < 6; i++ {
 			if f[i] == "-" {
 				f[i] = ""
 			}
 		}
 
-		out = append(out, pin{name: f[0], repo: f[1], version: f[2], sum: f[3], commit: f[4]})
+		out = append(out, toolPin{name: f[0], repo: f[1], version: f[2], sum: f[3], commit: f[4], path: f[5]})
 	}
 
 	return out
@@ -215,8 +255,8 @@ func (f *fetcher) download(req *http.Request, sum, file, mismatch string) int {
 // else a Node plugin's one file <program>.mjs, run by its node shebang; or
 // ./cmd/<program> built at a commit, which has no checksum and is cached by
 // its commit.
-func (f *fetcher) fetch(p pin, dest string) int {
-	name := plugin.Program(p.repo)
+func (f *fetcher) fetch(p toolPin, dest string) int {
+	name := p.program()
 
 	if p.commit != "" {
 		f.pinned = append(f.pinned, name+"-commit-"+p.commit)
@@ -258,44 +298,107 @@ type asset struct {
 	Name string `json:"name"`
 }
 
-// release downloads the release's file into the cache. A release the API
-// couldn't list has no files either.
-func (f *fetcher) release(p pin, name, cached string) int {
+// release downloads the release's file into the cache, from GitHub or
+// GitLab, as pipelinegen fetches a plugin. A release the API couldn't list
+// has no files either.
+func (f *fetcher) release(p toolPin, name, cached string) int {
+	repo, err := pin.ParseRepository(p.repo, nil)
+	if err != nil {
+		f.t.sayf("release %s of %s: %v", p.tag(), p.repo, err)
+
+		return 1
+	}
+
+	switch repo.Forge {
+	case pin.GitHub:
+		return f.gitHub(p, repo, name, cached)
+	case pin.GitLab:
+		return f.gitLab(p, repo, name, cached)
+	}
+
+	f.t.sayf("release %s of %s: a plain git server has no release files; the runner fetches them from GitHub and GitLab", p.tag(), p.repo)
+
+	return 1
+}
+
+// gitHub lists the release through the API with the read token, which
+// reads a private repository's files too.
+func (f *fetcher) gitHub(p toolPin, repo pin.Repo, name, cached string) int {
 	var assets struct {
 		Assets []asset `json:"assets"`
 	}
 
-	if req, err := f.request(f.t.api()+"/repos/"+p.repo+"/releases/tags/"+p.version, ""); err == nil {
+	if req, err := f.request(f.t.api()+"/repos/"+repo.Project+"/releases/tags/"+p.tag(), ""); err == nil {
 		var body bytes.Buffer
 		if f.t.requested(f.t.HTTP, req, &body) == 0 {
 			_ = json.Unmarshal(body.Bytes(), &assets) //nolint:errcheck // an answer that isn't a release lists no files
 		}
 	}
 
-	file, url := "", ""
+	file, link := "", ""
 
 	for _, want := range []string{name + "-linux-amd64", name + ".mjs"} {
 		if i := slices.IndexFunc(assets.Assets, func(a asset) bool { return a.Name == want && a.URL != "" }); i >= 0 {
-			file, url = want, assets.Assets[i].URL
+			file, link = want, assets.Assets[i].URL
 
 			break
 		}
 	}
 
-	if url == "" {
-		f.t.sayf("release %s of %s has neither %s-linux-amd64 nor %s.mjs", p.version, p.repo, name, name)
+	if link == "" {
+		f.t.sayf("release %s of %s has neither %s-linux-amd64 nor %s.mjs", p.tag(), p.repo, name, name)
 
 		return 1
 	}
 
-	req, err := f.request(url, "application/octet-stream")
+	req, err := f.request(link, "application/octet-stream")
 	if err != nil {
 		f.t.sayf("%v", err)
 
 		return 1
 	}
 
-	return f.download(req, p.sum, cached, "release "+p.version+" of "+p.repo+": "+file+" doesn't match its sha256")
+	return f.download(req, p.sum, cached, "release "+p.tag()+" of "+p.repo+": "+file+" doesn't match its sha256")
+}
+
+// gitLab downloads the release's file by its link, with no token: the read
+// token is GitHub's.
+func (f *fetcher) gitLab(p toolPin, repo pin.Repo, name, cached string) int {
+	base := repo.Origin + "/" + repo.Project + "/-/releases/" + url.PathEscape(p.tag()) + "/downloads/"
+
+	for _, file := range []string{name + "-linux-amd64", name + ".mjs"} {
+		req, err := http.NewRequest(http.MethodGet, base+file, http.NoBody) //nolint:noctx // a task's limit ends it
+		if err != nil {
+			f.t.sayf("%v", err)
+
+			return 1
+		}
+
+		if !f.found(req) {
+			continue
+		}
+
+		return f.download(req, p.sum, cached, "release "+p.tag()+" of "+p.repo+": "+file+" doesn't match its sha256")
+	}
+
+	f.t.sayf("release %s of %s has neither %s-linux-amd64 nor %s.mjs", p.tag(), p.repo, name, name)
+
+	return 1
+}
+
+// found says whether the file is there, asked with HEAD.
+func (f *fetcher) found(get *http.Request) bool {
+	req := get.Clone(get.Context())
+	req.Method = http.MethodHead
+
+	resp, err := f.t.HTTP.Do(req)
+	if err != nil {
+		return true // the download says why
+	}
+
+	resp.Body.Close()
+
+	return resp.StatusCode != http.StatusNotFound
 }
 
 // request asks the API with the read token, taken from the environment.
@@ -314,8 +417,9 @@ func (f *fetcher) request(url, accept string) (*http.Request, error) {
 	return req, nil
 }
 
-// build builds ./cmd/<program> at the pinned commit, once per commit.
-func (f *fetcher) build(p pin, name, dest string) int {
+// build builds ./cmd/<program> at the pinned commit, once per commit, in
+// the tool's directory when it has one.
+func (f *fetcher) build(p toolPin, name, dest string) int {
 	dir := filepath.Join("cache", name+"-commit-"+p.commit)
 
 	if err := os.MkdirAll(f.t.path(dir), 0o750); err != nil {
@@ -335,7 +439,7 @@ func (f *fetcher) build(p pin, name, dest string) int {
 	return f.copy(built, dest)
 }
 
-func (f *fetcher) buildAt(p pin, name, built string) int {
+func (f *fetcher) buildAt(p toolPin, name, built string) int {
 	if code := f.t.remove("src"); code != 0 {
 		return code
 	}
@@ -344,7 +448,7 @@ func (f *fetcher) buildAt(p pin, name, built string) int {
 
 	for _, args := range [][]string{
 		{"init", "-q", src},
-		{"-C", src, "fetch", "-q", "--depth", "1", "https://github.com/" + p.repo + ".git", p.commit},
+		{"-C", src, "fetch", "-q", "--depth", "1", cloneURL(p.repo), p.commit},
 		{"-C", src, "checkout", "-q", "FETCH_HEAD"},
 	} {
 		if code := f.t.call(f.env, "git", args...); code != 0 {
@@ -352,8 +456,17 @@ func (f *fetcher) buildAt(p pin, name, built string) int {
 		}
 	}
 
-	cmd := f.t.command(with(f.env, "CGO_ENABLED=0", "GOFLAGS=-trimpath"), src, "go", "build", "-o",
-		filepath.Join("..", built+".tmp"), "./cmd/"+name)
+	abs, err := filepath.Abs(f.t.path(built + ".tmp"))
+	if err != nil {
+		f.t.sayf("%v", err)
+
+		return 1
+	}
+
+	// a release is built without the repository's go.work, so a commit's
+	// build is too
+	cmd := f.t.command(with(f.env, "CGO_ENABLED=0", "GOFLAGS=-trimpath", "GOWORK=off"), filepath.Join(src, filepath.FromSlash(p.path)), "go", "build", "-o",
+		abs, "./cmd/"+name)
 	if code := f.t.exited("go", cmd.Run()); code != 0 {
 		return code
 	}

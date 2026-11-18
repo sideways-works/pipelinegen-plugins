@@ -50,6 +50,8 @@ fi
   done
   p=$PIPELINEGEN_RUNNER_PROGRAM v=$PIPELINEGEN_RUNNER_VERSION c=$PIPELINEGEN_RUNNER_COMMIT
   repo=$PIPELINEGEN_RUNNER_REPOSITORY
+  # a runner in a directory of its repository is tagged and built there
+  tag=${PIPELINEGEN_RUNNER_PATH:+$PIPELINEGEN_RUNNER_PATH/}$v
   if [ -z "$v$c" ]; then
     echo "the pipeline pins no runner: its config's plugins have none of kind runner" >&2
     exit 1
@@ -73,7 +75,8 @@ fi
         git -C src fetch -q --depth 1 "https://github.com/$repo.git" "$c"
       git -C src checkout -q FETCH_HEAD
       mkdir -p "$dir"
-      (cd src && CGO_ENABLED=0 GOFLAGS=-trimpath GOMODCACHE="$PWD/../cache/gomodcache" GOCACHE="$PWD/../cache/gocache" go build -o "../$dir/$p" "./cmd/$p")
+      top=$PWD
+      (cd "src/${PIPELINEGEN_RUNNER_PATH:-.}" && CGO_ENABLED=0 GOFLAGS=-trimpath GOWORK=off GOMODCACHE="$top/cache/gomodcache" GOCACHE="$top/cache/gocache" go build -o "$top/$dir/$p" "./cmd/$p")
     fi
     cp "$dir/$p" "$runner"
     exit 0
@@ -85,17 +88,17 @@ fi
     # curl reads its authorization header from awk, which reads the token
     # from the environment: no argument or variable here holds it
     auth() { awk 'BEGIN { t = ENVIRON["PIPELINEGEN_READ_TOKEN"]; if (t == "") t = ENVIRON["GITHUB_TOKEN"]; print "Authorization: Bearer " t }'; }
-    url=$(auth | curl -fsSL -H @- "${PIPELINEGEN_GITHUB_API:-https://api.github.com}/repos/$repo/releases/tags/$v" | tr -d '\n' |
+    url=$(auth | curl -fsSL -H @- "${PIPELINEGEN_GITHUB_API:-https://api.github.com}/repos/$repo/releases/tags/$tag" | tr -d '\n' |
       grep -o "\"url\": *\"[^\"]*/releases/assets/[0-9]*\"[^{}]*\"name\": *\"$p-linux-amd64\"" | head -n 1 | sed 's/^"url": *"\([^"]*\)".*/\1/')
     if [ -z "$url" ]; then
-      echo "release $v of $repo has no $p-linux-amd64" >&2
+      echo "release $tag of $repo has no $p-linux-amd64" >&2
       exit 1
     fi
     auth | curl -fsSL -H @- -H "Accept: application/octet-stream" -o "$dir/$p.tmp" "$url"
     chmod +x "$dir/$p.tmp"
     if ! ok "$dir/$p.tmp"; then
       rm -f "$dir/$p.tmp"
-      echo "release $v of $repo: $p-linux-amd64 doesn't match its sha256" >&2
+      echo "release $tag of $repo: $p-linux-amd64 doesn't match its sha256" >&2
       exit 1
     fi
     mv "$dir/$p.tmp" "$dir/$p"

@@ -26,6 +26,10 @@ var plannerOwn = []string{"PATH", "HOME", "GITHUB_TOKEN", "GOMODCACHE", "GOCACHE
 // checkEnv repeats the tool's check, so a config that skipped it never
 // reaches a pipeline.
 func checkEnv(spec plugin.Spec, ci settings) error {
+	if err := checkRunnerPin(spec); err != nil {
+		return err
+	}
+
 	for _, r := range spec.Runs {
 		for _, rs := range r.Suites {
 			where := "run " + r.Name + ", suite " + rs.Suite

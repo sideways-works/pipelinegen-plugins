@@ -258,15 +258,42 @@ func TestTheFetchsGoEnv(t *testing.T) {
 }
 
 func TestPluginPins(t *testing.T) {
-	got := pluginPins("go o/go-sbom v1 abc -\n\n  \nts o/ts - - c0ffee\nshort o/short\n")
-	want := []pin{
+	got := pluginPins("go o/go-sbom v1 abc -\n\n  \nts o/ts - - c0ffee\nshort o/short\n" +
+		"gd https://github.com/o/plugins v2 def - driver/go\nrc git@gitlab.com:g/plugins.git - - c0ffee runner/concourse\n")
+	want := []toolPin{
 		{name: "go", repo: "o/go-sbom", version: "v1", sum: "abc"},
 		{name: "ts", repo: "o/ts", commit: "c0ffee"},
 		{name: "short", repo: "o/short"},
+		{name: "gd", repo: "https://github.com/o/plugins", version: "v2", sum: "def", path: "driver/go"},
+		{name: "rc", repo: "git@gitlab.com:g/plugins.git", commit: "c0ffee", path: "runner/concourse"},
 	}
 
 	if !slices.Equal(got, want) {
 		t.Errorf("pins %+v", got)
+	}
+
+	for _, c := range []struct {
+		pin          toolPin
+		program, tag string
+	}{
+		{got[0], "go-sbom", "v1"},
+		{got[3], "go-driver", "driver/go/v2"},
+		{toolPin{repo: "https://github.com/o/pipelinegen-sbom-go.git", version: "v3"}, "go-sbom", "v3"},
+	} {
+		if p, tag := c.pin.program(), c.pin.tag(); p != c.program || tag != c.tag {
+			t.Errorf("%+v: program %s tag %s, want %s %s", c.pin, p, tag, c.program, c.tag)
+		}
+	}
+
+	for repo, want := range map[string][2]string{
+		"o/r":                            {"github.com/o/r", "https://github.com/o/r.git"},
+		"https://github.com/o/r":         {"github.com/o/r", "https://github.com/o/r.git"},
+		"git@github.com:o/r.git":         {"github.com/o/r", "https://github.com/o/r.git"},
+		"https://gitlab.com/g/sub/r.git": {"gitlab.com/g/sub/r", "https://gitlab.com/g/sub/r.git"},
+	} {
+		if mod, clone := ModulePath(repo), cloneURL(repo); mod != want[0] || clone != want[1] {
+			t.Errorf("%s: module %s, clone %s, want %v", repo, mod, clone, want)
+		}
 	}
 }
 

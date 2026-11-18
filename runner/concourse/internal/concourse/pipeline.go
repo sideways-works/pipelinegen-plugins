@@ -12,6 +12,7 @@ import (
 	"maps"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -20,6 +21,9 @@ import (
 	"go.yaml.in/yaml/v3"
 
 	"github.com/sideways-works/pipelinegen/plugin"
+	"github.com/sideways-works/plugkit/pin"
+
+	"github.com/sideways-works/pipelinegen-plugins/runner/concourse/internal/runstep"
 )
 
 // M is one mapping of a pipeline's YAML.
@@ -483,19 +487,68 @@ func (g *gen) bootstrapEnv() M {
 const defaultRunner = "concourse-runner"
 
 // runnerEnv is the bootstrap's pin of the runner, which the config's
-// plugins name, as the tool fetches it.
+// plugins name, as the tool fetches it: the bootstrap reads GitHub's
+// owner/name, and a runner in a directory its path, which its tags and its
+// build start from.
 func (g *gen) runnerEnv() M {
 	r := g.runnerTool()
 
 	name, program := r.Name, plugin.Program(r.Repository)
+	if r.Path != "" {
+		program = pin.Pin{Path: r.Path}.ProgramName()
+	}
+
 	if name == "" {
 		name, program = defaultRunner, defaultRunner
 	}
 
-	return M{
-		"PIPELINEGEN_RUNNER": name, "PIPELINEGEN_RUNNER_PROGRAM": program, "PIPELINEGEN_RUNNER_REPOSITORY": r.Repository,
+	env := M{
+		"PIPELINEGEN_RUNNER": name, "PIPELINEGEN_RUNNER_PROGRAM": program, "PIPELINEGEN_RUNNER_REPOSITORY": gitHubProject(r.Repository),
 		"PIPELINEGEN_RUNNER_VERSION": r.Version, "PIPELINEGEN_RUNNER_SHA256": r.SHA256, "PIPELINEGEN_RUNNER_COMMIT": r.Commit,
 	}
+
+	if r.Path != "" {
+		env["PIPELINEGEN_RUNNER_PATH"] = r.Path
+	}
+
+	return env
+}
+
+// gitHubProject is a repository on github.com as owner/name, whatever URL
+// the config gives.
+func gitHubProject(repo string) string {
+	if r, err := pin.ParseRepository(repo, nil); err == nil && r.Forge == pin.GitHub {
+		return r.Project
+	}
+
+	return repo
+}
+
+// ErrRunnerPin wraps a pin of the runner the bootstrap can't fetch.
+var ErrRunnerPin = errors.New("runner pin")
+
+// checkRunnerPin refuses a runner the bootstrap can't fetch: it fetches
+// from github.com alone.
+func checkRunnerPin(spec plugin.Spec) error {
+	r := tool(spec, plugin.KindRunner)
+	if r.Repository == "" {
+		return nil
+	}
+
+	repo, err := pin.ParseRepository(r.Repository, nil)
+	if err != nil {
+		return fmt.Errorf("%w: plugins.%s: %w", ErrRunnerPin, r.Name, err)
+	}
+
+	if repo.Forge != pin.GitHub || repo.Origin != "https://github.com" {
+		return fmt.Errorf("%w: plugins.%s: the bootstrap fetches the runner from github.com, not %s", ErrRunnerPin, r.Name, r.Repository)
+	}
+
+	if path.IsAbs(r.Path) || slices.Contains(strings.Split(r.Path, "/"), "..") {
+		return fmt.Errorf("%w: plugins.%s: path %s leaves the repository", ErrRunnerPin, r.Name, r.Path)
+	}
+
+	return nil
 }
 
 func (g *gen) runnerTool() plugin.SpecTool { return tool(g.spec, plugin.KindRunner) }
@@ -530,16 +583,16 @@ func (g *gen) toolTask(name string, tags []string, inputs []M, outputs []string,
 }
 
 // pluginLines is the bootstrap's input format: one plugin per line, "-" for
-// an empty field.
+// an empty field, and a path only where a tool has one.
 func pluginLines(s plugin.Spec) string {
 	var b strings.Builder
 
-	for _, t := range s.Tools {
-		if t.Kind == plugin.ToolPipelinegen || t.Kind == plugin.ToolBazelisk {
-			continue
+	for _, t := range plugins(s) {
+		fields := []string{t.Name, t.Repository, t.Version, t.SHA256, t.Commit}
+		if t.Path != "" {
+			fields = append(fields, t.Path)
 		}
 
-		fields := []string{t.Name, t.Repository, t.Version, t.SHA256, t.Commit}
 		for i, f := range fields {
 			if f == "" {
 				fields[i] = "-"
@@ -555,13 +608,26 @@ func pluginLines(s plugin.Spec) string {
 func privateModules(s plugin.Spec) string {
 	var mods []string
 
-	for _, t := range s.Tools {
-		if t.Commit != "" && t.Kind != plugin.ToolPipelinegen && t.Kind != plugin.ToolBazelisk {
-			mods = append(mods, "github.com/"+t.Repository)
+	for _, t := range plugins(s) {
+		if t.Commit != "" {
+			mods = append(mods, runstep.ModulePath(t.Repository))
 		}
 	}
 
 	return strings.Join(mods, ",")
+}
+
+// plugins are the tools the steps fetch besides pipelinegen and bazelisk.
+func plugins(s plugin.Spec) []plugin.SpecTool {
+	var out []plugin.SpecTool
+
+	for _, t := range s.Tools {
+		if t.Kind != plugin.ToolPipelinegen && t.Kind != plugin.ToolBazelisk {
+			out = append(out, t)
+		}
+	}
+
+	return out
 }
 
 // forTool marks every pipelinegen step as a pipeline's, so its Bazel output

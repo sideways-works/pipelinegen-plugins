@@ -176,7 +176,9 @@ repository's own parts from its include file.
   which does the task's work. The bootstrap fetches the runner the config's
   plugins pin into `tools/plugins`, checked by its sha256 like every pinned
   file, and runs the step; a task whose `tools` already hold the runner
-  runs it from there. The step fetches pipelinegen, bazelisk and the
+  runs it from there. It fetches the runner from GitHub alone, so a runner
+  whose `repository` is on another host is refused when the pipeline is
+  written. The step fetches pipelinegen, bazelisk and the
   configured plugins by checksum into `tools`, keeping them in the job's
   cache, and then calls pipelinegen as the task needs. Every run checks
   a cached file against its checksum again and fetches it anew when it
@@ -185,7 +187,9 @@ repository's own parts from its include file.
   cache each time the task ends, so a release, a commit's build or a
   bazelisk that no pin names any more is removed, and the task's log
   names it. A plugin pinned by a commit instead of a release is built from
-  that commit, from `./cmd/<name>`. A release's file is
+  that commit, from `./cmd/<name>` in the plugin's `path` (the
+  repository's root without one), with `GOWORK=off` as its release is
+  built. A release's file is
   `<name>-linux-amd64`, or, for a Node plugin, whose release has no such
   file, the script `<name>.mjs`, checked the same way and run by its own
   `node` shebang. `<name>` is the program the repository holds: a
@@ -194,7 +198,16 @@ repository's own parts from its include file.
   repository the program of its own name. Both spellings of a renamed
   repository (`owner/NAME-KIND` and `owner/pipelinegen-KIND-NAME`) fetch
   the same file into the same cache entry, so switching a pin from one to
-  the other fetches nothing again.
+  the other fetches nothing again. A plugin with a `path` lives in a
+  repository that holds several: its releases are tagged `<path>/vX.Y.Z`,
+  and `<name>` comes from the path (`driver/go` holds `go-driver`,
+  `runner/concourse` holds `concourse-runner`). The `repository` is
+  GitHub's `owner/name` or a git URL (`https://github.com/owner/name`,
+  `git@gitlab.com:group/name.git`). A GitHub release is read through the
+  API with the read token, so a private repository's files come too. A
+  GitLab release is downloaded from its link without a token, since the
+  token is GitHub's. Another git server has no release files to fetch,
+  and the step says so.
 - Every task that runs pipelinegen, planning and bookkeeping tasks as
   much as a suite's, gets `PIPELINEGEN_PIPELINE_STEP=1`, which tells
   pipelinegen it runs as a pipeline's step: Bazel's output and bazelisk's
