@@ -50,16 +50,16 @@ plugins:
       - name: api
         kind: sbom
         path: sbom/openapi
-        release: {version: vX.Y.Z, sha256: ...}
+        release: {version: v0.4.0, sums: …}
 ```
 
-The checksum is the `openapi-sbom-linux-amd64` line of the release's
-`SHA256SUMS`. Or pin the release by the checksum of its `SHA256SUMS`
-itself, `sums: ...` in place of `sha256`: one pin then serves every
-platform, a Mac's binary checked by its own line of the list.
-A new pin selects nothing by itself. List `pipelinegen.yaml`
-under `everything_on`, so that a pin change, like any other change to the
-config, runs every slice.
+`sums` is the checksum of the release's `SHA256SUMS`, so one pin serves
+every platform and each binary is checked by its own line of that list.
+To pin one binary alone, put `sha256:` with its line
+(`openapi-sbom-linux-amd64`) in place of `sums`. A new pin selects
+nothing by itself. List `pipelinegen.yaml` under `everything_on`, so
+that a pin change, like any other change to the config, runs every
+slice.
 
 ### The files it claims
 
@@ -297,49 +297,35 @@ service with its servers as endpoints, and each operation is a nested
 service with its full URL, its route (`GET /notes/{id}`) and its digest as
 properties.
 
-## Developing and releasing
-
-The Go version and golangci-lint version are in `.tool-versions`. Before a
-push, run `go test ./...` and `golangci-lint run`. The tests run
-against small fixture documents in `openapi/testdata` and need no network.
-
-The conformance kit checks the plugin the way pipelinegen calls it, on
-the fixture contract:
-
-```sh
-go build -trimpath -o openapi-sbom ./cmd/openapi-sbom
-pipelinegen plugin test ./openapi-sbom --tree openapi/testdata/notes
-```
-
-Releases are built and published with
-`bazel run //sbom/openapi:release`, which runs pipelinegen's release
-command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
-describes. For a tag `sbom/openapi/vX.Y.Z` on `main` it publishes static
-`openapi-sbom-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
-`-darwin-arm64`, `plugin.json` (the plugin's own `describe`), `LICENSE`,
-`NOTICE` and `SHA256SUMS`. A published release never changes; a wrong one
-gets a new version.
-
 ## Developing
 
-The tests and the lint run with the Go, golangci-lint and Node that the
-repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
-other commands run in this directory.
+`bazel run //sbom/openapi:test` runs the tests and `bazel run
+//sbom/openapi:lint` the lint, with the Go, golangci-lint and Node the
+repository pins in `MODULE.bazel`
+([CONTRIBUTING](../../CONTRIBUTING.md)). The tests read the fixture
+documents in `openapi/testdata` and use no network.
+
+pipelinegen's conformance kit calls the openapi-sbom you built the way
+pipelinegen does, on the fixture contract. The commands below run it
+from this directory with the pipelinegen that `tools/go.mod` pins. The
+go on your `PATH` must be at least as new as `go.mod` asks.
 
 ```sh
-bazel run //sbom/openapi:test
-bazel run //sbom/openapi:lint
 go build -trimpath -o openapi-sbom ./cmd/openapi-sbom
-pipelinegen plugin test ./openapi-sbom --tree openapi/testdata/notes
+go -C ../../tools tool pipelinegen plugin test "$PWD/openapi-sbom" --tree "$PWD/openapi/testdata/notes"
 ```
 
-- Tests read the fixture documents in `openapi/testdata` and use no
-  network.
-- The last line runs pipelinegen's conformance kit, which calls the
-  openapi-sbom you built the way pipelinegen does, on the fixture
-  contract. Take `pipelinegen` from [its
-  releases](https://github.com/sideways-works/pipelinegen/blob/main/docs/tutorial/install.md).
-- oapi-codegen-correlator names the units openapi-sbom lists, so a
-  change to an id's form is a change to both plugins.
-- A change to what openapi-sbom lists comes with its docs: the README
-  describes openapi-sbom as it is on `main`.
+oapi-codegen-correlator names the units openapi-sbom lists, so a change
+to an id's form is a change to both plugins.
+
+`bazel run //sbom/openapi:release` releases it from a tag
+`sbom/openapi/vX.Y.Z` on `main`, as
+[CONTRIBUTING](../../CONTRIBUTING.md#releases) describes: static
+`openapi-sbom-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (its own `describe` answer), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. Its first release here is `v0.4.0`
+([RELEASING](../../RELEASING.md)), and a published release never
+changes.
+
+A change to what openapi-sbom lists comes with its docs, so this README
+describes openapi-sbom as it is on `main`.
