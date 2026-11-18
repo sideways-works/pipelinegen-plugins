@@ -2,6 +2,8 @@ package runstep
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -471,6 +473,36 @@ func TestNoStepPassesATokenOn(t *testing.T) {
 
 		if strings.Contains(string(calls), "token-") || strings.Contains(out.String(), "token-") {
 			t.Errorf("%s passed a token on (withheld)", name)
+		}
+	}
+}
+
+// Tools the task holds at their pins are kept, with nothing fetched; one
+// that doesn't match its pin is fetched again.
+func TestTheFetchKeepsPlacedTools(t *testing.T) {
+	standIn := "#!/bin/sh\n"
+	sum := sha256.Sum256([]byte(standIn))
+	hexSum := hex.EncodeToString(sum[:])
+
+	for _, c := range []struct {
+		name string
+		sum  string
+		code int
+	}{
+		{"placed", hexSum, 0},
+		{"another file", strings.Repeat("a", 64), 1},
+	} {
+		tk, out := task(t, "PIPELINEGEN_GITHUB_API=http://127.0.0.1:1", "PIPELINEGEN_BAZELISK_BASE=http://127.0.0.1:1",
+			"PIPELINEGEN_TOOL_REPOSITORY=o/pipelinegen", "PIPELINEGEN_TOOL_COMMIT=c0ffee",
+			"PIPELINEGEN_BAZELISK_VERSION=v1", "PIPELINEGEN_BAZELISK_SHA256="+c.sum,
+			"PIPELINEGEN_PLUGINS=runner o/pipelinegen-runner-x v1 "+c.sum+" -\ngo o/go-sbom - - c0ffee\n")
+
+		for _, p := range []string{tool, "tools/bazelisk", "tools/plugins/runner", "tools/plugins/go"} {
+			write(t, filepath.Join(tk.Dir, p), standIn, 0o700)
+		}
+
+		if code := tk.fetchTools(tk.Env); code != c.code {
+			t.Errorf("%s: exit %d\n%s", c.name, code, out)
 		}
 	}
 }

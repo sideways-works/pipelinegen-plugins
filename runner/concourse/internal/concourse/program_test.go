@@ -92,6 +92,11 @@ func TestBootstrapFetchesARenamedRepositorysProgram(t *testing.T) {
 		}
 	}
 
+	// a task's tools start empty: only the cache is shared
+	if err := os.RemoveAll(filepath.Join(work, "tools")); err != nil {
+		t.Fatal(err)
+	}
+
 	out := run("go o/pipelinegen-sbom-go v1 " + sum + " -\nreact o/pipelinegen-correlator-react v1 " + hex.EncodeToString(ssum[:]) + " -\n")
 
 	mu.Lock()
@@ -106,8 +111,11 @@ func TestBootstrapFetchesARenamedRepositorysProgram(t *testing.T) {
 		t.Errorf("tools/plugins/go: %q (%v)", b, err)
 	}
 
-	if err := os.RemoveAll(filepath.Join(work, "cache")); err != nil {
-		t.Fatal(err)
+	// a task's tools start empty
+	for _, d := range []string{"cache", "tools"} {
+		if err := os.RemoveAll(filepath.Join(work, d)); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	asked := func() {

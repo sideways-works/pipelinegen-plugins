@@ -19,7 +19,9 @@ var errUnread = errors.New("unreadable")
 
 // fetchTools places the pinned tools in tools/: pipelinegen, the plugins in
 // tools/plugins and bazelisk. Each is kept in the job's cache, which is
-// checked every time: a wrong binary under a right name never runs.
+// checked every time: a wrong binary under a right name never runs. A tool
+// tools/ already holds at its pin is kept: a task's own tools start empty,
+// so only a task handed them has any (the conformance kit's, offline).
 func (t *Task) fetchTools(env []string) int {
 	f := &fetcher{t: t, env: t.fetchEnv(env)}
 
@@ -217,11 +219,22 @@ func (f *fetcher) fetch(p pin, dest string) int {
 	name := plugin.Program(p.repo)
 
 	if p.commit != "" {
+		f.pinned = append(f.pinned, name+"-commit-"+p.commit)
+
+		// a tool the task got placed is the one its build placed
+		if f.t.executable(dest) {
+			return 0
+		}
+
 		return f.build(p, name, dest)
 	}
 
 	dir := filepath.Join("cache", name+"-release-"+p.version)
 	f.pinned = append(f.pinned, filepath.Base(dir))
+
+	if f.verified(dest, p.sum) {
+		return 0
+	}
 
 	if err := os.MkdirAll(f.t.path(dir), 0o750); err != nil {
 		f.t.sayf("%v", err)
@@ -304,7 +317,6 @@ func (f *fetcher) request(url, accept string) (*http.Request, error) {
 // build builds ./cmd/<program> at the pinned commit, once per commit.
 func (f *fetcher) build(p pin, name, dest string) int {
 	dir := filepath.Join("cache", name+"-commit-"+p.commit)
-	f.pinned = append(f.pinned, filepath.Base(dir))
 
 	if err := os.MkdirAll(f.t.path(dir), 0o750); err != nil {
 		f.t.sayf("%v", err)
@@ -364,6 +376,10 @@ func (f *fetcher) buildAt(p pin, name, built string) int {
 func (f *fetcher) bazelisk(version, sum string) int {
 	cached := filepath.Join("cache", "bazelisk-"+version)
 	f.pinned = append(f.pinned, filepath.Base(cached))
+
+	if f.verified("tools/bazelisk", sum) {
+		return 0
+	}
 
 	if !f.verified(cached, sum) {
 		base := getenv(f.env, "PIPELINEGEN_BAZELISK_BASE")
