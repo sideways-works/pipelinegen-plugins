@@ -17,9 +17,7 @@ import (
 	"github.com/sideways-works/pipelinegen-sbom-openapi/openapi"
 )
 
-// Roles a detected file can have.
 const (
-	// RoleGenerated is a Go file oapi-codegen wrote.
 	RoleGenerated = "generated"
 	// RoleDirective is a Go file with a go:generate line that runs
 	// oapi-codegen: it names the contract and the generator's config.
@@ -36,11 +34,8 @@ const (
 	RoleManifest = "manifest"
 )
 
-// CandidatePatterns are the paths worth reading to detect generated code
-// and contracts.
 var CandidatePatterns = append([]string{"**/*.go", "**/go.mod"}, openapi.CandidatePatterns...)
 
-// A Detection is one file this plugin claims.
 type Detection struct {
 	Path string `json:"path"`
 	Role string `json:"role"`
@@ -271,7 +266,6 @@ var flagsWithValue = map[string]bool{
 }
 
 func directiveArgs(fields []string) (contract, config string) {
-	// Skip to the word that names the generator.
 	i := slices.IndexFunc(fields, func(f string) bool { return strings.Contains(f, "oapi-codegen") })
 	if i < 0 {
 		return "", ""

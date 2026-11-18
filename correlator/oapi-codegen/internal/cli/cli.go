@@ -1,5 +1,3 @@
-// Package cli answers pipelinegen's correlator calls: describe, links,
-// observe, collect and why.
 package cli
 
 import (
@@ -24,7 +22,6 @@ const (
 	exitCannotTell = 3
 )
 
-// The calls this plugin answers.
 const (
 	callDescribe = "describe"
 	callLinks    = "links"
@@ -39,7 +36,6 @@ var (
 	errRequest = errors.New("request")
 )
 
-// Request is what every call reads on stdin; each call uses its own part.
 type Request struct {
 	Protocol   int              `json:"protocol"`
 	Work       string           `json:"work"`
@@ -105,10 +101,8 @@ type step struct {
 	Note string `json:"note"`
 }
 
-// Version is what describe reports.
 var Version = "devel"
 
-// Run answers one call and returns the exit code.
 func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if len(args) != 1 {
 		say(stderr, errUsage)

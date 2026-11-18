@@ -1,5 +1,3 @@
-// Package correlate records who touches the operations of OpenAPI documents
-// in a Go server oapi-codegen generated.
 package correlate
 
 import (
@@ -17,7 +15,6 @@ import (
 // top-level parts only, instead of every unit of it.
 const NarrowDocument = "document-units"
 
-// Link kinds this package writes.
 const (
 	LinkServes     = "serves"     // generated code that runs for one operation
 	LinkImplements = "implements" // a handler method of the repository
@@ -25,7 +22,6 @@ const (
 	LinkReads      = "reads"      // code that reads the document beyond one operation
 )
 
-// Config is the plugin's own block of the repository's config.
 type Config struct {
 	Documents []Document `json:"documents"`
 	// Scan lists the directories searched for code that reaches the
@@ -48,12 +44,10 @@ type Document struct {
 
 	// Base is the path prefix requests carry before the templates
 	// ("/api"); without it, the path of the first server's URL.
-	Base string `json:"base,omitempty"`
-	// Go names the code oapi-codegen generated from the document.
-	Go *GoConfig `json:"go,omitempty"`
+	Base string    `json:"base,omitempty"`
+	Go   *GoConfig `json:"go,omitempty"`
 }
 
-// GoConfig names the Go code oapi-codegen generated from a document.
 type GoConfig struct {
 	// Package is the generated package's directory in the tree.
 	Package string `json:"package"`
@@ -86,7 +80,6 @@ type GoConfig struct {
 	set map[string]bool
 }
 
-// The variables oapi-codegen's embedded-spec option writes.
 const (
 	varSwaggerSpec = "swaggerSpec"
 	varRawSpec     = "rawSpec"
