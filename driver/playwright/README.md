@@ -22,7 +22,7 @@ flowchart LR
 plugins:
   - repository: https://github.com/sideways-works/pipelinegen-plugins
     with:
-      - {name: playwright, kind: driver, path: driver/playwright, release: {version: v0.1.0, sha256: ...}}
+      - {name: playwright, kind: driver, path: driver/playwright, release: {version: v0.4.0, sums: …}}
 suites:
   e2e:
     tests: ["e2e/**/*.spec.ts"]
@@ -171,28 +171,36 @@ root of this repository at the release's tag.
 
 ## Developing
 
-The tests and the lint run with the Go, golangci-lint and Node that the
-repository pins, as [CONTRIBUTING](../../CONTRIBUTING.md) describes; the
-other commands run in this directory.
+`bazel run //driver/playwright:test` runs the tests and `bazel run
+//driver/playwright:lint` the lint, with the Go, golangci-lint and Node
+the repository pins in `MODULE.bazel`
+([CONTRIBUTING](../../CONTRIBUTING.md)). The tests run the driver on
+copies of the fixture project in `driver/testdata/web`, three spec files
+whose tests need no browser. The driver installs the fixture's
+`@playwright/test` with `npm ci`, so the first run needs the npm
+registry. npm's downloads are kept in `playwright-driver-test` under
+your user cache directory, or in the directory
+`PLAYWRIGHT_DRIVER_TEST_CACHE` names. A test also checks that the
+fixture's `driver/testdata/web/e2e/marks.mjs` is byte for byte the
+`marks.mjs` the driver carries.
+
+The tests include pipelinegen's conformance kit: `TestTheKit` builds
+playwright-driver and runs it through the kit with that fixture and the
+pipelinegen `go.mod` requires as a tool. By hand, in this directory:
 
 ```sh
-bazel run //driver/playwright:test
-bazel run //driver/playwright:lint
+go build -trimpath -o playwright-driver ./cmd/playwright-driver
+go tool pipelinegen plugin test ./playwright-driver --tree driver/testdata/web
 ```
 
-- The tests run the driver on copies of the fixture project in
-  `driver/testdata/web`, three spec files whose tests need no browser.
-  The driver installs the fixture's `@playwright/test` with `npm ci`, so
-  the first run needs the npm registry; npm's downloads are kept in
-  `playwright-driver-test` under your user cache directory, or in the
-  directory `PLAYWRIGHT_DRIVER_TEST_CACHE` names.
-- The tests include pipelinegen's conformance kit: `TestTheKit` builds the
-  driver and runs `go tool pipelinegen plugin test` on it with the
-  fixture, with the pipelinegen that `go.mod` requires as a tool. By hand:
-  `pipelinegen plugin test ./playwright-driver --tree driver/testdata/web`.
-- `marks.mjs` is the module a suite's own coverage fixture imports to
-  mark each spec file's start and end. The fixture's
-  `driver/testdata/web/e2e/marks.mjs` must stay byte for byte the same
-  file, and a test checks that.
-- A change to what playwright-driver runs comes with its docs: the README
-  describes playwright-driver as it is on `main`.
+`bazel run //driver/playwright:release` releases it from a tag
+`driver/playwright/vX.Y.Z` on `main`, as
+[CONTRIBUTING](../../CONTRIBUTING.md#releases) describes: static
+`playwright-driver-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (its own `describe` answer), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. Its first release here is `v0.4.0`
+([RELEASING](../../RELEASING.md)), and a published release never
+changes.
+
+A change to what playwright-driver runs comes with its docs, so this
+README describes playwright-driver as it is on `main`.
