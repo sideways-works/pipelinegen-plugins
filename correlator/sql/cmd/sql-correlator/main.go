@@ -1,6 +1,3 @@
-// Command sql-correlator is a pipelinegen correlator that records which
-// database objects each test touched, from its PostgreSQL server's statement
-// log.
 package main
 
 import (
@@ -18,10 +15,8 @@ import (
 	"github.com/sideways-works/pipelinegen-correlator-sql/observe"
 )
 
-// Version is set at release time and reported by describe.
 var Version = "dev"
 
-// config is the plugin's block in the repository's config.
 type config struct {
 	Log            string           `json:"log"`
 	SetupDatabases []string         `json:"setup_databases"`

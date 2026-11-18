@@ -20,7 +20,6 @@ import (
 	"github.com/sideways-works/pipelinegen-correlator-sql/collect"
 )
 
-// Config is the repository's setup.
 type Config struct {
 	// SearchPath is the schemas an unqualified name is looked up in, as
 	// the tests' connections set it. Default: public.
@@ -34,7 +33,6 @@ type Config struct {
 // so what the slice touched is not known.
 var ErrCannotTell = errors.New("cannot tell")
 
-// Observation is what a slice touched.
 type Observation struct {
 	// Touched is every id, the setup's included.
 	Touched []string

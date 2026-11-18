@@ -16,7 +16,6 @@ import (
 	"time"
 )
 
-// Statement is one logged statement.
 type Statement struct {
 	Time time.Time
 	// Began is when it began as far as the line tells: a line logged at the
@@ -50,7 +49,6 @@ const timeLayout = "2006-01-02 15:04:05.000"
 // UTC is refused.
 var ErrNotUTC = errors.New("the server must log in UTC (log_timezone = 'UTC')")
 
-// ErrBadTime says a record's timestamp isn't one PostgreSQL writes.
 var ErrBadTime = errors.New("a timestamp PostgreSQL doesn't write (YYYY-MM-DD HH:MM:SS.mmm UTC)")
 
 // parseTime reads a record's timestamp. Its errors never quote it: a line
@@ -89,7 +87,6 @@ func JSONKind(err error) string {
 	}
 }
 
-// ErrNotJSONLog says a line was not a jsonlog record.
 var ErrNotJSONLog = errors.New("not a PostgreSQL JSON log line (log_destination must be jsonlog)")
 
 // maxLine bounds one record: a plan of a statement with a long text can be
@@ -105,7 +102,6 @@ func Read(r io.Reader, from, to time.Time) ([]Statement, error) {
 	return w.Statements, err
 }
 
-// Window is what Scan read.
 type Window struct {
 	Statements []Statement
 	// Latest is the latest timestamp of any record read, in the window or
@@ -113,7 +109,6 @@ type Window struct {
 	Latest time.Time
 }
 
-// Scan reads r as Read does, and also says the latest timestamp read.
 func Scan(r io.Reader, from, to time.Time) (Window, error) {
 	var out []Statement
 

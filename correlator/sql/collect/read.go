@@ -13,8 +13,6 @@ import (
 	"github.com/sideways-works/pipelinegen-correlator-sql/pglog"
 )
 
-// ErrCannotTell says the part's statements can't be told from its window,
-// and why.
 var ErrCannotTell = errors.New("cannot tell")
 
 // Part is what a part's window held: its own distinct statements and those
@@ -23,7 +21,6 @@ type Part struct {
 	Own, Setup []Statement
 }
 
-// HasWindow tells whether dir holds a window collect noted.
 func HasWindow(dir string) bool {
 	_, err := os.Stat(filepath.Join(dir, WindowFile))
 

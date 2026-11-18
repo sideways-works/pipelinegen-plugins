@@ -22,7 +22,6 @@ import (
 	"github.com/sideways-works/pipelinegen-correlator-sql/pglog"
 )
 
-// Config is the repository's setup.
 type Config struct {
 	// Log is the server's JSON log: a file, or the directory the server
 	// writes its *.json files into (log_directory), whose files are read
@@ -41,10 +40,8 @@ type Config struct {
 	Quiet Duration `json:"quiet"`
 }
 
-// Duration reads "150ms" from JSON.
 type Duration time.Duration
 
-// UnmarshalJSON reads a Go duration string.
 func (d *Duration) UnmarshalJSON(b []byte) error {
 	var s string
 	if err := json.Unmarshal(b, &s); err != nil {
@@ -61,7 +58,6 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// Files a slice's directory holds.
 const (
 	// StartFile marks where the slice began.
 	StartFile = "start.json"
@@ -549,7 +545,6 @@ func sayf(format string, a ...any) {
 // by each line's own timestamp.
 const mtimeSlack = 2 * time.Second
 
-// sameHead tells whether the file still begins as the start's file did.
 func sameHead(name string, from mark) (bool, error) {
 	if from.Head == "" {
 		return true, nil
@@ -662,7 +657,6 @@ func matches(patterns []string, name string) bool {
 	return false
 }
 
-// ReadStatements reads a file StatementsFile or SetupFile names.
 func ReadStatements(name string) ([]Statement, error) {
 	b, err := os.ReadFile(name) //nolint:gosec // a file collect wrote
 	if err != nil {
