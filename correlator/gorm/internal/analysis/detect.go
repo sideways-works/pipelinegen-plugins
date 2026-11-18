@@ -18,8 +18,6 @@ import (
 	"golang.org/x/mod/modfile"
 )
 
-// The files the Go tool reads to load a module, and the directories it
-// skips.
 const (
 	goMod       = "go.mod"
 	goSum       = "go.sum"
@@ -28,7 +26,6 @@ const (
 	dirVendor   = "vendor"
 )
 
-// The roles of the files the correlator claims.
 const (
 	// RoleModule is a go.mod that requires GORM: its module is loaded.
 	RoleModule = "module"
@@ -43,10 +40,8 @@ const (
 	RoleModuleFile = "module-file"
 )
 
-// Candidates are the paths worth showing the correlator.
 var Candidates = []string{"**/go.mod", "**/go.sum", "**/go.work", "**/*.go"}
 
-// ErrDetect wraps a failure to read the tree while detecting modules.
 var ErrDetect = errors.New("detecting GORM modules")
 
 // DetectFile says whether a file is the correlator's, from its name and

@@ -1,5 +1,3 @@
-// Command gorm-correlator is a pipelinegen plugin that links Go declarations
-// to the PostgreSQL relations they reach through GORM.
 package main
 
 import (
@@ -11,8 +9,7 @@ import (
 	"github.com/sideways-works/pipelinegen-correlator-gorm/internal/correlator"
 )
 
-// Version is stamped by the release build; a "dev" build keeps no parse
-// cache.
+// Version stays "dev" outside a release build, and a dev build keeps no parse cache.
 var Version = "dev"
 
 func main() {

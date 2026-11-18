@@ -19,7 +19,6 @@ import (
 	"github.com/sideways-works/pipelinegen-sbom-go/goid"
 )
 
-// ErrLoad wraps a failure to load a module's packages.
 var ErrLoad = errors.New("loading Go packages")
 
 const loadMode = packages.NeedName | packages.NeedFiles | packages.NeedCompiledGoFiles |
@@ -59,7 +58,6 @@ type CannotTell struct {
 	Reasons []string `json:"reasons"`
 }
 
-// Result is what one analysis of a tree found.
 type Result struct {
 	Modules []string `json:"modules"`
 	// Detected says the modules were found, not configured.
@@ -99,7 +97,6 @@ type Stats struct {
 	AnalyzeTime time.Duration `json:"analyze_ns"`
 }
 
-// Options are the request's settings besides the config.
 type Options struct {
 	// Parser parses SQL; nil makes one without a cache.
 	Parser *sqlrefs.Parser
@@ -155,8 +152,6 @@ type fileUnit struct {
 	ds   []goid.Decl
 }
 
-// Analyze loads the configured modules of the tree at root and finds what
-// their GORM calls reach.
 func Analyze(ctx context.Context, root string, cfg Config, opt Options) (*Result, error) {
 	root, err := filepath.Abs(root)
 	if err != nil {
@@ -371,7 +366,7 @@ func (a *analyzer) newCtx(p *packages.Package, d goid.Decl) *declCtx {
 
 func (a *analyzer) add(l Link, where string) {
 	a.links[l] = true
-	if len(a.evidence[l]) < 8 {
+	if len(a.evidence[l]) < 8 { // a few places are enough for a why answer
 		a.evidence[l] = append(a.evidence[l], where)
 	}
 }

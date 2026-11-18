@@ -12,7 +12,6 @@ import (
 
 const gormPath = "gorm.io/gorm"
 
-// Model is a struct type used as a GORM model.
 type Model struct {
 	key  string
 	decl string
@@ -32,13 +31,11 @@ type assoc struct {
 	joinTable string
 }
 
-// Column is a model field and the column it maps to.
 type Column struct {
 	Field  string `json:"field"`
 	Column string `json:"column"`
 }
 
-// ModelInfo describes a model for people and for tests.
 type ModelInfo struct {
 	Type         string            `json:"type"`
 	Decl         string            `json:"decl,omitempty"`

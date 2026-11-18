@@ -41,10 +41,8 @@ type Result struct {
 	Routines []Ref `json:"routines,omitempty"`
 }
 
-// Place says where a fragment sits in a statement.
 type Place int
 
-// The places a GORM fragment can sit in.
 const (
 	// Statement is a whole statement or several (Raw, Exec).
 	Statement Place = iota
@@ -124,7 +122,6 @@ func (p *Parser) Known() (map[string]Result, bool) {
 	return out, p.dirty
 }
 
-// Parse reads the relations of a fragment in its place.
 func (p *Parser) Parse(place Place, sql string) Result {
 	text := wrap(place, sql)
 	key := hash(text)

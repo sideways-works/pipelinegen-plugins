@@ -1,5 +1,3 @@
-// Package correlator answers pipelinegen's plugin calls (describe, detect,
-// links, why) from the analysis of a tree.
 package correlator
 
 import (
@@ -19,14 +17,12 @@ import (
 	"github.com/sideways-works/pipelinegen-correlator-gorm/internal/sqlrefs"
 )
 
-// Name is the plugin's name.
 const Name = "gorm-correlator"
 
 // CallInspect is not part of the protocol: it prints what the analysis of
 // a tree found, for people tuning the config.
 const CallInspect = "inspect"
 
-// The roles of claimed files, in the protocol's words.
 const (
 	RoleManifest = "manifest"
 	RoleSource   = "source"
@@ -47,7 +43,6 @@ var Narrowings = []plugin.Narrowing{
 	{Name: analysis.NarrowModelTypes, OffAt: 5, Note: "a model's type is not linked to its table; call sites link on their own"},
 }
 
-// Describe answers describe.
 func Describe(version string) plugin.Description {
 	return plugin.Description{
 		Protocol: plugin.Protocol, Kind: plugin.KindCorrelator, Name: Name, Version: version,
@@ -60,7 +55,6 @@ func Describe(version string) plugin.Description {
 	}
 }
 
-// WhyRequest asks how one unit reaches another.
 type WhyRequest struct {
 	plugin.TreeRequest
 
@@ -68,18 +62,15 @@ type WhyRequest struct {
 	To   string `json:"to"`
 }
 
-// Step is one step of a why answer.
 type Step struct {
 	Unit string `json:"unit"`
 	Note string `json:"note,omitempty"`
 }
 
-// WhyAnswer is the path from one unit to another.
 type WhyAnswer struct {
 	Path []Step `json:"path"`
 }
 
-// ErrRequest wraps a request the plugin can't read.
 var ErrRequest = errors.New("reading the request")
 
 func decode(in []byte, req any) error {
@@ -204,7 +195,6 @@ func within(mod, p string) bool {
 	return mod == "." || p == mod || strings.HasPrefix(p, mod+"/")
 }
 
-// Links answers links, one set per module.
 func Links(ctx context.Context, in []byte, version string) (any, error) {
 	var req plugin.TreeRequest
 	if err := decode(in, &req); err != nil {
@@ -380,8 +370,6 @@ func Why(ctx context.Context, in []byte, version string) (any, error) {
 	return nil, plugin.ErrCantTell
 }
 
-// Inspect answers the inspect call: the whole result, models and counts
-// included.
 func Inspect(ctx context.Context, in []byte, version string) (any, error) {
 	var req plugin.TreeRequest
 	if err := decode(in, &req); err != nil {

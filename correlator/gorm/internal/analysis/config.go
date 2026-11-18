@@ -12,7 +12,6 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-// Config is the correlator's block of the repository's config.
 type Config struct {
 	// Modules are the Go module directories to load; by default every module
 	// whose go.mod requires GORM.
@@ -127,7 +126,6 @@ type Relation struct {
 // tables, views and materialised views alike.
 const RelationPrefix = "pg:" + pgid.Relation + ":"
 
-// ID is the relation's unit id, as the database inventory builds it.
 func (r Relation) ID() string {
 	return pgid.Of(pgid.Relation, r.Schema, r.Name)
 }
