@@ -3,7 +3,7 @@ package cli
 import (
 	"strings"
 
-	"github.com/sideways-works/pipelinegen-sbom-openapi/openapi"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/openapi/openapi"
 )
 
 // The CycloneDX 1.6 shapes this plugin writes: a service per document, with a

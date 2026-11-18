@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/sideways-works/pipelinegen-sbom-openapi/internal/cli"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/openapi/internal/cli"
 )
 
 var Version = "dev"

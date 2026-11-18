@@ -1,4 +1,4 @@
-module github.com/sideways-works/pipelinegen-sbom-openapi
+module github.com/sideways-works/pipelinegen-plugins/sbom/openapi
 
 go 1.27.1
 

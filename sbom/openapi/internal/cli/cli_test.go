@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sideways-works/pipelinegen-sbom-openapi/openapi"
+	"github.com/sideways-works/pipelinegen-plugins/sbom/openapi/openapi"
 )
 
 const fixture = "../../openapi/testdata/notes"
