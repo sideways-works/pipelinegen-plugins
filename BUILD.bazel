@@ -42,10 +42,14 @@ launcher(
     ],
 )
 
-# Every template built and run through pipelinegen's conformance kit: bazel run //:templates
+# Every template built and run through pipelinegen's conformance kit, at the pipelinegen
+# tools/go.mod requires: bazel run //:templates. A slice of the templates suite, so a change to a
+# template or to that pin runs it.
 launcher(
     name = "templates",
     args = ["templates"],
+    data = ["//tools:module"] + ["//" + u + ":files" for u in UNITS if u.startswith("templates/")],
+    tags = ["slice-plugins-templates"],
 )
 
 # What every Go lint reads besides the code.
