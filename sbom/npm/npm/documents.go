@@ -206,12 +206,10 @@ func npmPURL(purl string) (name, version string, ok bool) {
 	return name, rest[at+1:], true
 }
 
-// PURL is the package URL of an npm package.
 func PURL(name, version string) string {
 	return "pkg:npm/" + strings.Replace(name, "@", "%40", 1) + "@" + version
 }
 
-// Document writes the model as a CycloneDX 1.6 bill of materials.
 func (m *Model) Document(tool, version string) any {
 	b := cdxBOM{BOMFormat: "CycloneDX", SpecVersion: "1.6", Version: 1, Metadata: &cdxMetadata{}, Components: []cdxComponent{}, Dependencies: []cdxDependency{}}
 	b.Metadata.Tools.Components = []cdxTool{{Type: "application", Name: tool, Version: version}}

@@ -1,5 +1,3 @@
-// Package cli answers pipelinegen's plugin calls: describe, units and
-// document.
 package cli
 
 import (
@@ -21,7 +19,6 @@ const (
 	exitCannotTell = 3
 )
 
-// The calls this plugin answers.
 const (
 	callDescribe = "describe"
 	callUnits    = "units"
@@ -34,7 +31,6 @@ var (
 	errRequest = errors.New("request")
 )
 
-// Request is what every call reads on stdin.
 type Request struct {
 	Protocol int        `json:"protocol"`
 	Work     string     `json:"work"`
@@ -78,10 +74,8 @@ type unitsAnswer struct {
 // lockfiles is one unit, so all their inputs form one set.
 const group = "npm"
 
-// Version is what describe reports.
 var Version = "devel"
 
-// Run answers one call and returns the exit code.
 func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if len(args) != 1 {
 		say(stderr, errUsage)

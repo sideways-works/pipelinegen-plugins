@@ -1,5 +1,3 @@
-// Command npm-sbom is a pipelinegen plugin that lists the packages of an npm
-// workspace.
 package main
 
 import (
@@ -8,7 +6,6 @@ import (
 	"github.com/sideways-works/pipelinegen-sbom-npm/internal/cli"
 )
 
-// Version is stamped by a release build with -ldflags "-X main.Version=<tag>".
 var Version = "dev"
 
 func main() {

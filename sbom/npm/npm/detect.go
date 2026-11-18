@@ -10,14 +10,12 @@ import (
 	"strings"
 )
 
-// Roles a detected file can have.
 const (
 	RoleLockfile    = "lockfile"
 	RoleManifest    = "manifest"
 	RoleNodeVersion = "node-version"
 )
 
-// The files npm's tools read, by name.
 const (
 	fileManifest    = "package.json"
 	filePackageLock = "package-lock.json"
@@ -27,19 +25,16 @@ const (
 	fileNodeVersion = ".node-version"
 )
 
-// CandidatePatterns are the paths worth reading to detect npm's files.
 var CandidatePatterns = []string{
 	"**/package.json", "**/package-lock.json", "**/npm-shrinkwrap.json", "**/pnpm-lock.yaml", "**/.nvmrc", "**/.node-version",
 }
 
-// A Detection is one file this plugin claims.
 type Detection struct {
 	Path string `json:"path"`
 	Role string `json:"role"`
 }
 
-// Detect claims npm's files among the candidates. Files under node_modules
-// belong to installed packages and are left out.
+// Detect leaves out files under node_modules: they belong to installed packages.
 func Detect(tree string, paths []string) []Detection {
 	var out []Detection
 
@@ -89,8 +84,7 @@ func hasKey(tree, p, key string) bool {
 	return ok
 }
 
-// Candidates walks the tree for the files CandidatePatterns name.
-// pipelinegen sends candidates itself; this is for running by hand.
+// Candidates is for running by hand: pipelinegen sends the candidates itself.
 func Candidates(tree string) ([]string, error) {
 	var out []string
 
@@ -139,7 +133,6 @@ func rank(p string) int {
 	}
 }
 
-// Lockfiles picks the lockfiles from detections, one per directory.
 func Lockfiles(found []Detection) []string {
 	byDir := map[string]string{}
 

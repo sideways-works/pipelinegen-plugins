@@ -12,10 +12,8 @@ import (
 	"strings"
 )
 
-// Namespace is the prefix of every unit id this package makes.
 const Namespace = "dep:npm:"
 
-// Unit kinds.
 const (
 	KindPackage = "package"
 	// KindToolchain is a unit that reaches everything built or run with
@@ -24,7 +22,6 @@ const (
 	KindToolchain = "toolchain"
 )
 
-// LinkUses is the kind of a link from a package to one it depends on.
 const LinkUses = "uses"
 
 // DefaultToolchains are the packages that build, check or run code rather
@@ -35,7 +32,6 @@ var DefaultToolchains = []string{
 	"@playwright/test", "playwright", "playwright-core", "vitest", "jest",
 }
 
-// Config is what a repository says about its npm workspaces.
 type Config struct {
 	// Lockfiles are the lockfiles' paths in the tree; when empty, every
 	// lockfile detection finds.
@@ -47,7 +43,6 @@ type Config struct {
 	Documents []string `json:"documents,omitempty"`
 }
 
-// A Unit is something a change can touch and a test can depend on.
 type Unit struct {
 	ID         string `json:"id"`
 	Group      string `json:"group"`
@@ -63,7 +58,6 @@ type Unit struct {
 	Label string `json:"label,omitempty"`
 }
 
-// Attributes of a package unit.
 type Attributes struct {
 	// Direct says a workspace's manifest names the package.
 	Direct   bool     `json:"direct"`
@@ -78,7 +72,6 @@ type Link struct {
 	Kind string `json:"kind"`
 }
 
-// Model is a tree's npm bill of materials.
 type Model struct {
 	Units  []Unit
 	Links  []Link
@@ -86,9 +79,7 @@ type Model struct {
 	Inputs []string
 }
 
-// Build reads the lockfiles, toolchain versions and bill of materials
-// documents into units and links. Without lockfiles in the config it detects
-// them itself.
+// Build detects the lockfiles itself when the config names none.
 func Build(tree string, cfg Config) (*Model, error) {
 	if len(cfg.Lockfiles) == 0 {
 		candidates, err := Candidates(tree)

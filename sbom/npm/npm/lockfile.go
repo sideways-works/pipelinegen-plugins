@@ -1,5 +1,3 @@
-// Package npm reads an npm workspace's bill of materials: the installed
-// packages, the dependencies between them and the declared toolchains.
 package npm
 
 import (
@@ -17,14 +15,10 @@ import (
 // nests a tree instead of listing install paths).
 var ErrCannotTell = errors.New("cannot tell")
 
-// ErrNoLockfile is the answer for a tree without package-lock.json or
-// npm-shrinkwrap.json.
 var ErrNoLockfile = fmt.Errorf("%w: no package-lock.json or npm-shrinkwrap.json, so nothing says which packages an install resolves", ErrCannotTell)
 
-// ErrInvalid marks a lockfile that isn't well formed.
 var ErrInvalid = errors.New("invalid lockfile")
 
-// An Entry is one install path of a lockfile.
 type Entry struct {
 	// Path is the install path ("node_modules/a/node_modules/b"), or a
 	// workspace's directory.
@@ -47,7 +41,6 @@ type Entry struct {
 	Engines              map[string]string `json:"engines"`
 }
 
-// A Lockfile is a package-lock.json or npm-shrinkwrap.json.
 type Lockfile struct {
 	File    string
 	Dir     string
@@ -65,7 +58,6 @@ type rawLockfile struct {
 	Packages        map[string]*Entry `json:"packages"`
 }
 
-// ReadLockfile reads a lockfile from the tree: npm's, or pnpm's by its name.
 func ReadLockfile(tree, file string) (*Lockfile, error) {
 	if path.Base(file) == filePnpmLock {
 		return readPnpmLock(tree, file)
@@ -126,7 +118,6 @@ func (l *Lockfile) Installed() []string {
 	return out
 }
 
-// Workspaces lists the root package and every workspace directory.
 func (l *Lockfile) Workspaces() []string {
 	var out []string
 
