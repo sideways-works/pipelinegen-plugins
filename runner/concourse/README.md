@@ -8,9 +8,9 @@ pipeline. `pipelinegen pipeline` calls it.
 
 A runner records nothing about the code. The pipeline it writes calls
 pipelinegen's own commands (`plan`, `unplanned`, `tree`, `batches`,
-`slice start`, `slice end`, `report`), which know no CI system, and the slices a
-run selects never appear in the pipeline: a suite job learns them at run
-time from the run's plan.
+`slice start`, `slice end`, `report`), which know no CI system. The slices
+a run selects never appear in the pipeline; a suite job learns them at
+run time from the run's plan.
 
 ```mermaid
 flowchart LR
@@ -35,8 +35,8 @@ A repository declares two runs, `pr` and `nightly`, and two suites,
 A pull request that changes one Go function starts `plan-pr`. Say the plan
 selects 7 slices of `e2e` and none of `backend`. `pr-e2e` deals the 7
 slices into at most the suite's `parallel` batches and runs one batch task
-per batch, all at once; `pr-backend` runs no batch.
-The pipeline's size doesn't grow with the number of slices.
+per batch, all at once; `pr-backend` runs no batch. The pipeline's size
+doesn't grow with the number of slices.
 
 ## Setting it up
 
@@ -56,8 +56,8 @@ plugins:
 The checksum is the `concourse-runner-linux-amd64` line of the release's
 `SHA256SUMS`. Or pin the release by the checksum of its `SHA256SUMS`
 itself, `sums: ...` in place of `sha256`: one pin then serves every
-platform, a Mac's binary checked by its own line of the list. A runner claims no files, so there is no `detect` and no
-`include` or `exclude`.
+platform, a Mac's binary checked by its own line of the list. A runner
+claims no files, so there is no `detect` and no `include` or `exclude`.
 
 ### Config
 
@@ -167,8 +167,8 @@ repository's own parts from its include file.
   the suite jobs through a resource of its own, `planned-<run>`, and only
   when its write step opened the gate. See [Pull requests](#pull-requests).
 - Each job holds as few tasks as the token allows, since each task waits
-  for a worker on its own. A branch run's planning job is one task, and so is the
-  `pipeline` job. A suite job with one batch is four: `start`, the batch,
+  for a worker on its own. A branch run's planning job is one task, and so
+  is the `pipeline` job. A suite job with one batch is four: `start`, the batch,
   the batch's `batch-end`, and `end`, plus the suite's prepare and its
   whole-suite checks.
 - Every task of pipelinegen's runs one short script, the bootstrap, and
@@ -203,12 +203,11 @@ repository's own parts from its include file.
   goes to the suite jobs' tasks alone.
 - A suite job's `start` task writes the tree under test and the gates,
   and when the plan selected anything of the suite it deals the selected
-  slices into batches. The job runs one batch
-  task per batch with `across` and `max_in_flight: all`, every batch at
-  once (the suite's `parallel`, `batches` and `batch_minutes` say how many
-  batches it deals), and each
-  batch's `batch-end` runs in that batch's `ensure`, so every batch reports
-  as it ends, whatever it did. Each whole-suite check runs only when the
+  slices into batches. The job runs one batch task per batch with
+  `across` and `max_in_flight: all`, every batch at once (the suite's
+  `parallel`, `batches` and `batch_minutes` say how many batches it
+  deals). Each batch's `batch-end` runs in that batch's `ensure`, so every
+  batch reports as it ends, whatever it did. Each whole-suite check runs only when the
   plan selected it. The `end` task runs in the job's `ensure`: it reports
   the suite.
 - A suite's `run_on.serial_group` is one Concourse serial group for every
@@ -221,7 +220,8 @@ repository's own parts from its include file.
   builds run side by side, each writing records of its own commit; the
   workers' own limits are the only bound. Two builds of one job each get
   a copy-on-write view of the job's task caches, and the last to finish
-  keeps its own as the cache, which costs warmth, never a wrong result.
+  keeps its own as the cache. That can cost a warm cache, never a wrong
+  result.
   A planning job is never serial, a continuous run's included, below.
 - A timer run's suite jobs take every commit its planning job passed, not
   the timer: a nightly that finds the branch where its last round left it
@@ -292,7 +292,7 @@ before it ever ran wait for the sweep.
 
 A run whose changes come from a connector (`trigger: {changes: ...}` with,
 say, the plain git connector's review branches) has no pull request
-resource and no planning job. Its sweep is the only doorbell: every
+resource and no planning job. Only its sweep notices new changes: every
 `sweep_every` (one minute by default), `pipelinegen unplanned` asks the
 connector for the changes, plans each new head at once in its own
 checkout, and hands each one on. A sweep costs one `ls-remote` of the
@@ -339,30 +339,35 @@ work tree and hashes, and the caches the plugins share at
 `plan-cache/caches/<name>` (`gomodcache`, `gocache`, `npm`). When
 `planner.prepare` is set, the task runs that command in the checkout
 before planning, with `GOMODCACHE`, `GOCACHE` and `npm_config_cache`
-pointing there (`go mod download`, say). That command may use the network; the plugins
-never do. It gets `planner.params` and `planner.secrets`, which the plan
+pointing there (`go mod download`, say). That command may use the
+network; the plugins never do. It gets `planner.params` and `planner.secrets`, which the plan
 itself never sees, and the pipeline's token only when `planner.secrets`
 declares it. With `planner.git_token`, git asks a credential helper that
 reads that secret when it needs it (`pipelinegen git-auth`).
 
 A pull request run's change comes from outside, and planning runs its
 code: Bazel reads its build files. So its planning job has two tasks,
-after a short third that comes first: `begin`, which runs none of the
-change's code and holds the read and store tokens alone, runs
-`pipelinegen plan --begin`, recording that this build plans the head. The
-run's sweep then leaves the head to the build until `limits.plan` and ten
-minutes have passed, so a cold plan that takes most of an hour isn't
-planned again beside itself; a store it can't write only warns.
-The first, `plan`, holds only the credential that reads; it runs the
-prepare command in a checkout of the base's tip, `base`, never in the
-change's tree, then `pipelinegen plan --out plan`, which writes no
+after a short third that comes first.
+
+`begin` runs none of the change's code and holds the read and store
+tokens alone. It runs `pipelinegen plan --begin`, recording that this
+build plans the head. The run's sweep then leaves the head to the build
+until `limits.plan` and ten minutes have passed, so a cold plan that
+takes most of an hour isn't planned again beside itself. A store it
+can't write only warns.
+
+The first of the two, `plan`, holds only the credential that reads. It
+runs the prepare command in a checkout of the base's tip, `base`, never
+in the change's tree, then `pipelinegen plan --out plan`, which writes no
 record and no status. The second, `write`, holds the credential that
-writes and runs none of the change's code: `pipelinegen plan --from plan`
-works out the commit under test and the base again from the trigger,
-refuses a plan of anything else, writes the plan and the statuses, and
-with `--gate handoff` says whether the job hands the head on.
+writes and runs none of the change's code. Its
+`pipelinegen plan --from plan` works out the commit under test and the
+base again from the trigger, refuses a plan of anything else, writes the
+plan and the statuses, and with `--gate handoff` says whether the job
+hands the head on.
+
 The sweep is split the same way. `planner.secrets` must therefore be
-read-only credentials: the change's code never sees them, but runs in
+read-only credentials: the change's code never sees them, but it runs in
 the task that had them.
 
 ### Images
@@ -410,8 +415,8 @@ pipelinegen's spec may name packages: each suite's (`packages` and
 pipelinegen releases that predate them. A spec without them gives the
 pipeline it always gave.
 
-- **Installs.** Every task the runner writes that runs pipelinegen runs
-  the spec's install script first, in the same shell: the suite's before
+- Every task the runner writes that runs pipelinegen runs the spec's
+  install script first, in the same shell: the suite's before
   `slice run` and `slice prepare`, the planner's before the rest (the
   bootstrap, planning, the reports). The script finds the image's
   package manager, installs only what is missing, and does nothing when
@@ -421,8 +426,8 @@ pipeline it always gave.
   packages when they can't be installed, so a broken build is still
   reported. A task file is the repository's own script: nothing goes in
   front of it, and its suite gets its packages only from a cached image.
-- **Building a cached image.** For each image the spec names, a job
-  `image-<key>` runs when the config changes. A `look` task in
+- For each cached image the spec names, a job `image-<key>` runs when
+  the config changes. A `look` task in
   `concourse/registry-image-resource` asks the registry for
   `<registry>:<key>`. When it is missing, a `build` task in
   `concourse/oci-build-task` builds it on the base resource, fetched at
@@ -435,19 +440,19 @@ pipeline it always gave.
   base the pinned resource. It holds no lock and is in no serial group.
   Two builds that race push the same packages on the same base. The
   resources it pushes through (`cached-<key>`) are never checked.
-- **Running in it.** A suite's job fetches its cached image in an
+- A suite's job fetches its cached image in an
   `image-<key>` task at the start of its work, and its prepare, batch and
   whole-suite tasks run in that artifact. It is a task, not a `get`, since
   every `get` is an input of the job, and a build would wait for an image
   the registry hasn't got. When the registry hasn't got the image or can't
   be reached, the task fetches the base at its digest instead, says so,
   and the installs do the work.
-- **Credentials.** `images.credentials` (`((name.username))`,
+- `images.credentials` (`((name.username))`,
   `((name.password))`) is in the image jobs and their resources, nowhere
   else: no suite job, planning job or pull request's job holds it.
   `images.pull_credentials`, when set, is in the fetch task, which runs no
   code of the repository's. Neither reaches a task that does.
-- **The planner** is never swapped for a cached image: its steps hold the
+- The planner is never swapped for a cached image: its steps hold the
   tokens that write.
 
 ### Workers
@@ -459,8 +464,9 @@ suite's, so on a busy test worker they never queue behind the tests.
 `tags: []` puts them on untagged workers; without a rule they stay with
 the suite.
 
-It has a price. They read what other tasks left on the test workers, and
-Concourse streams it to the bookkeeping worker on every build: the tools
+Moving them adds streaming. They read what other tasks left on the test
+workers, and Concourse streams it to the bookkeeping worker on every
+build: the tools
 (pipelinegen, bazelisk and the plugins), the trigger's checkout, the
 `start` task's `source` (the whole tree under test, with its history)
 and `batches`, each batch's `result` and, in a recording run, its
@@ -488,8 +494,9 @@ each version streams to a worker once; peer-to-peer streaming makes the
 streams themselves fast. The runner can't see the workers' tags, so it
 can't warn about a pool.
 
-Only these two go there. Anything that runs tests, a prepare or Bazel
-stays on the suite's tags, and so does the `start` task: its `source`
+Only these two tasks move to the bookkeeping workers. Anything that runs
+tests, a prepare or Bazel stays on the suite's tags, and so does the
+`start` task: its `source`
 output would otherwise stream from the bookkeeping worker to every batch
 on the test workers. The `report-error` hooks of a build that broke stay
 on the suite's tags too.
@@ -515,6 +522,7 @@ once, waits while a round of the run is in progress (it reads the run's
 records, and takes nothing), and lets the build go on when that round has
 ended and its commit is still the newest. A build it ends has a closed
 gate in `handoff/`, and the task stops there, green, without the prepare.
+
 Only a build that goes on runs the prepare and then the plan step, which
 decides once more and plans. So what the prepare leaves for the plan (a
 credential cache that expires, say) need only last the plan's limit, not
@@ -555,7 +563,8 @@ A step in an `ensure` or another hook carries its own `timeout`: Concourse
 runs a hook after a limit ended the step, outside that limit. A timeout
 fails a step rather than erroring it, so the job's `on_error` hook doesn't
 post for it; the end task, in the job's `ensure`, reports the suite.
-The end task sits in no `try`: its inputs are optional. Concourse runs the
+
+The end task sits in no `try`, since its inputs are optional. Concourse runs the
 job's `ensure` on an abort too, so the end task runs whatever happened to
 the build. A build that broke or was aborted before its start task had the
 tools, such as one still waiting for a worker for that task, has no
@@ -565,6 +574,7 @@ not wait for it. A build that broke before its trigger was there has no
 commit to end, and ends at once. Its step lets every failure of `report
 suite` pass but exit 4, a suite's end that could not be recorded, which
 fails the job.
+
 The job's `on_error` and `on_abort` hooks (`report-error`) run before the
 `ensure`. They run `report suite` themselves when the build had got as far
 as its tools and its trigger; only without them do they post the suite's
@@ -573,6 +583,7 @@ They hold the end task's tokens for that. A build aborted while it was
 pending, before it started, and one that broke before it had its trigger
 or the planner image the end task runs in, end no suite: theirs has no end
 until `pipelinegen end` or the run's idle bound.
+
 Each of pipelinegen's own steps gets `PIPELINEGEN_LIMIT` (the key and its
 minutes), and a task that begins with a script exports
 `PIPELINEGEN_DEADLINE` at its start: pipelinegen ends two minutes before
@@ -714,12 +725,15 @@ go build -trimpath -o concourse-runner ./cmd/concourse-runner
 pipelinegen plugin test ./concourse-runner
 ```
 
-Releases are built and published with `bazel run //runner/concourse:release`, which
-runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
-describes: static `concourse-runner-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
-`-darwin-arm64`,
-`plugin.json` (the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `runner/concourse/vX.Y.Z` on `main`. A published release never changes; a wrong one gets a
-new version. A change to what the pipeline's steps call ships with the
+Releases are built and published with
+`bazel run //runner/concourse:release`, which runs pipelinegen's release
+command as its
+[release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+describes. For a tag `runner/concourse/vX.Y.Z` on `main` it makes static
+`concourse-runner-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (the plugin's own `describe`), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. A published release never changes; a wrong one
+gets a new version. A change to what the pipeline's steps call ships with the
 pipelinegen release that has those commands, both pins moving in one
 commit.
 
@@ -751,9 +765,9 @@ go tool pipelinegen plugin test ./concourse-runner
   `internal/concourse/testdata`. With `fly` on your `PATH`, they also
   check every pipeline with `fly validate-pipeline --strict`; without it
   those checks are skipped, so run them with `fly` before a pull request.
-- No step prints a secret: tests check the generated pipeline and the
+- No step prints a secret. Tests check the generated pipeline and the
   bootstrap for the patterns that would leak the token, and run every
-  step to check none passes it on; a change keeps them passing rather
-  than loosening them.
+  step to check none passes it on. A change keeps them passing and
+  doesn't loosen them.
 - A change to the pipeline comes with its docs: the README describes the
   pipeline as concourse-runner writes it on `main`.
