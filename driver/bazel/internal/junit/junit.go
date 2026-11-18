@@ -1,4 +1,3 @@
-// Package junit reads the test cases of a test.xml Bazel kept for a target.
 package junit
 
 import (
@@ -9,7 +8,6 @@ import (
 	"strings"
 )
 
-// Case is one test case.
 type Case struct {
 	Name string
 	// Failed is set for a failure or an error; Message is what it said.
@@ -42,7 +40,6 @@ type detail struct {
 	Text    string `xml:",chardata"`
 }
 
-// ErrRead wraps a test.xml that can't be read.
 var ErrRead = errors.New("test.xml")
 
 // ReadFile reads the cases of a test.xml; none for an empty one.
@@ -55,7 +52,6 @@ func ReadFile(path string) ([]Case, error) {
 	return Read(data)
 }
 
-// Read reads the cases of a test.xml's content.
 func Read(data []byte) ([]Case, error) {
 	if strings.TrimSpace(string(data)) == "" {
 		return nil, nil

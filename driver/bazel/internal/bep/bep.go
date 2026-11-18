@@ -1,6 +1,5 @@
-// Package bep reads one Bazel invocation's build event file. Results come
-// from this file alone, never from the output tree, which keeps files from
-// earlier invocations.
+// Package bep reads results from the build event file alone, never from the output tree,
+// which keeps files from earlier invocations.
 package bep
 
 import (
@@ -16,10 +15,8 @@ import (
 	"time"
 )
 
-// Result is one test target's outcome in the invocation.
 type Result struct {
-	Label string
-	// Status is the target's overall status from its test summary.
+	Label  string
 	Status string
 	// Cached is set when every part was replayed from a cache.
 	Cached bool
@@ -28,7 +25,6 @@ type Result struct {
 	Seconds float64
 }
 
-// Part is one test action's last attempt: a shard of a run.
 type Part struct {
 	Shard, Run, Attempt int
 	Status              string
@@ -36,15 +32,12 @@ type Part struct {
 	// Log, XML and LCOV are local paths; empty when the event names none or
 	// only a remote one (bytestream://).
 	Log, XML, LCOV string
-	// Remote names the outputs the event gives only as remote URIs.
-	Remote  []string
-	Seconds float64
+	Remote         []string
+	Seconds        float64
 }
 
-// Passed tells whether Bazel counts the target as passing.
 func (r Result) Passed() bool { return r.Status == "PASSED" || r.Status == "FLAKY" }
 
-// Invocation is what one build event file says.
 type Invocation struct {
 	// Results holds only targets whose test summary the file holds, so a
 	// target cut short in one shard has none.
@@ -60,7 +53,6 @@ type Invocation struct {
 // abort says nothing of the target, which then has no result.
 var brokenTarget = map[string]bool{"LOADING_FAILURE": true, "ANALYSIS_FAILURE": true}
 
-// ErrRead wraps a build event file that can't be read.
 var ErrRead = errors.New("build events")
 
 type event struct {
@@ -119,7 +111,6 @@ func ReadFile(path string) (Invocation, error) {
 	return Read(f)
 }
 
-// Read reads build events from r.
 func Read(r io.Reader) (Invocation, error) {
 	inv := Invocation{Results: map[string]Result{}, Failed: map[string]string{}}
 	parts := map[string]map[[2]int]Part{}

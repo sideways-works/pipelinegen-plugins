@@ -27,8 +27,7 @@ type Slice struct {
 	Label string
 	// Kind is the target's rule kind (go_test), which says how its tests are
 	// filtered.
-	Kind string
-	// Tests, when set, are the only tests of the target the slice runs.
+	Kind  string
 	Tests []string
 	// Extras receives test.log and test.xml; Recording, the coverage.
 	Extras, Recording string
@@ -47,7 +46,6 @@ type Settings struct {
 	Timeout int
 }
 
-// With is what a step's with block may hold.
 type With struct {
 	Startup    []string `json:"startup"`
 	Flags      []string `json:"flags"`
@@ -94,7 +92,6 @@ func SettingsOf(conf map[string]any) (Settings, error) {
 	return Settings{Startup: w.Startup, Flags: w.Flags, Instrument: w.Instrument, Timeout: w.Timeout}, nil
 }
 
-// Request is one run of a batch's slices.
 type Request struct {
 	Workspace string
 	// Root is Bazel's output root, kept between a worker's batches so its
@@ -113,13 +110,11 @@ type Request struct {
 	Env         []string
 }
 
-// Failure is a failing test and what it said.
 type Failure struct {
 	Test string `json:"test"`
 	Tail string `json:"tail"`
 }
 
-// Result is one slice's outcome.
 type Result struct {
 	Slice    string    `json:"slice"`
 	Passed   bool      `json:"passed"`
@@ -128,16 +123,13 @@ type Result struct {
 	Seconds  float64   `json:"seconds"`
 	// Status is Bazel's word for the target, FAILED_TO_BUILD, or UNFILTERED
 	// for tests the target's rule can't be told to filter.
-	Status string `json:"status"`
-	// Replayed is set when Bazel served the result from its cache.
-	Replayed bool `json:"replayed,omitempty"`
-	// Recorded is set when a recording run left the slice's coverage.
-	Recorded bool `json:"recorded,omitempty"`
+	Status   string `json:"status"`
+	Replayed bool   `json:"replayed,omitempty"`
+	Recorded bool   `json:"recorded,omitempty"`
 }
 
 const tailLines = 30
 
-// ErrRun wraps a run that couldn't go on.
 var ErrRun = errors.New("bazel driver")
 
 // Run hands each result to emit as its invocation ends. A slice without a

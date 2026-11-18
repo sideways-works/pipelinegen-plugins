@@ -27,7 +27,6 @@ const (
 	EnvSlices = "PIPELINEGEN_MARK_SLICES"
 )
 
-// The boundaries a slice passes.
 const (
 	Start = "start"
 	Stop  = "stop"
@@ -56,7 +55,6 @@ func action() string {
 	return "s" + os.Getenv("TEST_SHARD_INDEX") + "-p" + strconv.Itoa(os.Getpid())
 }
 
-// Mark asks the tool to mark a boundary and waits for its answer.
 func Mark(dir, label, slice, at string, limit time.Duration) error {
 	name := Name(label, action(), at)
 
@@ -93,7 +91,6 @@ func Mark(dir, label, slice, at string, limit time.Duration) error {
 	}
 }
 
-// Slices reads the file naming each target's slice.
 func Slices(path string) (map[string]string, error) {
 	data, err := os.ReadFile(path) //nolint:gosec // the driver's own file
 	if err != nil {
@@ -108,7 +105,6 @@ func Slices(path string) (map[string]string, error) {
 	return out, nil
 }
 
-// WriteSlices writes the file naming each target's slice.
 func WriteSlices(path string, byLabel map[string]string) error {
 	body, err := json.Marshal(byLabel)
 	if err != nil {
@@ -118,8 +114,6 @@ func WriteSlices(path string, byLabel map[string]string) error {
 	return writeAtomic(path, body)
 }
 
-// Wrap runs a test command between its slice's two boundaries and returns
-// its exit code.
 func Wrap(limit time.Duration, argv []string) int {
 	label, dir := os.Getenv("TEST_TARGET"), os.Getenv(EnvDir)
 	if label == "" || dir == "" || len(argv) == 0 {
@@ -217,7 +211,7 @@ func run(argv []string) (int, bool) {
 	case errors.As(err, &exit) && exit.ExitCode() >= 0 && !stopped:
 		return exit.ExitCode(), false
 	case stopped:
-		return 143, true
+		return 143, true // 128 + SIGTERM, as a shell reports a terminated command.
 	default:
 		fmt.Fprintln(os.Stderr, "boundary:", err)
 

@@ -1,5 +1,3 @@
-// Command bazel-driver is pipelinegen's driver for slices that are Bazel
-// test targets.
 package main
 
 import (
@@ -19,7 +17,6 @@ import (
 
 var errVerb = errors.New("unknown verb")
 
-// Version is the driver's version, set by its release build.
 var Version = "dev"
 
 func main() {

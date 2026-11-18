@@ -1,5 +1,3 @@
-// Package bazel runs one `bazel test` or `bazel coverage` invocation. It is
-// the one place that knows Bazel's command line.
 package bazel
 
 import (
@@ -12,7 +10,6 @@ import (
 	"time"
 )
 
-// Invocation is one run of Bazel over some test targets.
 type Invocation struct {
 	Dir string
 	// Record runs `bazel coverage`, instrumenting what Filter matches.
@@ -21,8 +18,7 @@ type Invocation struct {
 	Targets []string
 	// TestFilter, when set, runs only the matching tests of the targets.
 	TestFilter string
-	// Events is the build event file the invocation writes.
-	Events string
+	Events     string
 	// Startup are Bazel's startup options (--output_user_root first).
 	Startup []string
 	Flags   []string
@@ -30,9 +26,8 @@ type Invocation struct {
 	TestEnv []string
 	// Timeout, when positive, is each test's limit in seconds.
 	Timeout int
-	// Log receives Bazel's output.
-	Log string
-	Env []string
+	Log     string
+	Env     []string
 }
 
 // Runner runs invocations; the driver's tests replace it.
@@ -40,15 +35,12 @@ type Runner interface {
 	Run(ctx context.Context, inv Invocation) error
 }
 
-// Exec runs Bazel (or bazelisk) as a command.
 type Exec struct {
 	Bazel string
 }
 
-// ErrBazel wraps an invocation that couldn't start.
 var ErrBazel = errors.New("bazel")
 
-// Args is the invocation's command line after the command's name.
 func Args(inv Invocation) []string {
 	cmd := "test"
 	if inv.Record {
