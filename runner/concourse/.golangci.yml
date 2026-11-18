@@ -94,6 +94,8 @@ linters:
       allow-unused: false
   exclusions:
     generated: lax
+    presets:
+      - comments
     rules:
       # Tests repeat literal fixtures on purpose, and table-driven tests are
       # long by nature: the bug linters stay on, the size and repetition
