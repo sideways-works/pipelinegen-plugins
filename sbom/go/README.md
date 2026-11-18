@@ -13,10 +13,10 @@ repository, each thing as a unit with an id and a digest:
   Bazel downloads.
 
 It records what exists. Which code uses a declaration or a module, and
-which declarations a test ran, is
-[go-correlator](../../correlator/go)'s job.
-go-correlator names units through go-sbom's `goid` package, so the two
-always agree. A repository configures the two together.
+which declarations a test ran, is left to
+[go-correlator](../../correlator/go), which names units through go-sbom's
+`goid` package, so the two always agree. A repository configures the two
+together.
 
 go-sbom only reads files. It never runs the go command, never type-checks
 and never touches the network. A backend of about 20,000 declarations
@@ -64,11 +64,10 @@ The checksum is the `go-sbom-linux-amd64` line of the release's
 `SHA256SUMS`. Or pin the release by the checksum of its `SHA256SUMS`
 itself, `sums: ...` in place of `sha256`: one pin then serves every
 platform, a Mac's binary checked by its own line of the list.
-A new pin selects nothing by itself. List `pipelinegen.yaml`
-under `everything_on`, so that a pin change, like any other change to the
-config, runs every slice.
 
-That is usually all.
+A new pin selects nothing by itself. List `pipelinegen.yaml` under
+`everything_on`, so that a pin change, like any other change to the
+config, runs every slice. Usually nothing more is needed.
 
 ### The files it claims
 
@@ -84,8 +83,8 @@ That is usually all.
 | `go.sum`, `go.work.sum`, `vendor/modules.txt` | `lockfile` |
 | `MODULE.bazel` that downloads a Go SDK (`go_sdk.download(`) | `directive` |
 
-It never claims files under `testdata`, `vendor` (but for
-`vendor/modules.txt`) or `node_modules`, under a directory whose name
+It never claims files under `testdata`, `vendor` (except
+`vendor/modules.txt`) or `node_modules`, or under a directory whose name
 starts with `.`, `_` or `bazel-`. The modules it lists are the ones that
 hold a claimed file. The `include` and `exclude` patterns of the plugin's
 entry widen or narrow that.
@@ -133,8 +132,8 @@ dependencies. pipelinegen caches each set by the content of its inputs.
 ### Declaration ids
 
 Plugins that name Go declarations import
-`github.com/sideways-works/pipelinegen-plugins/sbom/go/goid`, so every plugin names a
-declaration the same way. The format changes only with a new major
+`github.com/sideways-works/pipelinegen-plugins/sbom/go/goid`, so every
+plugin names a declaration the same way. The format changes only with a new major
 version of this module.
 
 An id is `go:<package directory>#<kind>:<name>`. The package directory is
@@ -205,9 +204,9 @@ literals and operators, never positions or comments) and also covers:
   digest, so adding `func len` to a package changes its callers' digests.
   A local variable of that name over-selects the same way.
 
-Each package with Go files outside its tests also gets an `api` unit,
-whose digest changes exactly when something another package's type check
-or links can depend on changes. It covers the package's name, every type
+Each package with Go files outside its tests also gets an `api` unit. Its
+digest changes exactly when something changes that another package's
+type check or links can depend on. It covers the package's name, every type
 and constant in full, each function's and method's signature (type
 parameters and constraints included) with whether its body is absent,
 empty or has statements, and each variable's names and type, or the whole
@@ -300,8 +299,8 @@ built:
 
 - the version go.mod requires. Since Go 1.17, go.mod lists every module
   that provides a package to the main module's packages and tests, so
-  go-sbom needs neither the module cache nor a version selection to know
-  it;
+  go-sbom knows the version without the module cache or a version
+  selection;
 - the h1 checksum of that version's zip, from go.sum. The `/go.mod` lines
   don't count, so a `go mod tidy` that only adds those changes no digest;
 - for a module that a `replace` points elsewhere, the replacement's path,
@@ -346,15 +345,15 @@ narrowing is on.
 ### When it can't tell
 
 When pipelinegen passes no claimed files and the walk finds no `go.mod`,
-`units` and `document` answer "can't tell" (exit 3) and say so on stderr.
-An empty answer there would tell pipelinegen that every Go unit of the
-tree is gone.
+`units` and `document` answer "can't tell" (exit 3) and say so on stderr,
+because an empty answer there would tell pipelinegen that every Go unit
+of the tree is gone.
 
 A module whose go.mod isn't in the module cache is listed under
 `cannot_tell` with the reason, never as a module without requirements,
-and the answer is marked `"cacheable": false`. It depends on the module
-cache as well as on the tree, so the next plan asks again; until then
-pipelinegen binds that module wide.
+and the answer is marked `"cacheable": false`. Since the answer then
+depends on the module cache as well as on the tree, the next plan asks
+again; until then pipelinegen binds that module wide.
 
 ## Narrowings
 
@@ -367,7 +366,7 @@ with it off the wide rule applies.
 | `unexported-methods` | 5 | an unexported method whose name no interface, struct field or other method of the package bears stays out of its type's `type:T` digest: adding, removing or renaming such a helper changes the method and its signature unit, which bind the tests that call it, and not every test that uses the type | the type links to the signature of each such method, so a test bound to the type is bound to them all, as when they were in its digest | nothing. An unexported method is seen only by its own package: reflection and templates see exported methods alone, and an unexported name in another package is another name. In its package it can matter beyond a call that names it in two ways only: an interface declaring the name (a type may now satisfy it, also through an embedding, also an interface in a function body or a test file), and a selector through an embedding that now resolves to it (which needs another method or field of the same name somewhere in the package). Either keeps the method in the digest. A call naming the method is new or changed code itself, or it ran the old method, and is bound through that |
 | `module-graph` | 5 | a slice binds only the modules its code links, through go-correlator | a slice bound to a module is also bound to every module that module's go.mod requires, transitively | nothing next to go-correlator, which links each package to the module of every package it imports, transitively, imports made by other modules' packages included. A module that another module's go.mod requires, but whose packages nothing imports, isn't compiled into any binary and can't change a result. Without go-correlator nothing links code to modules, so keep this narrowing off |
 
-With go-correlator in place, the module graph only adds runs: a bump of a
+With go-correlator in place, the module graph only adds runs. A bump of a
 text library would select everything that uses a database driver, even
 where the driver never imports it. pipelinegen's ladder switches the
 narrowing off at the same level as go-correlator's `module-bumps`.
@@ -385,7 +384,7 @@ narrowing off at the same level as go-correlator's `module-bumps`.
 
 The requests and answers follow pipelinegen's
 [plugin protocol](https://github.com/sideways-works/pipelinegen/blob/main/docs/plugins.md).
-This section adds what is particular to go-sbom. Its capabilities are
+What is particular to go-sbom: its capabilities are
 `detect`, `units` and `document`; its namespaces are `go` and `dep:go`;
 `inputs` declares `detect` per file and `units` and `document` per set.
 
@@ -455,12 +454,14 @@ go build -trimpath -o go-sbom ./cmd/go-sbom
 pipelinegen plugin test ./go-sbom --tree testdata/kit
 ```
 
-Releases are built and published with `bazel run //sbom/go:release`, which
-runs pipelinegen's release command as its [release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
-describes: static `go-sbom-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
-`-darwin-arm64`, `plugin.json`
-(the plugin's own `describe`), `LICENSE`, `NOTICE` and `SHA256SUMS`, for a tag `sbom/go/vX.Y.Z` on `main`. A published release never changes; a wrong one gets a new
-version.
+Releases are built and published with `bazel run //sbom/go:release`,
+which runs pipelinegen's release command as its
+[release guide](https://github.com/sideways-works/pipelinegen/blob/main/docs/releases.md)
+describes. For a tag `sbom/go/vX.Y.Z` on `main` it makes static
+`go-sbom-linux-amd64`, `-linux-arm64`, `-darwin-amd64` and
+`-darwin-arm64`, `plugin.json` (the plugin's own `describe`), `LICENSE`,
+`NOTICE` and `SHA256SUMS`. A published release never changes; a wrong one
+gets a new version.
 
 ## Developing
 
