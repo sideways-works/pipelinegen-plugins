@@ -1334,18 +1334,32 @@ jobs:
                             trigger: trigger-bookkeeping
                         task: batch-end
                         timeout: 20m
-                      file: source/ci/go-test.yml
-                      params:
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/main-go
-                        PIPELINEGEN_RECORD: "true"
-                        PIPELINEGEN_RUN: main
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: go
-                      tags:
-                        - cloud-1
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/ci/go-test.yml
+                        on_error:
+                            file: source/ci/go-test.yml
+                            params:
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/main-go
+                                PIPELINEGEN_RECORD: "true"
+                                PIPELINEGEN_RUN: main
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: go
+                            tags:
+                                - cloud-1
+                            task: batch
+                            timeout: 120m
+                        params:
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/main-go
+                            PIPELINEGEN_RECORD: "true"
+                            PIPELINEGEN_RUN: main
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: go
+                        tags:
+                            - cloud-1
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
     - ensure:
         config:
@@ -2226,18 +2240,32 @@ jobs:
                             trigger: trigger-bookkeeping
                         task: batch-end
                         timeout: 20m
-                      file: source/ci/go-test.yml
-                      params:
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/main-go-whole
-                        PIPELINEGEN_RECORD: "false"
-                        PIPELINEGEN_RUN: main
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: go-whole
-                      tags:
-                        - cloud-1
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/ci/go-test.yml
+                        on_error:
+                            file: source/ci/go-test.yml
+                            params:
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/main-go-whole
+                                PIPELINEGEN_RECORD: "false"
+                                PIPELINEGEN_RUN: main
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: go-whole
+                            tags:
+                                - cloud-1
+                            task: batch
+                            timeout: 120m
+                        params:
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/main-go-whole
+                            PIPELINEGEN_RECORD: "false"
+                            PIPELINEGEN_RUN: main
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: go-whole
+                        tags:
+                            - cloud-1
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
     - ensure:
         config:
@@ -3118,18 +3146,32 @@ jobs:
                             trigger: trigger-bookkeeping
                         task: batch-end
                         timeout: 20m
-                      file: source/ci/lint.yml
-                      params:
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/main-lint
-                        PIPELINEGEN_RECORD: "false"
-                        PIPELINEGEN_RUN: main
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: lint
-                      tags:
-                        - cloud-1
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/ci/lint.yml
+                        on_error:
+                            file: source/ci/lint.yml
+                            params:
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/main-lint
+                                PIPELINEGEN_RECORD: "false"
+                                PIPELINEGEN_RUN: main
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: lint
+                            tags:
+                                - cloud-1
+                            task: batch
+                            timeout: 120m
+                        params:
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/main-lint
+                            PIPELINEGEN_RECORD: "false"
+                            PIPELINEGEN_RUN: main
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: lint
+                        tags:
+                            - cloud-1
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
     - ensure:
         config:
@@ -4010,20 +4052,36 @@ jobs:
                             trigger: trigger-bookkeeping
                         task: batch-end
                         timeout: 20m
-                      file: source/ci/proof/task.yml
-                      params:
-                        GITHUB_TOKEN: ((github_token))
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/main-proof
-                        PIPELINEGEN_RECORD: "false"
-                        PIPELINEGEN_RUN: main
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: proof
-                        PROOF_TOOL: source
-                      tags:
-                        - cloud-1
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/ci/proof/task.yml
+                        on_error:
+                            file: source/ci/proof/task.yml
+                            params:
+                                GITHUB_TOKEN: ((github_token))
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/main-proof
+                                PIPELINEGEN_RECORD: "false"
+                                PIPELINEGEN_RUN: main
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: proof
+                                PROOF_TOOL: source
+                            tags:
+                                - cloud-1
+                            task: batch
+                            timeout: 120m
+                        params:
+                            GITHUB_TOKEN: ((github_token))
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/main-proof
+                            PIPELINEGEN_RECORD: "false"
+                            PIPELINEGEN_RUN: main
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: proof
+                            PROOF_TOOL: source
+                        tags:
+                            - cloud-1
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
     - ensure:
         config:
@@ -4914,19 +4972,34 @@ jobs:
                             trigger: trigger-bookkeeping
                         task: batch-end
                         timeout: 20m
-                      file: source/example/ci/smoke-slices.yml
-                      params:
-                        EXAMPLE_DIR: example
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/main-smoke
-                        PIPELINEGEN_RECORD: "false"
-                        PIPELINEGEN_RUN: main
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: smoke
-                      tags:
-                        - cloud-1
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/example/ci/smoke-slices.yml
+                        on_error:
+                            file: source/example/ci/smoke-slices.yml
+                            params:
+                                EXAMPLE_DIR: example
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/main-smoke
+                                PIPELINEGEN_RECORD: "false"
+                                PIPELINEGEN_RUN: main
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: smoke
+                            tags:
+                                - cloud-1
+                            task: batch
+                            timeout: 120m
+                        params:
+                            EXAMPLE_DIR: example
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/main-smoke
+                            PIPELINEGEN_RECORD: "false"
+                            PIPELINEGEN_RUN: main
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: smoke
+                        tags:
+                            - cloud-1
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
     - ensure:
         config:
@@ -5807,19 +5880,34 @@ jobs:
                             trigger: trigger-bookkeeping
                         task: batch-end
                         timeout: 20m
-                      file: source/example/ci/unit-slices.yml
-                      params:
-                        EXAMPLE_DIR: example
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/main-unit
-                        PIPELINEGEN_RECORD: "false"
-                        PIPELINEGEN_RUN: main
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: unit
-                      tags:
-                        - cloud-1
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/example/ci/unit-slices.yml
+                        on_error:
+                            file: source/example/ci/unit-slices.yml
+                            params:
+                                EXAMPLE_DIR: example
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/main-unit
+                                PIPELINEGEN_RECORD: "false"
+                                PIPELINEGEN_RUN: main
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: unit
+                            tags:
+                                - cloud-1
+                            task: batch
+                            timeout: 120m
+                        params:
+                            EXAMPLE_DIR: example
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/main-unit
+                            PIPELINEGEN_RECORD: "false"
+                            PIPELINEGEN_RUN: main
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: unit
+                        tags:
+                            - cloud-1
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
     - name: plan-newest
       plan:
@@ -6899,20 +6987,36 @@ jobs:
                             trigger: trigger-bookkeeping
                         task: batch-end
                         timeout: 20m
-                      file: source/ci/proof/task.yml
-                      params:
-                        GITHUB_TOKEN: ((github_token))
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/newest-proof
-                        PIPELINEGEN_RECORD: "false"
-                        PIPELINEGEN_RUN: newest
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: proof
-                        PROOF_NEWEST: "true"
-                      tags:
-                        - cloud-1
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/ci/proof/task.yml
+                        on_error:
+                            file: source/ci/proof/task.yml
+                            params:
+                                GITHUB_TOKEN: ((github_token))
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/newest-proof
+                                PIPELINEGEN_RECORD: "false"
+                                PIPELINEGEN_RUN: newest
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: proof
+                                PROOF_NEWEST: "true"
+                            tags:
+                                - cloud-1
+                            task: batch
+                            timeout: 120m
+                        params:
+                            GITHUB_TOKEN: ((github_token))
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/newest-proof
+                            PIPELINEGEN_RECORD: "false"
+                            PIPELINEGEN_RUN: newest
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: proof
+                            PROOF_NEWEST: "true"
+                        tags:
+                            - cloud-1
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
     - name: plan-nightly
       plan:
@@ -7994,18 +8098,32 @@ jobs:
                             trigger: trigger-bookkeeping
                         task: batch-end
                         timeout: 20m
-                      file: source/ci/go-test.yml
-                      params:
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/nightly-go
-                        PIPELINEGEN_RECORD: "true"
-                        PIPELINEGEN_RUN: nightly
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: go
-                      tags:
-                        - cloud-1
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/ci/go-test.yml
+                        on_error:
+                            file: source/ci/go-test.yml
+                            params:
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/nightly-go
+                                PIPELINEGEN_RECORD: "true"
+                                PIPELINEGEN_RUN: nightly
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: go
+                            tags:
+                                - cloud-1
+                            task: batch
+                            timeout: 120m
+                        params:
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/nightly-go
+                            PIPELINEGEN_RECORD: "true"
+                            PIPELINEGEN_RUN: nightly
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: go
+                        tags:
+                            - cloud-1
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
     - ensure:
         config:
@@ -8878,18 +8996,32 @@ jobs:
                             trigger: trigger-bookkeeping
                         task: batch-end
                         timeout: 20m
-                      file: source/ci/go-test.yml
-                      params:
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/nightly-go-whole
-                        PIPELINEGEN_RECORD: "false"
-                        PIPELINEGEN_RUN: nightly
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: go-whole
-                      tags:
-                        - cloud-1
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/ci/go-test.yml
+                        on_error:
+                            file: source/ci/go-test.yml
+                            params:
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/nightly-go-whole
+                                PIPELINEGEN_RECORD: "false"
+                                PIPELINEGEN_RUN: nightly
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: go-whole
+                            tags:
+                                - cloud-1
+                            task: batch
+                            timeout: 120m
+                        params:
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/nightly-go-whole
+                            PIPELINEGEN_RECORD: "false"
+                            PIPELINEGEN_RUN: nightly
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: go-whole
+                        tags:
+                            - cloud-1
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
     - ensure:
         config:
@@ -9762,18 +9894,32 @@ jobs:
                             trigger: trigger-bookkeeping
                         task: batch-end
                         timeout: 20m
-                      file: source/ci/lint.yml
-                      params:
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/nightly-lint
-                        PIPELINEGEN_RECORD: "false"
-                        PIPELINEGEN_RUN: nightly
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: lint
-                      tags:
-                        - cloud-1
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/ci/lint.yml
+                        on_error:
+                            file: source/ci/lint.yml
+                            params:
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/nightly-lint
+                                PIPELINEGEN_RECORD: "false"
+                                PIPELINEGEN_RUN: nightly
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: lint
+                            tags:
+                                - cloud-1
+                            task: batch
+                            timeout: 120m
+                        params:
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/nightly-lint
+                            PIPELINEGEN_RECORD: "false"
+                            PIPELINEGEN_RUN: nightly
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: lint
+                        tags:
+                            - cloud-1
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
     - ensure:
         config:
@@ -10646,19 +10792,34 @@ jobs:
                             trigger: trigger-bookkeeping
                         task: batch-end
                         timeout: 20m
-                      file: source/ci/proof/task.yml
-                      params:
-                        GITHUB_TOKEN: ((github_token))
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/nightly-proof
-                        PIPELINEGEN_RECORD: "false"
-                        PIPELINEGEN_RUN: nightly
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: proof
-                      tags:
-                        - cloud-1
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/ci/proof/task.yml
+                        on_error:
+                            file: source/ci/proof/task.yml
+                            params:
+                                GITHUB_TOKEN: ((github_token))
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/nightly-proof
+                                PIPELINEGEN_RECORD: "false"
+                                PIPELINEGEN_RUN: nightly
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: proof
+                            tags:
+                                - cloud-1
+                            task: batch
+                            timeout: 120m
+                        params:
+                            GITHUB_TOKEN: ((github_token))
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/nightly-proof
+                            PIPELINEGEN_RECORD: "false"
+                            PIPELINEGEN_RUN: nightly
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: proof
+                        tags:
+                            - cloud-1
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
     - ensure:
         config:
@@ -11541,19 +11702,34 @@ jobs:
                             trigger: trigger-bookkeeping
                         task: batch-end
                         timeout: 20m
-                      file: source/example/ci/smoke-slices.yml
-                      params:
-                        EXAMPLE_DIR: example
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/nightly-smoke
-                        PIPELINEGEN_RECORD: "false"
-                        PIPELINEGEN_RUN: nightly
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: smoke
-                      tags:
-                        - cloud-1
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/example/ci/smoke-slices.yml
+                        on_error:
+                            file: source/example/ci/smoke-slices.yml
+                            params:
+                                EXAMPLE_DIR: example
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/nightly-smoke
+                                PIPELINEGEN_RECORD: "false"
+                                PIPELINEGEN_RUN: nightly
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: smoke
+                            tags:
+                                - cloud-1
+                            task: batch
+                            timeout: 120m
+                        params:
+                            EXAMPLE_DIR: example
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/nightly-smoke
+                            PIPELINEGEN_RECORD: "false"
+                            PIPELINEGEN_RUN: nightly
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: smoke
+                        tags:
+                            - cloud-1
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
     - ensure:
         config:
@@ -12426,19 +12602,34 @@ jobs:
                             trigger: trigger-bookkeeping
                         task: batch-end
                         timeout: 20m
-                      file: source/example/ci/unit-slices.yml
-                      params:
-                        EXAMPLE_DIR: example
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/nightly-unit
-                        PIPELINEGEN_RECORD: "false"
-                        PIPELINEGEN_RUN: nightly
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: unit
-                      tags:
-                        - cloud-1
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/example/ci/unit-slices.yml
+                        on_error:
+                            file: source/example/ci/unit-slices.yml
+                            params:
+                                EXAMPLE_DIR: example
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/nightly-unit
+                                PIPELINEGEN_RECORD: "false"
+                                PIPELINEGEN_RUN: nightly
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: unit
+                            tags:
+                                - cloud-1
+                            task: batch
+                            timeout: 120m
+                        params:
+                            EXAMPLE_DIR: example
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/sideways-works/pipelines/pipelinegen/jobs/nightly-unit
+                            PIPELINEGEN_RECORD: "false"
+                            PIPELINEGEN_RUN: nightly
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: unit
+                        tags:
+                            - cloud-1
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
     - name: release
       plan:

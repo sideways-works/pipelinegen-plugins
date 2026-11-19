@@ -246,7 +246,13 @@ repository's own parts from its include file.
   `across` and `max_in_flight: all`, every batch at once (the suite's
   `parallel`, `batches` and `batch_minutes` say how many batches it
   deals). Each batch's `batch-end` runs in that batch's `ensure`, so every
-  batch reports as it ends, whatever it did. Each whole-suite check runs only when the
+  batch reports as it ends, whatever it did. A batch task that errors
+  (its container or a volume couldn't be set up, its worker went, it hit
+  its timeout) runs once more, the same task with the same inputs and
+  outputs, in its `on_error`; one that fails, or is aborted, does not. The
+  batch sits in a `try`, so the batch's `batch-end` decides its step: it
+  fails when a slice didn't pass, whether its tests failed or no attempt
+  ran it, which a second error leaves errored. Each whole-suite check runs only when the
   plan selected it. The `end` task runs in the job's `ensure`: it reports
   the suite.
 - A suite's `run_on.serial_group` is one Concourse serial group for every

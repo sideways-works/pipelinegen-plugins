@@ -116,14 +116,14 @@ func TestTheEndRunsWhateverTheBuildDid(t *testing.T) {
 
 	found := false
 
-	walkFileTasks(job, func(task M) {
-		if task["task"] == "batch" {
-			found = asMap(task["ensure"])["task"] == "batch-end"
+	walkSteps(job, func(step M) {
+		if try := asMap(step["try"]); try["task"] == "batch" {
+			found = asMap(step["ensure"])["task"] == "batch-end"
 		}
 	})
 
 	if !found {
-		t.Error("the batch's end isn't in the batch's ensure")
+		t.Error("the batch's end isn't in the ensure of the step that tries the batch")
 	}
 }
 

@@ -51,7 +51,7 @@ jobs:
                 PIPELINEGEN_LIMIT: limits.steps=20
                 PIPELINEGEN_PACKAGE_CACHE: pkgcache
                 PIPELINEGEN_PIPELINE: fixture
-                PIPELINEGEN_PIPELINE_SHA256: 005b8235886549239ff0b509778e37115f5928d35d870475aea7564946f185c3
+                PIPELINEGEN_PIPELINE_SHA256: c6624e114b35838a7d9751b4c80007f0a9bc5ca9c7079a7dfd5cbe65125ca53a
                 PIPELINEGEN_PIPELINE_STEP: "1"
                 PIPELINEGEN_PLUGINS: ""
                 PIPELINEGEN_PRIVATE: ""
@@ -1936,111 +1936,7 @@ jobs:
                       values: ((.:batches))
                       var: batch
                   do:
-                    - config:
-                        caches:
-                            - path: cache
-                            - path: pkgcache
-                        inputs:
-                            - name: source
-                            - name: batches
-                            - name: tools
-                            - name: prepared
-                        outputs:
-                            - name: result
-                            - name: coverage
-                            - name: work
-                        params:
-                            PIPELINEGEN_BATCH: ((.:batch))
-                            PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/main-backend
-                            PIPELINEGEN_PACKAGE_CACHE: pkgcache
-                            PIPELINEGEN_PIPELINE_STEP: "1"
-                            PIPELINEGEN_RECORD: "false"
-                            PIPELINEGEN_RUN: main
-                            PIPELINEGEN_RUN_FILE: batches/run.json
-                            PIPELINEGEN_SUITE: backend
-                            PIPELINEGEN_TRUSTED: '{"git_remote":"x"}'
-                        platform: linux
-                        run:
-                            args:
-                                - -ec
-                                - |
-                                  # pipelinegen: install what the steps need: jq
-                                  (
-                                  set -eu
-                                  if command -v apt-get >/dev/null 2>&1; then pg_m=apt-get pg_want='jq' pg_none=''
-                                  elif command -v apk >/dev/null 2>&1; then pg_m=apk pg_want='jq' pg_none=''
-                                  elif command -v dnf >/dev/null 2>&1; then pg_m=dnf pg_want='jq' pg_none=''
-                                  elif command -v microdnf >/dev/null 2>&1; then pg_m=microdnf pg_want='jq' pg_none=''
-                                  elif command -v yum >/dev/null 2>&1; then pg_m=yum pg_want='jq' pg_none=''
-                                  else
-                                    echo "pipelinegen: this image has none of the package managers apt-get, apk, dnf, microdnf, yum to install jq" >&2
-                                    exit 1
-                                  fi
-                                  if [ -n "$pg_none" ]; then
-                                    echo "pipelinegen: these packages name nothing for $pg_m: $pg_none" >&2
-                                    exit 1
-                                  fi
-                                  pg_has() {
-                                    case $pg_m in
-                                    apt-get) case "$(dpkg-query -W -f '${Status}' "$1" 2>/dev/null)" in *" ok installed") ;; *) return 1 ;; esac ;;
-                                    apk) apk info -e "$1" >/dev/null 2>&1 ;;
-                                    *) rpm -q "$1" >/dev/null 2>&1 ;;
-                                    esac
-                                  }
-                                  pg_missing=
-                                  for pg_p in $pg_want; do
-                                    pg_has "$pg_p" || pg_missing="$pg_missing $pg_p"
-                                  done
-                                  [ -n "$pg_missing" ] || exit 0
-                                  if [ "$(id -u)" != 0 ]; then
-                                    echo "pipelinegen: can't install$pg_missing with $pg_m: the step runs as user $(id -u), not root" >&2
-                                    exit 1
-                                  fi
-                                  pg_cache=${PIPELINEGEN_PACKAGE_CACHE:-}
-                                  case $pg_cache in ''|/*) ;; *) pg_cache=$PWD/$pg_cache ;; esac
-                                  echo "pipelinegen: installing$pg_missing with $pg_m" >&2
-                                  case $pg_m in
-                                  apt-get)
-                                    set -- -q -o Dpkg::Use-Pty=0 -o APT::Keep-Downloaded-Packages=true
-                                    if [ -n "$pg_cache" ]; then
-                                      mkdir -p "$pg_cache/apt/partial"
-                                      set -- "$@" -o "Dir::Cache::Archives=$pg_cache/apt"
-                                    fi
-                                    DEBIAN_FRONTEND=noninteractive apt-get "$@" update >/dev/null
-                                    DEBIAN_FRONTEND=noninteractive apt-get "$@" install -y --no-install-recommends $pg_missing >/dev/null
-                                    if [ -n "${PIPELINEGEN_PACKAGE_CLEAN:-}" ]; then apt-get clean; rm -rf /var/lib/apt/lists/*; fi
-                                    ;;
-                                  apk)
-                                    if [ -n "$pg_cache" ]; then
-                                      mkdir -p "$pg_cache/apk"
-                                      apk add --no-progress -q --cache-dir "$pg_cache/apk" --update-cache $pg_missing
-                                    else
-                                      apk add --no-progress -q --no-cache $pg_missing
-                                    fi
-                                    ;;
-                                  *)
-                                    set -- -y
-                                    [ -z "$pg_cache" ] || set -- "$@" --setopt=keepcache=1 "--setopt=cachedir=$pg_cache/$pg_m"
-                                    $pg_m "$@" install $pg_missing >/dev/null
-                                    [ -z "${PIPELINEGEN_PACKAGE_CLEAN:-}" ] || $pg_m clean all >/dev/null
-                                    ;;
-                                  esac
-                                  for pg_p in $pg_missing; do
-                                    pg_has "$pg_p" || { echo "pipelinegen: $pg_m installed no $pg_p" >&2; exit 1; }
-                                  done
-                                  )
-                                  exec "$0" "$@"
-                                - tools/pipelinegen
-                                - slice
-                                - run
-                                - --root
-                                - source
-                                - --tools
-                                - tools
-                                - --prepared
-                                - prepared
-                            path: sh
-                      ensure:
+                    - ensure:
                         config:
                             caches:
                                 - path: tools
@@ -2312,9 +2208,222 @@ jobs:
                         image: planner
                         task: batch-end
                         timeout: 20m
-                      image: cached-111111111111
-                      task: batch
-                      timeout: 120m
+                      try:
+                        config:
+                            caches:
+                                - path: cache
+                                - path: pkgcache
+                            inputs:
+                                - name: source
+                                - name: batches
+                                - name: tools
+                                - name: prepared
+                            outputs:
+                                - name: result
+                                - name: coverage
+                                - name: work
+                            params:
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/main-backend
+                                PIPELINEGEN_PACKAGE_CACHE: pkgcache
+                                PIPELINEGEN_PIPELINE_STEP: "1"
+                                PIPELINEGEN_RECORD: "false"
+                                PIPELINEGEN_RUN: main
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: backend
+                                PIPELINEGEN_TRUSTED: '{"git_remote":"x"}'
+                            platform: linux
+                            run:
+                                args:
+                                    - -ec
+                                    - |
+                                      # pipelinegen: install what the steps need: jq
+                                      (
+                                      set -eu
+                                      if command -v apt-get >/dev/null 2>&1; then pg_m=apt-get pg_want='jq' pg_none=''
+                                      elif command -v apk >/dev/null 2>&1; then pg_m=apk pg_want='jq' pg_none=''
+                                      elif command -v dnf >/dev/null 2>&1; then pg_m=dnf pg_want='jq' pg_none=''
+                                      elif command -v microdnf >/dev/null 2>&1; then pg_m=microdnf pg_want='jq' pg_none=''
+                                      elif command -v yum >/dev/null 2>&1; then pg_m=yum pg_want='jq' pg_none=''
+                                      else
+                                        echo "pipelinegen: this image has none of the package managers apt-get, apk, dnf, microdnf, yum to install jq" >&2
+                                        exit 1
+                                      fi
+                                      if [ -n "$pg_none" ]; then
+                                        echo "pipelinegen: these packages name nothing for $pg_m: $pg_none" >&2
+                                        exit 1
+                                      fi
+                                      pg_has() {
+                                        case $pg_m in
+                                        apt-get) case "$(dpkg-query -W -f '${Status}' "$1" 2>/dev/null)" in *" ok installed") ;; *) return 1 ;; esac ;;
+                                        apk) apk info -e "$1" >/dev/null 2>&1 ;;
+                                        *) rpm -q "$1" >/dev/null 2>&1 ;;
+                                        esac
+                                      }
+                                      pg_missing=
+                                      for pg_p in $pg_want; do
+                                        pg_has "$pg_p" || pg_missing="$pg_missing $pg_p"
+                                      done
+                                      [ -n "$pg_missing" ] || exit 0
+                                      if [ "$(id -u)" != 0 ]; then
+                                        echo "pipelinegen: can't install$pg_missing with $pg_m: the step runs as user $(id -u), not root" >&2
+                                        exit 1
+                                      fi
+                                      pg_cache=${PIPELINEGEN_PACKAGE_CACHE:-}
+                                      case $pg_cache in ''|/*) ;; *) pg_cache=$PWD/$pg_cache ;; esac
+                                      echo "pipelinegen: installing$pg_missing with $pg_m" >&2
+                                      case $pg_m in
+                                      apt-get)
+                                        set -- -q -o Dpkg::Use-Pty=0 -o APT::Keep-Downloaded-Packages=true
+                                        if [ -n "$pg_cache" ]; then
+                                          mkdir -p "$pg_cache/apt/partial"
+                                          set -- "$@" -o "Dir::Cache::Archives=$pg_cache/apt"
+                                        fi
+                                        DEBIAN_FRONTEND=noninteractive apt-get "$@" update >/dev/null
+                                        DEBIAN_FRONTEND=noninteractive apt-get "$@" install -y --no-install-recommends $pg_missing >/dev/null
+                                        if [ -n "${PIPELINEGEN_PACKAGE_CLEAN:-}" ]; then apt-get clean; rm -rf /var/lib/apt/lists/*; fi
+                                        ;;
+                                      apk)
+                                        if [ -n "$pg_cache" ]; then
+                                          mkdir -p "$pg_cache/apk"
+                                          apk add --no-progress -q --cache-dir "$pg_cache/apk" --update-cache $pg_missing
+                                        else
+                                          apk add --no-progress -q --no-cache $pg_missing
+                                        fi
+                                        ;;
+                                      *)
+                                        set -- -y
+                                        [ -z "$pg_cache" ] || set -- "$@" --setopt=keepcache=1 "--setopt=cachedir=$pg_cache/$pg_m"
+                                        $pg_m "$@" install $pg_missing >/dev/null
+                                        [ -z "${PIPELINEGEN_PACKAGE_CLEAN:-}" ] || $pg_m clean all >/dev/null
+                                        ;;
+                                      esac
+                                      for pg_p in $pg_missing; do
+                                        pg_has "$pg_p" || { echo "pipelinegen: $pg_m installed no $pg_p" >&2; exit 1; }
+                                      done
+                                      )
+                                      exec "$0" "$@"
+                                    - tools/pipelinegen
+                                    - slice
+                                    - run
+                                    - --root
+                                    - source
+                                    - --tools
+                                    - tools
+                                    - --prepared
+                                    - prepared
+                                path: sh
+                        image: cached-111111111111
+                        on_error:
+                            config:
+                                caches:
+                                    - path: cache
+                                    - path: pkgcache
+                                inputs:
+                                    - name: source
+                                    - name: batches
+                                    - name: tools
+                                    - name: prepared
+                                outputs:
+                                    - name: result
+                                    - name: coverage
+                                    - name: work
+                                params:
+                                    PIPELINEGEN_BATCH: ((.:batch))
+                                    PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/main-backend
+                                    PIPELINEGEN_PACKAGE_CACHE: pkgcache
+                                    PIPELINEGEN_PIPELINE_STEP: "1"
+                                    PIPELINEGEN_RECORD: "false"
+                                    PIPELINEGEN_RUN: main
+                                    PIPELINEGEN_RUN_FILE: batches/run.json
+                                    PIPELINEGEN_SUITE: backend
+                                    PIPELINEGEN_TRUSTED: '{"git_remote":"x"}'
+                                platform: linux
+                                run:
+                                    args:
+                                        - -ec
+                                        - |
+                                          # pipelinegen: install what the steps need: jq
+                                          (
+                                          set -eu
+                                          if command -v apt-get >/dev/null 2>&1; then pg_m=apt-get pg_want='jq' pg_none=''
+                                          elif command -v apk >/dev/null 2>&1; then pg_m=apk pg_want='jq' pg_none=''
+                                          elif command -v dnf >/dev/null 2>&1; then pg_m=dnf pg_want='jq' pg_none=''
+                                          elif command -v microdnf >/dev/null 2>&1; then pg_m=microdnf pg_want='jq' pg_none=''
+                                          elif command -v yum >/dev/null 2>&1; then pg_m=yum pg_want='jq' pg_none=''
+                                          else
+                                            echo "pipelinegen: this image has none of the package managers apt-get, apk, dnf, microdnf, yum to install jq" >&2
+                                            exit 1
+                                          fi
+                                          if [ -n "$pg_none" ]; then
+                                            echo "pipelinegen: these packages name nothing for $pg_m: $pg_none" >&2
+                                            exit 1
+                                          fi
+                                          pg_has() {
+                                            case $pg_m in
+                                            apt-get) case "$(dpkg-query -W -f '${Status}' "$1" 2>/dev/null)" in *" ok installed") ;; *) return 1 ;; esac ;;
+                                            apk) apk info -e "$1" >/dev/null 2>&1 ;;
+                                            *) rpm -q "$1" >/dev/null 2>&1 ;;
+                                            esac
+                                          }
+                                          pg_missing=
+                                          for pg_p in $pg_want; do
+                                            pg_has "$pg_p" || pg_missing="$pg_missing $pg_p"
+                                          done
+                                          [ -n "$pg_missing" ] || exit 0
+                                          if [ "$(id -u)" != 0 ]; then
+                                            echo "pipelinegen: can't install$pg_missing with $pg_m: the step runs as user $(id -u), not root" >&2
+                                            exit 1
+                                          fi
+                                          pg_cache=${PIPELINEGEN_PACKAGE_CACHE:-}
+                                          case $pg_cache in ''|/*) ;; *) pg_cache=$PWD/$pg_cache ;; esac
+                                          echo "pipelinegen: installing$pg_missing with $pg_m" >&2
+                                          case $pg_m in
+                                          apt-get)
+                                            set -- -q -o Dpkg::Use-Pty=0 -o APT::Keep-Downloaded-Packages=true
+                                            if [ -n "$pg_cache" ]; then
+                                              mkdir -p "$pg_cache/apt/partial"
+                                              set -- "$@" -o "Dir::Cache::Archives=$pg_cache/apt"
+                                            fi
+                                            DEBIAN_FRONTEND=noninteractive apt-get "$@" update >/dev/null
+                                            DEBIAN_FRONTEND=noninteractive apt-get "$@" install -y --no-install-recommends $pg_missing >/dev/null
+                                            if [ -n "${PIPELINEGEN_PACKAGE_CLEAN:-}" ]; then apt-get clean; rm -rf /var/lib/apt/lists/*; fi
+                                            ;;
+                                          apk)
+                                            if [ -n "$pg_cache" ]; then
+                                              mkdir -p "$pg_cache/apk"
+                                              apk add --no-progress -q --cache-dir "$pg_cache/apk" --update-cache $pg_missing
+                                            else
+                                              apk add --no-progress -q --no-cache $pg_missing
+                                            fi
+                                            ;;
+                                          *)
+                                            set -- -y
+                                            [ -z "$pg_cache" ] || set -- "$@" --setopt=keepcache=1 "--setopt=cachedir=$pg_cache/$pg_m"
+                                            $pg_m "$@" install $pg_missing >/dev/null
+                                            [ -z "${PIPELINEGEN_PACKAGE_CLEAN:-}" ] || $pg_m clean all >/dev/null
+                                            ;;
+                                          esac
+                                          for pg_p in $pg_missing; do
+                                            pg_has "$pg_p" || { echo "pipelinegen: $pg_m installed no $pg_p" >&2; exit 1; }
+                                          done
+                                          )
+                                          exec "$0" "$@"
+                                        - tools/pipelinegen
+                                        - slice
+                                        - run
+                                        - --root
+                                        - source
+                                        - --tools
+                                        - tools
+                                        - --prepared
+                                        - prepared
+                                    path: sh
+                            image: cached-111111111111
+                            task: batch
+                            timeout: 120m
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
     - ensure:
         config:
@@ -3875,21 +3984,38 @@ jobs:
                             - browsers
                         task: batch-end
                         timeout: 20m
-                      file: source/ci/e2e-slice.yml
-                      image: cached-222222222222
-                      params:
-                        GITHUB_TOKEN: ((github_token))
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/main-e2e
-                        PIPELINEGEN_RECORD: "true"
-                        PIPELINEGEN_RUN: main
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: e2e
-                        PROJECTS: phone
-                      tags:
-                        - browsers
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/ci/e2e-slice.yml
+                        image: cached-222222222222
+                        on_error:
+                            file: source/ci/e2e-slice.yml
+                            image: cached-222222222222
+                            params:
+                                GITHUB_TOKEN: ((github_token))
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/main-e2e
+                                PIPELINEGEN_RECORD: "true"
+                                PIPELINEGEN_RUN: main
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: e2e
+                                PROJECTS: phone
+                            tags:
+                                - browsers
+                            task: batch
+                            timeout: 120m
+                        params:
+                            GITHUB_TOKEN: ((github_token))
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/main-e2e
+                            PIPELINEGEN_RECORD: "true"
+                            PIPELINEGEN_RUN: main
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: e2e
+                            PROJECTS: phone
+                        tags:
+                            - browsers
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
                 - file: gate/whole-reconcile.json
                   load_var: whole_0
@@ -5767,111 +5893,7 @@ jobs:
                       values: ((.:batches))
                       var: batch
                   do:
-                    - config:
-                        caches:
-                            - path: cache
-                            - path: pkgcache
-                        inputs:
-                            - name: source
-                            - name: batches
-                            - name: tools
-                            - name: prepared
-                        outputs:
-                            - name: result
-                            - name: coverage
-                            - name: work
-                        params:
-                            PIPELINEGEN_BATCH: ((.:batch))
-                            PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/nightly-backend
-                            PIPELINEGEN_PACKAGE_CACHE: pkgcache
-                            PIPELINEGEN_PIPELINE_STEP: "1"
-                            PIPELINEGEN_RECORD: "false"
-                            PIPELINEGEN_RUN: nightly
-                            PIPELINEGEN_RUN_FILE: batches/run.json
-                            PIPELINEGEN_SUITE: backend
-                            PIPELINEGEN_TRUSTED: '{"git_remote":"x"}'
-                        platform: linux
-                        run:
-                            args:
-                                - -ec
-                                - |
-                                  # pipelinegen: install what the steps need: jq
-                                  (
-                                  set -eu
-                                  if command -v apt-get >/dev/null 2>&1; then pg_m=apt-get pg_want='jq' pg_none=''
-                                  elif command -v apk >/dev/null 2>&1; then pg_m=apk pg_want='jq' pg_none=''
-                                  elif command -v dnf >/dev/null 2>&1; then pg_m=dnf pg_want='jq' pg_none=''
-                                  elif command -v microdnf >/dev/null 2>&1; then pg_m=microdnf pg_want='jq' pg_none=''
-                                  elif command -v yum >/dev/null 2>&1; then pg_m=yum pg_want='jq' pg_none=''
-                                  else
-                                    echo "pipelinegen: this image has none of the package managers apt-get, apk, dnf, microdnf, yum to install jq" >&2
-                                    exit 1
-                                  fi
-                                  if [ -n "$pg_none" ]; then
-                                    echo "pipelinegen: these packages name nothing for $pg_m: $pg_none" >&2
-                                    exit 1
-                                  fi
-                                  pg_has() {
-                                    case $pg_m in
-                                    apt-get) case "$(dpkg-query -W -f '${Status}' "$1" 2>/dev/null)" in *" ok installed") ;; *) return 1 ;; esac ;;
-                                    apk) apk info -e "$1" >/dev/null 2>&1 ;;
-                                    *) rpm -q "$1" >/dev/null 2>&1 ;;
-                                    esac
-                                  }
-                                  pg_missing=
-                                  for pg_p in $pg_want; do
-                                    pg_has "$pg_p" || pg_missing="$pg_missing $pg_p"
-                                  done
-                                  [ -n "$pg_missing" ] || exit 0
-                                  if [ "$(id -u)" != 0 ]; then
-                                    echo "pipelinegen: can't install$pg_missing with $pg_m: the step runs as user $(id -u), not root" >&2
-                                    exit 1
-                                  fi
-                                  pg_cache=${PIPELINEGEN_PACKAGE_CACHE:-}
-                                  case $pg_cache in ''|/*) ;; *) pg_cache=$PWD/$pg_cache ;; esac
-                                  echo "pipelinegen: installing$pg_missing with $pg_m" >&2
-                                  case $pg_m in
-                                  apt-get)
-                                    set -- -q -o Dpkg::Use-Pty=0 -o APT::Keep-Downloaded-Packages=true
-                                    if [ -n "$pg_cache" ]; then
-                                      mkdir -p "$pg_cache/apt/partial"
-                                      set -- "$@" -o "Dir::Cache::Archives=$pg_cache/apt"
-                                    fi
-                                    DEBIAN_FRONTEND=noninteractive apt-get "$@" update >/dev/null
-                                    DEBIAN_FRONTEND=noninteractive apt-get "$@" install -y --no-install-recommends $pg_missing >/dev/null
-                                    if [ -n "${PIPELINEGEN_PACKAGE_CLEAN:-}" ]; then apt-get clean; rm -rf /var/lib/apt/lists/*; fi
-                                    ;;
-                                  apk)
-                                    if [ -n "$pg_cache" ]; then
-                                      mkdir -p "$pg_cache/apk"
-                                      apk add --no-progress -q --cache-dir "$pg_cache/apk" --update-cache $pg_missing
-                                    else
-                                      apk add --no-progress -q --no-cache $pg_missing
-                                    fi
-                                    ;;
-                                  *)
-                                    set -- -y
-                                    [ -z "$pg_cache" ] || set -- "$@" --setopt=keepcache=1 "--setopt=cachedir=$pg_cache/$pg_m"
-                                    $pg_m "$@" install $pg_missing >/dev/null
-                                    [ -z "${PIPELINEGEN_PACKAGE_CLEAN:-}" ] || $pg_m clean all >/dev/null
-                                    ;;
-                                  esac
-                                  for pg_p in $pg_missing; do
-                                    pg_has "$pg_p" || { echo "pipelinegen: $pg_m installed no $pg_p" >&2; exit 1; }
-                                  done
-                                  )
-                                  exec "$0" "$@"
-                                - tools/pipelinegen
-                                - slice
-                                - run
-                                - --root
-                                - source
-                                - --tools
-                                - tools
-                                - --prepared
-                                - prepared
-                            path: sh
-                      ensure:
+                    - ensure:
                         config:
                             caches:
                                 - path: tools
@@ -6143,9 +6165,222 @@ jobs:
                         image: planner
                         task: batch-end
                         timeout: 20m
-                      image: cached-111111111111
-                      task: batch
-                      timeout: 120m
+                      try:
+                        config:
+                            caches:
+                                - path: cache
+                                - path: pkgcache
+                            inputs:
+                                - name: source
+                                - name: batches
+                                - name: tools
+                                - name: prepared
+                            outputs:
+                                - name: result
+                                - name: coverage
+                                - name: work
+                            params:
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/nightly-backend
+                                PIPELINEGEN_PACKAGE_CACHE: pkgcache
+                                PIPELINEGEN_PIPELINE_STEP: "1"
+                                PIPELINEGEN_RECORD: "false"
+                                PIPELINEGEN_RUN: nightly
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: backend
+                                PIPELINEGEN_TRUSTED: '{"git_remote":"x"}'
+                            platform: linux
+                            run:
+                                args:
+                                    - -ec
+                                    - |
+                                      # pipelinegen: install what the steps need: jq
+                                      (
+                                      set -eu
+                                      if command -v apt-get >/dev/null 2>&1; then pg_m=apt-get pg_want='jq' pg_none=''
+                                      elif command -v apk >/dev/null 2>&1; then pg_m=apk pg_want='jq' pg_none=''
+                                      elif command -v dnf >/dev/null 2>&1; then pg_m=dnf pg_want='jq' pg_none=''
+                                      elif command -v microdnf >/dev/null 2>&1; then pg_m=microdnf pg_want='jq' pg_none=''
+                                      elif command -v yum >/dev/null 2>&1; then pg_m=yum pg_want='jq' pg_none=''
+                                      else
+                                        echo "pipelinegen: this image has none of the package managers apt-get, apk, dnf, microdnf, yum to install jq" >&2
+                                        exit 1
+                                      fi
+                                      if [ -n "$pg_none" ]; then
+                                        echo "pipelinegen: these packages name nothing for $pg_m: $pg_none" >&2
+                                        exit 1
+                                      fi
+                                      pg_has() {
+                                        case $pg_m in
+                                        apt-get) case "$(dpkg-query -W -f '${Status}' "$1" 2>/dev/null)" in *" ok installed") ;; *) return 1 ;; esac ;;
+                                        apk) apk info -e "$1" >/dev/null 2>&1 ;;
+                                        *) rpm -q "$1" >/dev/null 2>&1 ;;
+                                        esac
+                                      }
+                                      pg_missing=
+                                      for pg_p in $pg_want; do
+                                        pg_has "$pg_p" || pg_missing="$pg_missing $pg_p"
+                                      done
+                                      [ -n "$pg_missing" ] || exit 0
+                                      if [ "$(id -u)" != 0 ]; then
+                                        echo "pipelinegen: can't install$pg_missing with $pg_m: the step runs as user $(id -u), not root" >&2
+                                        exit 1
+                                      fi
+                                      pg_cache=${PIPELINEGEN_PACKAGE_CACHE:-}
+                                      case $pg_cache in ''|/*) ;; *) pg_cache=$PWD/$pg_cache ;; esac
+                                      echo "pipelinegen: installing$pg_missing with $pg_m" >&2
+                                      case $pg_m in
+                                      apt-get)
+                                        set -- -q -o Dpkg::Use-Pty=0 -o APT::Keep-Downloaded-Packages=true
+                                        if [ -n "$pg_cache" ]; then
+                                          mkdir -p "$pg_cache/apt/partial"
+                                          set -- "$@" -o "Dir::Cache::Archives=$pg_cache/apt"
+                                        fi
+                                        DEBIAN_FRONTEND=noninteractive apt-get "$@" update >/dev/null
+                                        DEBIAN_FRONTEND=noninteractive apt-get "$@" install -y --no-install-recommends $pg_missing >/dev/null
+                                        if [ -n "${PIPELINEGEN_PACKAGE_CLEAN:-}" ]; then apt-get clean; rm -rf /var/lib/apt/lists/*; fi
+                                        ;;
+                                      apk)
+                                        if [ -n "$pg_cache" ]; then
+                                          mkdir -p "$pg_cache/apk"
+                                          apk add --no-progress -q --cache-dir "$pg_cache/apk" --update-cache $pg_missing
+                                        else
+                                          apk add --no-progress -q --no-cache $pg_missing
+                                        fi
+                                        ;;
+                                      *)
+                                        set -- -y
+                                        [ -z "$pg_cache" ] || set -- "$@" --setopt=keepcache=1 "--setopt=cachedir=$pg_cache/$pg_m"
+                                        $pg_m "$@" install $pg_missing >/dev/null
+                                        [ -z "${PIPELINEGEN_PACKAGE_CLEAN:-}" ] || $pg_m clean all >/dev/null
+                                        ;;
+                                      esac
+                                      for pg_p in $pg_missing; do
+                                        pg_has "$pg_p" || { echo "pipelinegen: $pg_m installed no $pg_p" >&2; exit 1; }
+                                      done
+                                      )
+                                      exec "$0" "$@"
+                                    - tools/pipelinegen
+                                    - slice
+                                    - run
+                                    - --root
+                                    - source
+                                    - --tools
+                                    - tools
+                                    - --prepared
+                                    - prepared
+                                path: sh
+                        image: cached-111111111111
+                        on_error:
+                            config:
+                                caches:
+                                    - path: cache
+                                    - path: pkgcache
+                                inputs:
+                                    - name: source
+                                    - name: batches
+                                    - name: tools
+                                    - name: prepared
+                                outputs:
+                                    - name: result
+                                    - name: coverage
+                                    - name: work
+                                params:
+                                    PIPELINEGEN_BATCH: ((.:batch))
+                                    PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/nightly-backend
+                                    PIPELINEGEN_PACKAGE_CACHE: pkgcache
+                                    PIPELINEGEN_PIPELINE_STEP: "1"
+                                    PIPELINEGEN_RECORD: "false"
+                                    PIPELINEGEN_RUN: nightly
+                                    PIPELINEGEN_RUN_FILE: batches/run.json
+                                    PIPELINEGEN_SUITE: backend
+                                    PIPELINEGEN_TRUSTED: '{"git_remote":"x"}'
+                                platform: linux
+                                run:
+                                    args:
+                                        - -ec
+                                        - |
+                                          # pipelinegen: install what the steps need: jq
+                                          (
+                                          set -eu
+                                          if command -v apt-get >/dev/null 2>&1; then pg_m=apt-get pg_want='jq' pg_none=''
+                                          elif command -v apk >/dev/null 2>&1; then pg_m=apk pg_want='jq' pg_none=''
+                                          elif command -v dnf >/dev/null 2>&1; then pg_m=dnf pg_want='jq' pg_none=''
+                                          elif command -v microdnf >/dev/null 2>&1; then pg_m=microdnf pg_want='jq' pg_none=''
+                                          elif command -v yum >/dev/null 2>&1; then pg_m=yum pg_want='jq' pg_none=''
+                                          else
+                                            echo "pipelinegen: this image has none of the package managers apt-get, apk, dnf, microdnf, yum to install jq" >&2
+                                            exit 1
+                                          fi
+                                          if [ -n "$pg_none" ]; then
+                                            echo "pipelinegen: these packages name nothing for $pg_m: $pg_none" >&2
+                                            exit 1
+                                          fi
+                                          pg_has() {
+                                            case $pg_m in
+                                            apt-get) case "$(dpkg-query -W -f '${Status}' "$1" 2>/dev/null)" in *" ok installed") ;; *) return 1 ;; esac ;;
+                                            apk) apk info -e "$1" >/dev/null 2>&1 ;;
+                                            *) rpm -q "$1" >/dev/null 2>&1 ;;
+                                            esac
+                                          }
+                                          pg_missing=
+                                          for pg_p in $pg_want; do
+                                            pg_has "$pg_p" || pg_missing="$pg_missing $pg_p"
+                                          done
+                                          [ -n "$pg_missing" ] || exit 0
+                                          if [ "$(id -u)" != 0 ]; then
+                                            echo "pipelinegen: can't install$pg_missing with $pg_m: the step runs as user $(id -u), not root" >&2
+                                            exit 1
+                                          fi
+                                          pg_cache=${PIPELINEGEN_PACKAGE_CACHE:-}
+                                          case $pg_cache in ''|/*) ;; *) pg_cache=$PWD/$pg_cache ;; esac
+                                          echo "pipelinegen: installing$pg_missing with $pg_m" >&2
+                                          case $pg_m in
+                                          apt-get)
+                                            set -- -q -o Dpkg::Use-Pty=0 -o APT::Keep-Downloaded-Packages=true
+                                            if [ -n "$pg_cache" ]; then
+                                              mkdir -p "$pg_cache/apt/partial"
+                                              set -- "$@" -o "Dir::Cache::Archives=$pg_cache/apt"
+                                            fi
+                                            DEBIAN_FRONTEND=noninteractive apt-get "$@" update >/dev/null
+                                            DEBIAN_FRONTEND=noninteractive apt-get "$@" install -y --no-install-recommends $pg_missing >/dev/null
+                                            if [ -n "${PIPELINEGEN_PACKAGE_CLEAN:-}" ]; then apt-get clean; rm -rf /var/lib/apt/lists/*; fi
+                                            ;;
+                                          apk)
+                                            if [ -n "$pg_cache" ]; then
+                                              mkdir -p "$pg_cache/apk"
+                                              apk add --no-progress -q --cache-dir "$pg_cache/apk" --update-cache $pg_missing
+                                            else
+                                              apk add --no-progress -q --no-cache $pg_missing
+                                            fi
+                                            ;;
+                                          *)
+                                            set -- -y
+                                            [ -z "$pg_cache" ] || set -- "$@" --setopt=keepcache=1 "--setopt=cachedir=$pg_cache/$pg_m"
+                                            $pg_m "$@" install $pg_missing >/dev/null
+                                            [ -z "${PIPELINEGEN_PACKAGE_CLEAN:-}" ] || $pg_m clean all >/dev/null
+                                            ;;
+                                          esac
+                                          for pg_p in $pg_missing; do
+                                            pg_has "$pg_p" || { echo "pipelinegen: $pg_m installed no $pg_p" >&2; exit 1; }
+                                          done
+                                          )
+                                          exec "$0" "$@"
+                                        - tools/pipelinegen
+                                        - slice
+                                        - run
+                                        - --root
+                                        - source
+                                        - --tools
+                                        - tools
+                                        - --prepared
+                                        - prepared
+                                    path: sh
+                            image: cached-111111111111
+                            task: batch
+                            timeout: 120m
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
     - ensure:
         config:
@@ -7705,20 +7940,36 @@ jobs:
                             - browsers
                         task: batch-end
                         timeout: 20m
-                      file: source/ci/e2e-slice.yml
-                      image: cached-222222222222
-                      params:
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/nightly-e2e
-                        PIPELINEGEN_RECORD: "true"
-                        PIPELINEGEN_RUN: nightly
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: e2e
-                        PROJECTS: all
-                      tags:
-                        - browsers
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/ci/e2e-slice.yml
+                        image: cached-222222222222
+                        on_error:
+                            file: source/ci/e2e-slice.yml
+                            image: cached-222222222222
+                            params:
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/nightly-e2e
+                                PIPELINEGEN_RECORD: "true"
+                                PIPELINEGEN_RUN: nightly
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: e2e
+                                PROJECTS: all
+                            tags:
+                                - browsers
+                            task: batch
+                            timeout: 120m
+                        params:
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/nightly-e2e
+                            PIPELINEGEN_RECORD: "true"
+                            PIPELINEGEN_RUN: nightly
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: e2e
+                            PROJECTS: all
+                        tags:
+                            - browsers
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
                 - file: gate/whole-reconcile.json
                   load_var: whole_0
@@ -10984,111 +11235,7 @@ jobs:
                       values: ((.:batches))
                       var: batch
                   do:
-                    - config:
-                        caches:
-                            - path: cache
-                            - path: pkgcache
-                        inputs:
-                            - name: source
-                            - name: batches
-                            - name: tools
-                            - name: prepared
-                        outputs:
-                            - name: result
-                            - name: coverage
-                            - name: work
-                        params:
-                            PIPELINEGEN_BATCH: ((.:batch))
-                            PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/pr-backend
-                            PIPELINEGEN_PACKAGE_CACHE: pkgcache
-                            PIPELINEGEN_PIPELINE_STEP: "1"
-                            PIPELINEGEN_RECORD: "false"
-                            PIPELINEGEN_RUN: pr
-                            PIPELINEGEN_RUN_FILE: batches/run.json
-                            PIPELINEGEN_SUITE: backend
-                            PIPELINEGEN_TRUSTED: '{"git_remote":"x"}'
-                        platform: linux
-                        run:
-                            args:
-                                - -ec
-                                - |
-                                  # pipelinegen: install what the steps need: jq
-                                  (
-                                  set -eu
-                                  if command -v apt-get >/dev/null 2>&1; then pg_m=apt-get pg_want='jq' pg_none=''
-                                  elif command -v apk >/dev/null 2>&1; then pg_m=apk pg_want='jq' pg_none=''
-                                  elif command -v dnf >/dev/null 2>&1; then pg_m=dnf pg_want='jq' pg_none=''
-                                  elif command -v microdnf >/dev/null 2>&1; then pg_m=microdnf pg_want='jq' pg_none=''
-                                  elif command -v yum >/dev/null 2>&1; then pg_m=yum pg_want='jq' pg_none=''
-                                  else
-                                    echo "pipelinegen: this image has none of the package managers apt-get, apk, dnf, microdnf, yum to install jq" >&2
-                                    exit 1
-                                  fi
-                                  if [ -n "$pg_none" ]; then
-                                    echo "pipelinegen: these packages name nothing for $pg_m: $pg_none" >&2
-                                    exit 1
-                                  fi
-                                  pg_has() {
-                                    case $pg_m in
-                                    apt-get) case "$(dpkg-query -W -f '${Status}' "$1" 2>/dev/null)" in *" ok installed") ;; *) return 1 ;; esac ;;
-                                    apk) apk info -e "$1" >/dev/null 2>&1 ;;
-                                    *) rpm -q "$1" >/dev/null 2>&1 ;;
-                                    esac
-                                  }
-                                  pg_missing=
-                                  for pg_p in $pg_want; do
-                                    pg_has "$pg_p" || pg_missing="$pg_missing $pg_p"
-                                  done
-                                  [ -n "$pg_missing" ] || exit 0
-                                  if [ "$(id -u)" != 0 ]; then
-                                    echo "pipelinegen: can't install$pg_missing with $pg_m: the step runs as user $(id -u), not root" >&2
-                                    exit 1
-                                  fi
-                                  pg_cache=${PIPELINEGEN_PACKAGE_CACHE:-}
-                                  case $pg_cache in ''|/*) ;; *) pg_cache=$PWD/$pg_cache ;; esac
-                                  echo "pipelinegen: installing$pg_missing with $pg_m" >&2
-                                  case $pg_m in
-                                  apt-get)
-                                    set -- -q -o Dpkg::Use-Pty=0 -o APT::Keep-Downloaded-Packages=true
-                                    if [ -n "$pg_cache" ]; then
-                                      mkdir -p "$pg_cache/apt/partial"
-                                      set -- "$@" -o "Dir::Cache::Archives=$pg_cache/apt"
-                                    fi
-                                    DEBIAN_FRONTEND=noninteractive apt-get "$@" update >/dev/null
-                                    DEBIAN_FRONTEND=noninteractive apt-get "$@" install -y --no-install-recommends $pg_missing >/dev/null
-                                    if [ -n "${PIPELINEGEN_PACKAGE_CLEAN:-}" ]; then apt-get clean; rm -rf /var/lib/apt/lists/*; fi
-                                    ;;
-                                  apk)
-                                    if [ -n "$pg_cache" ]; then
-                                      mkdir -p "$pg_cache/apk"
-                                      apk add --no-progress -q --cache-dir "$pg_cache/apk" --update-cache $pg_missing
-                                    else
-                                      apk add --no-progress -q --no-cache $pg_missing
-                                    fi
-                                    ;;
-                                  *)
-                                    set -- -y
-                                    [ -z "$pg_cache" ] || set -- "$@" --setopt=keepcache=1 "--setopt=cachedir=$pg_cache/$pg_m"
-                                    $pg_m "$@" install $pg_missing >/dev/null
-                                    [ -z "${PIPELINEGEN_PACKAGE_CLEAN:-}" ] || $pg_m clean all >/dev/null
-                                    ;;
-                                  esac
-                                  for pg_p in $pg_missing; do
-                                    pg_has "$pg_p" || { echo "pipelinegen: $pg_m installed no $pg_p" >&2; exit 1; }
-                                  done
-                                  )
-                                  exec "$0" "$@"
-                                - tools/pipelinegen
-                                - slice
-                                - run
-                                - --root
-                                - source
-                                - --tools
-                                - tools
-                                - --prepared
-                                - prepared
-                            path: sh
-                      ensure:
+                    - ensure:
                         config:
                             caches:
                                 - path: tools
@@ -11360,9 +11507,222 @@ jobs:
                         image: planner
                         task: batch-end
                         timeout: 20m
-                      image: cached-111111111111
-                      task: batch
-                      timeout: 120m
+                      try:
+                        config:
+                            caches:
+                                - path: cache
+                                - path: pkgcache
+                            inputs:
+                                - name: source
+                                - name: batches
+                                - name: tools
+                                - name: prepared
+                            outputs:
+                                - name: result
+                                - name: coverage
+                                - name: work
+                            params:
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/pr-backend
+                                PIPELINEGEN_PACKAGE_CACHE: pkgcache
+                                PIPELINEGEN_PIPELINE_STEP: "1"
+                                PIPELINEGEN_RECORD: "false"
+                                PIPELINEGEN_RUN: pr
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: backend
+                                PIPELINEGEN_TRUSTED: '{"git_remote":"x"}'
+                            platform: linux
+                            run:
+                                args:
+                                    - -ec
+                                    - |
+                                      # pipelinegen: install what the steps need: jq
+                                      (
+                                      set -eu
+                                      if command -v apt-get >/dev/null 2>&1; then pg_m=apt-get pg_want='jq' pg_none=''
+                                      elif command -v apk >/dev/null 2>&1; then pg_m=apk pg_want='jq' pg_none=''
+                                      elif command -v dnf >/dev/null 2>&1; then pg_m=dnf pg_want='jq' pg_none=''
+                                      elif command -v microdnf >/dev/null 2>&1; then pg_m=microdnf pg_want='jq' pg_none=''
+                                      elif command -v yum >/dev/null 2>&1; then pg_m=yum pg_want='jq' pg_none=''
+                                      else
+                                        echo "pipelinegen: this image has none of the package managers apt-get, apk, dnf, microdnf, yum to install jq" >&2
+                                        exit 1
+                                      fi
+                                      if [ -n "$pg_none" ]; then
+                                        echo "pipelinegen: these packages name nothing for $pg_m: $pg_none" >&2
+                                        exit 1
+                                      fi
+                                      pg_has() {
+                                        case $pg_m in
+                                        apt-get) case "$(dpkg-query -W -f '${Status}' "$1" 2>/dev/null)" in *" ok installed") ;; *) return 1 ;; esac ;;
+                                        apk) apk info -e "$1" >/dev/null 2>&1 ;;
+                                        *) rpm -q "$1" >/dev/null 2>&1 ;;
+                                        esac
+                                      }
+                                      pg_missing=
+                                      for pg_p in $pg_want; do
+                                        pg_has "$pg_p" || pg_missing="$pg_missing $pg_p"
+                                      done
+                                      [ -n "$pg_missing" ] || exit 0
+                                      if [ "$(id -u)" != 0 ]; then
+                                        echo "pipelinegen: can't install$pg_missing with $pg_m: the step runs as user $(id -u), not root" >&2
+                                        exit 1
+                                      fi
+                                      pg_cache=${PIPELINEGEN_PACKAGE_CACHE:-}
+                                      case $pg_cache in ''|/*) ;; *) pg_cache=$PWD/$pg_cache ;; esac
+                                      echo "pipelinegen: installing$pg_missing with $pg_m" >&2
+                                      case $pg_m in
+                                      apt-get)
+                                        set -- -q -o Dpkg::Use-Pty=0 -o APT::Keep-Downloaded-Packages=true
+                                        if [ -n "$pg_cache" ]; then
+                                          mkdir -p "$pg_cache/apt/partial"
+                                          set -- "$@" -o "Dir::Cache::Archives=$pg_cache/apt"
+                                        fi
+                                        DEBIAN_FRONTEND=noninteractive apt-get "$@" update >/dev/null
+                                        DEBIAN_FRONTEND=noninteractive apt-get "$@" install -y --no-install-recommends $pg_missing >/dev/null
+                                        if [ -n "${PIPELINEGEN_PACKAGE_CLEAN:-}" ]; then apt-get clean; rm -rf /var/lib/apt/lists/*; fi
+                                        ;;
+                                      apk)
+                                        if [ -n "$pg_cache" ]; then
+                                          mkdir -p "$pg_cache/apk"
+                                          apk add --no-progress -q --cache-dir "$pg_cache/apk" --update-cache $pg_missing
+                                        else
+                                          apk add --no-progress -q --no-cache $pg_missing
+                                        fi
+                                        ;;
+                                      *)
+                                        set -- -y
+                                        [ -z "$pg_cache" ] || set -- "$@" --setopt=keepcache=1 "--setopt=cachedir=$pg_cache/$pg_m"
+                                        $pg_m "$@" install $pg_missing >/dev/null
+                                        [ -z "${PIPELINEGEN_PACKAGE_CLEAN:-}" ] || $pg_m clean all >/dev/null
+                                        ;;
+                                      esac
+                                      for pg_p in $pg_missing; do
+                                        pg_has "$pg_p" || { echo "pipelinegen: $pg_m installed no $pg_p" >&2; exit 1; }
+                                      done
+                                      )
+                                      exec "$0" "$@"
+                                    - tools/pipelinegen
+                                    - slice
+                                    - run
+                                    - --root
+                                    - source
+                                    - --tools
+                                    - tools
+                                    - --prepared
+                                    - prepared
+                                path: sh
+                        image: cached-111111111111
+                        on_error:
+                            config:
+                                caches:
+                                    - path: cache
+                                    - path: pkgcache
+                                inputs:
+                                    - name: source
+                                    - name: batches
+                                    - name: tools
+                                    - name: prepared
+                                outputs:
+                                    - name: result
+                                    - name: coverage
+                                    - name: work
+                                params:
+                                    PIPELINEGEN_BATCH: ((.:batch))
+                                    PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/pr-backend
+                                    PIPELINEGEN_PACKAGE_CACHE: pkgcache
+                                    PIPELINEGEN_PIPELINE_STEP: "1"
+                                    PIPELINEGEN_RECORD: "false"
+                                    PIPELINEGEN_RUN: pr
+                                    PIPELINEGEN_RUN_FILE: batches/run.json
+                                    PIPELINEGEN_SUITE: backend
+                                    PIPELINEGEN_TRUSTED: '{"git_remote":"x"}'
+                                platform: linux
+                                run:
+                                    args:
+                                        - -ec
+                                        - |
+                                          # pipelinegen: install what the steps need: jq
+                                          (
+                                          set -eu
+                                          if command -v apt-get >/dev/null 2>&1; then pg_m=apt-get pg_want='jq' pg_none=''
+                                          elif command -v apk >/dev/null 2>&1; then pg_m=apk pg_want='jq' pg_none=''
+                                          elif command -v dnf >/dev/null 2>&1; then pg_m=dnf pg_want='jq' pg_none=''
+                                          elif command -v microdnf >/dev/null 2>&1; then pg_m=microdnf pg_want='jq' pg_none=''
+                                          elif command -v yum >/dev/null 2>&1; then pg_m=yum pg_want='jq' pg_none=''
+                                          else
+                                            echo "pipelinegen: this image has none of the package managers apt-get, apk, dnf, microdnf, yum to install jq" >&2
+                                            exit 1
+                                          fi
+                                          if [ -n "$pg_none" ]; then
+                                            echo "pipelinegen: these packages name nothing for $pg_m: $pg_none" >&2
+                                            exit 1
+                                          fi
+                                          pg_has() {
+                                            case $pg_m in
+                                            apt-get) case "$(dpkg-query -W -f '${Status}' "$1" 2>/dev/null)" in *" ok installed") ;; *) return 1 ;; esac ;;
+                                            apk) apk info -e "$1" >/dev/null 2>&1 ;;
+                                            *) rpm -q "$1" >/dev/null 2>&1 ;;
+                                            esac
+                                          }
+                                          pg_missing=
+                                          for pg_p in $pg_want; do
+                                            pg_has "$pg_p" || pg_missing="$pg_missing $pg_p"
+                                          done
+                                          [ -n "$pg_missing" ] || exit 0
+                                          if [ "$(id -u)" != 0 ]; then
+                                            echo "pipelinegen: can't install$pg_missing with $pg_m: the step runs as user $(id -u), not root" >&2
+                                            exit 1
+                                          fi
+                                          pg_cache=${PIPELINEGEN_PACKAGE_CACHE:-}
+                                          case $pg_cache in ''|/*) ;; *) pg_cache=$PWD/$pg_cache ;; esac
+                                          echo "pipelinegen: installing$pg_missing with $pg_m" >&2
+                                          case $pg_m in
+                                          apt-get)
+                                            set -- -q -o Dpkg::Use-Pty=0 -o APT::Keep-Downloaded-Packages=true
+                                            if [ -n "$pg_cache" ]; then
+                                              mkdir -p "$pg_cache/apt/partial"
+                                              set -- "$@" -o "Dir::Cache::Archives=$pg_cache/apt"
+                                            fi
+                                            DEBIAN_FRONTEND=noninteractive apt-get "$@" update >/dev/null
+                                            DEBIAN_FRONTEND=noninteractive apt-get "$@" install -y --no-install-recommends $pg_missing >/dev/null
+                                            if [ -n "${PIPELINEGEN_PACKAGE_CLEAN:-}" ]; then apt-get clean; rm -rf /var/lib/apt/lists/*; fi
+                                            ;;
+                                          apk)
+                                            if [ -n "$pg_cache" ]; then
+                                              mkdir -p "$pg_cache/apk"
+                                              apk add --no-progress -q --cache-dir "$pg_cache/apk" --update-cache $pg_missing
+                                            else
+                                              apk add --no-progress -q --no-cache $pg_missing
+                                            fi
+                                            ;;
+                                          *)
+                                            set -- -y
+                                            [ -z "$pg_cache" ] || set -- "$@" --setopt=keepcache=1 "--setopt=cachedir=$pg_cache/$pg_m"
+                                            $pg_m "$@" install $pg_missing >/dev/null
+                                            [ -z "${PIPELINEGEN_PACKAGE_CLEAN:-}" ] || $pg_m clean all >/dev/null
+                                            ;;
+                                          esac
+                                          for pg_p in $pg_missing; do
+                                            pg_has "$pg_p" || { echo "pipelinegen: $pg_m installed no $pg_p" >&2; exit 1; }
+                                          done
+                                          )
+                                          exec "$0" "$@"
+                                        - tools/pipelinegen
+                                        - slice
+                                        - run
+                                        - --root
+                                        - source
+                                        - --tools
+                                        - tools
+                                        - --prepared
+                                        - prepared
+                                    path: sh
+                            image: cached-111111111111
+                            task: batch
+                            timeout: 120m
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
     - ensure:
         config:
@@ -12923,20 +13283,36 @@ jobs:
                             - browsers
                         task: batch-end
                         timeout: 20m
-                      file: source/ci/e2e-slice.yml
-                      image: cached-222222222222
-                      params:
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/pr-e2e
-                        PIPELINEGEN_RECORD: "true"
-                        PIPELINEGEN_RUN: pr
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: e2e
-                        PROJECTS: phone
-                      tags:
-                        - browsers
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/ci/e2e-slice.yml
+                        image: cached-222222222222
+                        on_error:
+                            file: source/ci/e2e-slice.yml
+                            image: cached-222222222222
+                            params:
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/pr-e2e
+                                PIPELINEGEN_RECORD: "true"
+                                PIPELINEGEN_RUN: pr
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: e2e
+                                PROJECTS: phone
+                            tags:
+                                - browsers
+                            task: batch
+                            timeout: 120m
+                        params:
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/pr-e2e
+                            PIPELINEGEN_RECORD: "true"
+                            PIPELINEGEN_RUN: pr
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: e2e
+                            PROJECTS: phone
+                        tags:
+                            - browsers
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
                 - file: gate/whole-reconcile.json
                   load_var: whole_0

@@ -1352,7 +1352,22 @@ func (g *gen) withBatchEnd(run, suite string, task M) M {
 		end = g.ownToolsTask("batch-end", g.bookkeepingTags(run, suite), inputs, env, append([]string{"batch-end"}, args...)...)
 	}
 
-	task["ensure"] = g.onBookkeeping(limited(end, stepsKey, g.stepMinutes()), run, suite)
+	return M{"try": retriedOnError(task), "ensure": g.onBookkeeping(limited(end, stepsKey, g.stepMinutes()), run, suite)}
+}
+
+// retriedOnError runs a batch's task once more, with the same config, inputs, outputs and caches, when it
+// errored: its container or a volume couldn't be set up, its worker went, it hit its timeout. Concourse runs
+// an on_error hook for any end but a failure, an abort or a success (exec.OnErrorStep), and registers the
+// hook's outputs as the step's would be, so the batch's end reads the second attempt's. A second error
+// stays the batch's: the hook has no hook of its own.
+//
+// The try lets the batch's end decide the step: Concourse keeps an errored step errored even when its
+// on_error hook passed (OnErrorStep returns the step's error), and a try passes anything but an abort
+// (exec.TryStep). The end fails the step when a slice didn't pass, whether its tests failed or neither
+// attempt ran it, so a red test stays red and runs once; an abort aborts, and is never retried.
+func retriedOnError(task M) M {
+	again := maps.Clone(task)
+	task["on_error"] = again
 
 	return task
 }

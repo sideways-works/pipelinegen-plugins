@@ -47,7 +47,7 @@ jobs:
                 PIPELINEGEN_CONCOURSE_URL: https://ci.example
                 PIPELINEGEN_LIMIT: limits.steps=20
                 PIPELINEGEN_PIPELINE: fixture
-                PIPELINEGEN_PIPELINE_SHA256: 282044a2f248a1bfa1a569b8a19cba6c55de56c3a5e46b63c059515e9a27e3f5
+                PIPELINEGEN_PIPELINE_SHA256: bc9af9155f5ec54253abb6e62649939a03812d55aa818e4fe1d56a2d42dfe43e
                 PIPELINEGEN_PIPELINE_STEP: "1"
                 PIPELINEGEN_PLUGINS: ""
                 PIPELINEGEN_PRIVATE: ""
@@ -1448,16 +1448,28 @@ jobs:
                         image: planner
                         task: batch-end
                         timeout: 20m
-                      file: source/ci/backend-slice.yml
-                      params:
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/main-backend
-                        PIPELINEGEN_RECORD: "false"
-                        PIPELINEGEN_RUN: main
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: backend
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/ci/backend-slice.yml
+                        on_error:
+                            file: source/ci/backend-slice.yml
+                            params:
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/main-backend
+                                PIPELINEGEN_RECORD: "false"
+                                PIPELINEGEN_RUN: main
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: backend
+                            task: batch
+                            timeout: 120m
+                        params:
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/main-backend
+                            PIPELINEGEN_RECORD: "false"
+                            PIPELINEGEN_RUN: main
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: backend
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
     - ensure:
         config:
@@ -2496,20 +2508,36 @@ jobs:
                             - browsers
                         task: batch-end
                         timeout: 20m
-                      file: source/ci/e2e-slice.yml
-                      params:
-                        GITHUB_TOKEN: ((github_token))
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/main-e2e
-                        PIPELINEGEN_RECORD: "true"
-                        PIPELINEGEN_RUN: main
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: e2e
-                        PROJECTS: phone
-                      tags:
-                        - browsers
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/ci/e2e-slice.yml
+                        on_error:
+                            file: source/ci/e2e-slice.yml
+                            params:
+                                GITHUB_TOKEN: ((github_token))
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/main-e2e
+                                PIPELINEGEN_RECORD: "true"
+                                PIPELINEGEN_RUN: main
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: e2e
+                                PROJECTS: phone
+                            tags:
+                                - browsers
+                            task: batch
+                            timeout: 120m
+                        params:
+                            GITHUB_TOKEN: ((github_token))
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/main-e2e
+                            PIPELINEGEN_RECORD: "true"
+                            PIPELINEGEN_RUN: main
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: e2e
+                            PROJECTS: phone
+                        tags:
+                            - browsers
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
                 - file: gate/whole-reconcile.json
                   load_var: whole_0
@@ -3822,16 +3850,28 @@ jobs:
                         image: planner
                         task: batch-end
                         timeout: 20m
-                      file: source/ci/backend-slice.yml
-                      params:
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/nightly-backend
-                        PIPELINEGEN_RECORD: "false"
-                        PIPELINEGEN_RUN: nightly
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: backend
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/ci/backend-slice.yml
+                        on_error:
+                            file: source/ci/backend-slice.yml
+                            params:
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/nightly-backend
+                                PIPELINEGEN_RECORD: "false"
+                                PIPELINEGEN_RUN: nightly
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: backend
+                            task: batch
+                            timeout: 120m
+                        params:
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/nightly-backend
+                            PIPELINEGEN_RECORD: "false"
+                            PIPELINEGEN_RUN: nightly
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: backend
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
     - ensure:
         config:
@@ -4869,19 +4909,34 @@ jobs:
                             - browsers
                         task: batch-end
                         timeout: 20m
-                      file: source/ci/e2e-slice.yml
-                      params:
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/nightly-e2e
-                        PIPELINEGEN_RECORD: "true"
-                        PIPELINEGEN_RUN: nightly
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: e2e
-                        PROJECTS: all
-                      tags:
-                        - browsers
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/ci/e2e-slice.yml
+                        on_error:
+                            file: source/ci/e2e-slice.yml
+                            params:
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/nightly-e2e
+                                PIPELINEGEN_RECORD: "true"
+                                PIPELINEGEN_RUN: nightly
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: e2e
+                                PROJECTS: all
+                            tags:
+                                - browsers
+                            task: batch
+                            timeout: 120m
+                        params:
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/nightly-e2e
+                            PIPELINEGEN_RECORD: "true"
+                            PIPELINEGEN_RUN: nightly
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: e2e
+                            PROJECTS: all
+                        tags:
+                            - browsers
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
                 - file: gate/whole-reconcile.json
                   load_var: whole_0
@@ -7242,16 +7297,28 @@ jobs:
                         image: planner
                         task: batch-end
                         timeout: 20m
-                      file: source/ci/backend-slice.yml
-                      params:
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/pr-backend
-                        PIPELINEGEN_RECORD: "false"
-                        PIPELINEGEN_RUN: pr
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: backend
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/ci/backend-slice.yml
+                        on_error:
+                            file: source/ci/backend-slice.yml
+                            params:
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/pr-backend
+                                PIPELINEGEN_RECORD: "false"
+                                PIPELINEGEN_RUN: pr
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: backend
+                            task: batch
+                            timeout: 120m
+                        params:
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/pr-backend
+                            PIPELINEGEN_RECORD: "false"
+                            PIPELINEGEN_RUN: pr
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: backend
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
     - ensure:
         config:
@@ -8290,19 +8357,34 @@ jobs:
                             - browsers
                         task: batch-end
                         timeout: 20m
-                      file: source/ci/e2e-slice.yml
-                      params:
-                        PIPELINEGEN_BATCH: ((.:batch))
-                        PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/pr-e2e
-                        PIPELINEGEN_RECORD: "true"
-                        PIPELINEGEN_RUN: pr
-                        PIPELINEGEN_RUN_FILE: batches/run.json
-                        PIPELINEGEN_SUITE: e2e
-                        PROJECTS: phone
-                      tags:
-                        - browsers
-                      task: batch
-                      timeout: 120m
+                      try:
+                        file: source/ci/e2e-slice.yml
+                        on_error:
+                            file: source/ci/e2e-slice.yml
+                            params:
+                                PIPELINEGEN_BATCH: ((.:batch))
+                                PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/pr-e2e
+                                PIPELINEGEN_RECORD: "true"
+                                PIPELINEGEN_RUN: pr
+                                PIPELINEGEN_RUN_FILE: batches/run.json
+                                PIPELINEGEN_SUITE: e2e
+                                PROJECTS: phone
+                            tags:
+                                - browsers
+                            task: batch
+                            timeout: 120m
+                        params:
+                            PIPELINEGEN_BATCH: ((.:batch))
+                            PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/pr-e2e
+                            PIPELINEGEN_RECORD: "true"
+                            PIPELINEGEN_RUN: pr
+                            PIPELINEGEN_RUN_FILE: batches/run.json
+                            PIPELINEGEN_SUITE: e2e
+                            PROJECTS: phone
+                        tags:
+                            - browsers
+                        task: batch
+                        timeout: 120m
                   fail_fast: false
                 - file: gate/whole-reconcile.json
                   load_var: whole_0
