@@ -11,6 +11,9 @@ const (
 	failed    outcome = "failed"
 	errored   outcome = "errored"
 	aborted   outcome = "aborted"
+	// timedOut is a task stopped by its own timeout, which Concourse shows as errored but whose Run returns
+	// false and no error (exec.TaskStep), so for the steps around it the task failed.
+	timedOut outcome = "timed out"
 )
 
 // evalStep runs a step by the rules of Concourse's atc/exec: a task's outcome is run's; a do stops at the
@@ -36,7 +39,13 @@ func evalStep(t *testing.T, step M, run func(task M) outcome) outcome {
 			}
 		}
 	case step["task"] != nil:
-		out = run(step)
+		if out = run(step); out == timedOut {
+			if step["timeout"] == nil {
+				t.Fatalf("task %v timed out without a timeout of its own", step["task"])
+			}
+
+			out = failed
+		}
 	default:
 		t.Fatalf("a step the evaluator doesn't know: %v", step)
 	}
@@ -93,6 +102,8 @@ func TestAnErroredBatchIsRetriedOnceAndAFailedOneNever(t *testing.T) {
 			{"passed", []outcome{succeeded}, succeeded},
 			{"errored twice", []outcome{errored, errored}, failed},
 			{"aborted", []outcome{aborted}, aborted},
+			{"timed out", []outcome{timedOut}, failed},
+			{"errored, then timed out", []outcome{errored, timedOut}, failed},
 		} {
 			ran := 0
 			last := outcome("")

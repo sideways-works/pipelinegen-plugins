@@ -247,9 +247,10 @@ repository's own parts from its include file.
   `parallel`, `batches` and `batch_minutes` say how many batches it
   deals). Each batch's `batch-end` runs in that batch's `ensure`, so every
   batch reports as it ends, whatever it did. A batch task that errors
-  (its container or a volume couldn't be set up, its worker went, it hit
-  its timeout) runs once more, the same task with the same inputs and
-  outputs, in its `on_error`; one that fails, or is aborted, does not. The
+  (its container or a volume couldn't be set up, its worker went) runs
+  once more, the same task with the same inputs and outputs, in its
+  `on_error`; one that fails, hits its timeout, or is aborted, does not:
+  Concourse gives a task that hit its own timeout no error. The
   batch sits in a `try`, so the batch's `batch-end` decides its step: it
   fails when a slice didn't pass, whether its tests failed or no attempt
   ran it, which a second error leaves errored. Each whole-suite check runs only when the

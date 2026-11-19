@@ -1356,10 +1356,11 @@ func (g *gen) withBatchEnd(run, suite string, task M) M {
 }
 
 // retriedOnError runs a batch's task once more, with the same config, inputs, outputs and caches, when it
-// errored: its container or a volume couldn't be set up, its worker went, it hit its timeout. Concourse runs
-// an on_error hook for any end but a failure, an abort or a success (exec.OnErrorStep), and registers the
-// hook's outputs as the step's would be, so the batch's end reads the second attempt's. A second error
-// stays the batch's: the hook has no hook of its own.
+// errored: its container or a volume couldn't be set up, its worker went. Concourse runs an on_error hook
+// only when the step returned an error that is no abort (exec.OnErrorStep), and registers the hook's
+// outputs as the step's would be, so the batch's end reads the second attempt's. A task that hits its own
+// timeout returns no error (exec.TaskStep's Run gives false, nil), so a hung batch runs once, under one
+// limit. A second error stays the batch's: the hook has no hook of its own.
 //
 // The try lets the batch's end decide the step: Concourse keeps an errored step errored even when its
 // on_error hook passed (OnErrorStep returns the step's error), and a try passes anything but an abort
