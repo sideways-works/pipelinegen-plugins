@@ -6545,13 +6545,11 @@ jobs:
               tags:
                 - cloud-1
               trigger: true
-              version: every
             - get: trigger-bookkeeping
               passed:
                 - plan-newest
               resource: branch-main
               trigger: false
-              version: every
             - get: planner-bookkeeping
               resource: planner
             - get: planner
@@ -7625,13 +7623,11 @@ jobs:
               tags:
                 - cloud-1
               trigger: true
-              version: every
             - get: trigger-bookkeeping
               passed:
                 - plan-nightly
               resource: branch-main
               trigger: false
-              version: every
             - get: planner-bookkeeping
               resource: planner
             - get: planner
@@ -8501,13 +8497,11 @@ jobs:
               tags:
                 - cloud-1
               trigger: true
-              version: every
             - get: trigger-bookkeeping
               passed:
                 - plan-nightly
               resource: branch-main
               trigger: false
-              version: every
             - get: planner-bookkeeping
               resource: planner
             - get: planner
@@ -9375,13 +9369,11 @@ jobs:
               tags:
                 - cloud-1
               trigger: true
-              version: every
             - get: trigger-bookkeeping
               passed:
                 - plan-nightly
               resource: branch-main
               trigger: false
-              version: every
             - get: planner-bookkeeping
               resource: planner
             - get: planner
@@ -10249,13 +10241,11 @@ jobs:
               tags:
                 - cloud-1
               trigger: true
-              version: every
             - get: trigger-bookkeeping
               passed:
                 - plan-nightly
               resource: branch-main
               trigger: false
-              version: every
             - get: planner-bookkeeping
               resource: planner
             - get: planner
@@ -11124,13 +11114,11 @@ jobs:
               tags:
                 - cloud-1
               trigger: true
-              version: every
             - get: trigger-bookkeeping
               passed:
                 - plan-nightly
               resource: branch-main
               trigger: false
-              version: every
             - get: planner-bookkeeping
               resource: planner
             - get: planner
@@ -12009,13 +11997,11 @@ jobs:
               tags:
                 - cloud-1
               trigger: true
-              version: every
             - get: trigger-bookkeeping
               passed:
                 - plan-nightly
               resource: branch-main
               trigger: false
-              version: every
             - get: planner-bookkeeping
               resource: planner
             - get: planner

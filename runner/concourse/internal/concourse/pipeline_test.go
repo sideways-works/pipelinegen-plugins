@@ -516,7 +516,7 @@ func TestNoJobIsSerializedUnlessTheConfigAsks(t *testing.T) {
 	// skipped.
 	versions := map[string]any{
 		"main-backend": "every", "main-e2e": "every", "plan-main": "every",
-		"nightly-backend": "every", "nightly-e2e": "every", "plan-nightly": nil,
+		"nightly-backend": nil, "nightly-e2e": nil, "plan-nightly": nil,
 		"pr-backend": "every", "pr-e2e": "every", "plan-pr": "every",
 	}
 

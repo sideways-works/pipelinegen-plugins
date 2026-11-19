@@ -51,7 +51,7 @@ jobs:
                 PIPELINEGEN_LIMIT: limits.steps=20
                 PIPELINEGEN_PACKAGE_CACHE: pkgcache
                 PIPELINEGEN_PIPELINE: fixture
-                PIPELINEGEN_PIPELINE_SHA256: 324b0026889bf3b2145de7baf4c3e90d812e9ad657bd32264858996caa2f905d
+                PIPELINEGEN_PIPELINE_SHA256: 09be3bdc9ec23efc135af10bd3d502c974e494774696422984c4808e882c6d62
                 PIPELINEGEN_PIPELINE_STEP: "1"
                 PIPELINEGEN_PLUGINS: ""
                 PIPELINEGEN_PRIVATE: ""
@@ -4978,7 +4978,6 @@ jobs:
                 - plan-nightly
               resource: branch-main
               trigger: true
-              version: every
             - get: planner
           timeout: 20m
         - config:
@@ -6550,7 +6549,6 @@ jobs:
               tags:
                 - browsers
               trigger: true
-              version: every
             - get: planner
               tags:
                 - browsers

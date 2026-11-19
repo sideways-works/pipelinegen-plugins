@@ -3031,7 +3031,6 @@ jobs:
                 - plan-nightly
               resource: branch-main
               trigger: true
-              version: every
             - get: planner
           timeout: 20m
         - config:
@@ -3878,7 +3877,6 @@ jobs:
               tags:
                 - browsers
               trigger: true
-              version: every
             - get: planner
               tags:
                 - browsers

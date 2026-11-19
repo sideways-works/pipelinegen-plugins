@@ -47,7 +47,7 @@ jobs:
                 PIPELINEGEN_CONCOURSE_URL: https://ci.example
                 PIPELINEGEN_LIMIT: limits.steps=20
                 PIPELINEGEN_PIPELINE: fixture
-                PIPELINEGEN_PIPELINE_SHA256: 67cf2f7c03a2856e89a162d20c8e35712e61c4a70516237bdda9c2cab519a4c1
+                PIPELINEGEN_PIPELINE_SHA256: b4ae792fb658e10c622651f24a6ea9a7706f17c813897d0c9d641c2fe6317405
                 PIPELINEGEN_PIPELINE_STEP: "1"
                 PIPELINEGEN_PLUGINS: ""
                 PIPELINEGEN_PRIVATE: ""
@@ -3024,7 +3024,6 @@ jobs:
                 - plan-nightly
               resource: branch-main
               trigger: true
-              version: every
             - get: planner
           timeout: 20m
         - config:
@@ -3871,7 +3870,6 @@ jobs:
               tags:
                 - browsers
               trigger: true
-              version: every
             - get: planner
               tags:
                 - browsers

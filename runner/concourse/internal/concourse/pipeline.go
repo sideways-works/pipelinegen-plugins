@@ -396,12 +396,12 @@ func (g *gen) trigger(run string, tags []string, passed []string) []any {
 		return []any{step}
 	case "timer":
 		// Follow the planning job, not the timer: a round that plans nothing
-		// passes no commit, so no suite runs.
+		// passes no commit, so no suite runs. The suites take the newest
+		// commit it passed, never every one: the planning job takes only the
+		// newest, so a commit between two rounds never passes, and a suite
+		// waiting for each in turn would wait for it for good.
 		if len(passed) > 0 {
-			step := get("trigger", branchResource(t.Branch), true)
-			step["version"] = "every"
-
-			return []any{step}
+			return []any{get("trigger", branchResource(t.Branch), true)}
 		}
 
 		return []any{get(triggerResource(run), triggerResource(run), true), get("trigger", branchResource(t.Branch), false)}
