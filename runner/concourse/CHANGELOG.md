@@ -6,6 +6,10 @@ Every release of concourse-runner, newest first. The format follows
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-19
+
+The first release from the plugins repository. Its tag `runner/concourse/v0.4.0` exists without a release.
+
 ### Added
 
 - The batch and prepare tasks of a suite run by drivers pass `--tools tools` to `slice run` and `slice prepare`, so the tools directory, with pipelinegen and bazelisk, comes first on the `PATH` of the drivers and their tests whatever the pinned pipelinegen's default
