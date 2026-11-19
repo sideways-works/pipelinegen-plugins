@@ -38,7 +38,10 @@ type toolCommand struct {
 	also []string
 	// recording are directories it reads in a recording run.
 	recording []string
-	tokenless bool
+	// taskFileRecording are directories it reads in a recording run of a suite whose batch is its own
+	// task file.
+	taskFileRecording []string
+	tokenless         bool
 	// linksConcourse: only writing the pipeline needs Concourse's address.
 	linksConcourse bool
 }
@@ -91,9 +94,10 @@ var toolCommands = map[string]toolCommand{
 			"batch": other, "batches": reads("batches"), "result": reads("result"),
 			"coverage": reads(""), "tools": reads("tools"), "started": reads(""),
 		}),
-		// The journal's ends name the tree and coverage by their defaults.
-		also:      []string{"source"},
-		recording: []string{"coverage"},
+		// The journal's ends name the tree and coverage by their defaults; the tree is read only to
+		// observe what the batch left unobserved, every slice of a task file's batch.
+		recording:         []string{"coverage"},
+		taskFileRecording: []string{"source"},
 	},
 	"report collect": {runFromEnv: true, flags: common(".", map[string]flagUse{
 		"suite": other, "out": writes("slices"),
@@ -103,6 +107,9 @@ var toolCommands = map[string]toolCommand{
 	"slice setup-end": {runFromEnv: true, flags: common("source", map[string]flagUse{"coverage": writes("coverage"), "result": writes("result"), "tools": reads("tools")})},
 	"slice flush":     {runFromEnv: true, flags: common("source", map[string]flagUse{"result": reads("result"), "tools": reads("tools")})},
 	"slice list":      {tokenless: true, flags: map[string]flagUse{"batches": reads("batches")}},
+	"slice bookkeeping-files": {tokenless: true, flags: map[string]flagUse{
+		"root": reads("source"), "out": writes("bookkeeping"),
+	}},
 }
 
 func sliceFlags() map[string]flagUse {
@@ -191,7 +198,7 @@ func top(p string) string {
 	return p
 }
 
-func (c call) needs(params M, recording bool) (read, written []string, err error) { //nolint:nonamedreturns // two lists and an error
+func (c call) needs(params M, recording, taskFile bool) (read, written []string, err error) { //nolint:nonamedreturns // two lists and an error
 	tc := toolCommands[c.command]
 
 	value := func(name string) string {
@@ -233,6 +240,12 @@ func (c call) needs(params M, recording bool) (read, written []string, err error
 
 	if recording {
 		for _, d := range tc.recording {
+			read = append(read, top(d))
+		}
+	}
+
+	if recording && taskFile {
+		for _, d := range tc.taskFileRecording {
 			read = append(read, top(d))
 		}
 	}
@@ -442,11 +455,12 @@ func TestEveryPipelinegenStepMountsWhatItReads(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		recording := map[string]bool{}
+		recording, taskFile := map[string]bool{}, map[string]bool{}
 
 		for _, r := range spec.Runs {
 			for _, rs := range r.Suites {
 				recording[SuiteJob(r.Name, rs.Suite)] = rs.Records
+				taskFile[SuiteJob(r.Name, rs.Suite)] = spec.Suites[suiteIndex(t, spec, rs.Suite)].Steps == nil
 			}
 		}
 
@@ -495,7 +509,7 @@ func TestEveryPipelinegenStepMountsWhatItReads(t *testing.T) {
 						t.Errorf("%s: gets Concourse's address, which only writing the pipeline needs", where)
 					}
 
-					read, written, err := c.needs(asMap(cfg["params"]), recording[jobName])
+					read, written, err := c.needs(asMap(cfg["params"]), recording[jobName], taskFile[jobName])
 					if err != nil {
 						t.Errorf("%s: %v", where, err)
 
@@ -554,7 +568,7 @@ func TestParseCallRefusesWhatTheToolRefuses(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	read, _, err := c.needs(M{"PIPELINEGEN_TRIGGER": "trigger"}, true)
+	read, _, err := c.needs(M{"PIPELINEGEN_TRIGGER": "trigger"}, true, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -563,5 +577,117 @@ func TestParseCallRefusesWhatTheToolRefuses(t *testing.T) {
 
 	if got := strings.Join(slices.Compact(read), ","); got != "batches,coverage,result,source,tools,trigger" {
 		t.Errorf("batch-end reads %s", got)
+	}
+
+	// a driven batch's end reads its root and the batch's outputs, and no tree
+	c, err = parseCall([]string{"report", "batch-end", "--batch", "((.:batch))", "--result=result", "-root", "bookkeeping"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	read, _, err = c.needs(M{"PIPELINEGEN_TRIGGER": "trigger"}, true, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	slices.Sort(read)
+
+	if got := strings.Join(slices.Compact(read), ","); got != "batches,bookkeeping,coverage,result,tools,trigger" {
+		t.Errorf("a driven batch's end reads %s", got)
+	}
+}
+
+func TestBatchEndsTakeTheBookkeepingFilesWhenTheToolWritesThem(t *testing.T) {
+	for _, tc := range []struct {
+		pin  plugin.SpecTool
+		want bool
+	}{
+		{plugin.SpecTool{Commit: "0123456789abcdef0123456789abcdef01234567"}, true},
+		{plugin.SpecTool{Version: "v0.4.2", SHA256: "x"}, true},
+		{plugin.SpecTool{Version: "v0.10.0", SHA256: "x"}, true},
+		{plugin.SpecTool{Version: "v0.4.1", SHA256: "x"}, false},
+		{plugin.SpecTool{Version: "v0.4.2-rc.1", SHA256: "x"}, false},
+	} {
+		spec, _ := fixture(t)
+
+		for i, tl := range spec.Tools {
+			if tl.Kind == plugin.ToolPipelinegen {
+				tc.pin.Name, tc.pin.Kind, tc.pin.Repository = tl.Name, tl.Kind, tl.Repository
+				spec.Tools[i] = tc.pin
+			}
+		}
+
+		p, err := Generate(spec, t.TempDir())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		roots := map[string]string{}
+
+		for _, j := range asSlice(p["jobs"]) {
+			job := asMap(j)
+
+			walkTasks(job, func(task M) {
+				if task["task"] != "batch-end" {
+					return
+				}
+
+				args := asSlice(asMap(asMap(task["config"])["run"])["args"])
+				roots[fmt.Sprint(job["name"])] = fmt.Sprint(args[len(args)-1])
+			})
+		}
+
+		// e2e records and runs its batches by a task file, so its ends observe in the tree
+		want := map[string]string{"main-backend": "source", "main-e2e": "source"}
+		if tc.want {
+			want["main-backend"] = bookkeeping
+		}
+
+		for job, root := range want {
+			if roots[job] != root {
+				t.Errorf("tool %+v: %s's batch end takes %q, want %q", tc.pin, job, roots[job], root)
+			}
+		}
+	}
+}
+
+func TestARecordingDrivenSuitesBatchEndTakesTheBookkeepingFiles(t *testing.T) {
+	spec, root := fixture(t)
+	spec.Trusted = `{"git_remote":"x"}`
+
+	i := suiteIndex(t, spec, "e2e")
+	spec.Suites[i].Prepare, spec.Suites[i].RunSlice = "", ""
+	spec.Suites[i].Image = "golang"
+	spec.Suites[i].Steps = &plugin.SpecSteps{Drivers: []string{"go"}}
+
+	p, err := Generate(spec, root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	found := false
+
+	for _, j := range asSlice(p["jobs"]) {
+		job := asMap(j)
+		if job["name"] != "main-e2e" {
+			continue
+		}
+
+		walkTasks(job, func(task M) {
+			if task["task"] != "batch-end" {
+				return
+			}
+
+			found = true
+
+			cfg := asMap(task["config"])
+			if args := asSlice(asMap(cfg["run"])["args"]); fmt.Sprint(args[len(args)-1]) != bookkeeping || slices.Contains(mounts(cfg, "inputs"), "source") {
+				t.Errorf("a driven recording suite's batch end: %v, inputs %v", args, mounts(cfg, "inputs"))
+			}
+		})
+	}
+
+	if !found {
+		t.Fatal("main-e2e has no batch end")
 	}
 }

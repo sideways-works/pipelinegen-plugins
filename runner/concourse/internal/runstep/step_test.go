@@ -535,3 +535,30 @@ func TestTheFetchKeepsPlacedTools(t *testing.T) {
 		}
 	}
 }
+
+// The start task writes the bookkeeping files only when the pipeline gave it their output.
+func TestTheStartWritesTheBookkeepingFilesItsPipelineAsksFor(t *testing.T) {
+	for _, asked := range []bool{false, true} {
+		tk, out := task(t, "PIPELINEGEN_RUN=main", "PIPELINEGEN_SUITE=e2e")
+		fakeTool(t, tk, "echo \"$*\" >> calls\nif [ \"$1\" = tree ]; then mkdir -p gate && echo '[\"1\"]' > gate/gate.json; fi\n")
+
+		if asked {
+			if err := os.MkdirAll(filepath.Join(tk.Dir, "bookkeeping"), 0o750); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		if code := tk.Run([]string{"start"}); code != 0 {
+			t.Fatalf("start: %d\n%s", code, out)
+		}
+
+		calls, err := os.ReadFile(filepath.Join(tk.Dir, "calls"))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if got := strings.Contains(string(calls), "slice bookkeeping-files --root source --out bookkeeping\n"); got != asked {
+			t.Errorf("with the output %t, the start called %q", asked, calls)
+		}
+	}
+}

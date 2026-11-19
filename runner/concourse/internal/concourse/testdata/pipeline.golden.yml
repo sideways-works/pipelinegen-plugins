@@ -47,7 +47,7 @@ jobs:
                 PIPELINEGEN_CONCOURSE_URL: https://ci.example
                 PIPELINEGEN_LIMIT: limits.steps=20
                 PIPELINEGEN_PIPELINE: fixture
-                PIPELINEGEN_PIPELINE_SHA256: b4ae792fb658e10c622651f24a6ea9a7706f17c813897d0c9d641c2fe6317405
+                PIPELINEGEN_PIPELINE_SHA256: 0a55cbe5f5e389513127a4d6a4f21046952d6cf1f582dc2cb8d984c858d2d033
                 PIPELINEGEN_PIPELINE_STEP: "1"
                 PIPELINEGEN_PLUGINS: ""
                 PIPELINEGEN_PRIVATE: ""
@@ -1029,6 +1029,7 @@ jobs:
                 - name: source
                 - name: gate
                 - name: batches
+                - name: bookkeeping
             params:
                 GITHUB_TOKEN: ((github_token))
                 PIPELINEGEN_BAZELISK: tools/bazelisk
@@ -1230,7 +1231,7 @@ jobs:
                         config:
                             inputs:
                                 - name: tools
-                                - name: source
+                                - name: bookkeeping
                                 - name: trigger
                                 - name: batches
                                 - name: result
@@ -1255,7 +1256,7 @@ jobs:
                                     - --result
                                     - result
                                     - --root
-                                    - source
+                                    - bookkeeping
                                 path: tools/pipelinegen
                         image: planner
                         task: batch-end
@@ -1878,6 +1879,7 @@ jobs:
                 - name: source
                 - name: gate
                 - name: batches
+                - name: bookkeeping
             params:
                 GITHUB_TOKEN: ((github_token))
                 PIPELINEGEN_BAZELISK: tools/bazelisk
@@ -3036,6 +3038,7 @@ jobs:
                 - name: source
                 - name: gate
                 - name: batches
+                - name: bookkeeping
             params:
                 GITHUB_TOKEN: ((github_token))
                 PIPELINEGEN_BAZELISK: tools/bazelisk
@@ -3237,7 +3240,7 @@ jobs:
                         config:
                             inputs:
                                 - name: tools
-                                - name: source
+                                - name: bookkeeping
                                 - name: trigger
                                 - name: batches
                                 - name: result
@@ -3262,7 +3265,7 @@ jobs:
                                     - --result
                                     - result
                                     - --root
-                                    - source
+                                    - bookkeeping
                                 path: tools/pipelinegen
                         image: planner
                         task: batch-end
@@ -3884,6 +3887,7 @@ jobs:
                 - name: source
                 - name: gate
                 - name: batches
+                - name: bookkeeping
             params:
                 GITHUB_TOKEN: ((github_token))
                 PIPELINEGEN_BAZELISK: tools/bazelisk
@@ -6074,6 +6078,7 @@ jobs:
                 - name: source
                 - name: gate
                 - name: batches
+                - name: bookkeeping
             params:
                 GITHUB_TOKEN: ((github_token))
                 PIPELINEGEN_BAZELISK: tools/bazelisk
@@ -6275,7 +6280,7 @@ jobs:
                         config:
                             inputs:
                                 - name: tools
-                                - name: source
+                                - name: bookkeeping
                                 - name: trigger
                                 - name: batches
                                 - name: result
@@ -6300,7 +6305,7 @@ jobs:
                                     - --result
                                     - result
                                     - --root
-                                    - source
+                                    - bookkeeping
                                 path: tools/pipelinegen
                         image: planner
                         task: batch-end
@@ -6923,6 +6928,7 @@ jobs:
                 - name: source
                 - name: gate
                 - name: batches
+                - name: bookkeeping
             params:
                 GITHUB_TOKEN: ((github_token))
                 PIPELINEGEN_BAZELISK: tools/bazelisk

@@ -29,6 +29,13 @@ func (t *Task) start([]string) int {
 		return t.writeFile("batches/batches.json", "[]\n")
 	}
 
+	// a pipeline whose batches' ends take the bookkeeping files has the task write them
+	if t.isDir("bookkeeping") {
+		if code := t.call(t.Env, tool, "slice", "bookkeeping-files", "--root", "source", "--out", "bookkeeping"); code != 0 {
+			return code
+		}
+	}
+
 	return t.last(t.Env, "batches", "--run", run, "--suite", suite, "--trigger", "trigger", "--out", "batches", "--root", "source")
 }
 

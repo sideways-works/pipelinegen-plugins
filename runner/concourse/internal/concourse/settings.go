@@ -3,6 +3,8 @@ package concourse
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/sideways-works/pipelinegen/plugin"
 )
@@ -49,6 +51,47 @@ func readSettings(ci map[string]any) (settings, error) {
 	}
 
 	return s, nil
+}
+
+// atLeast tells whether version, vMAJOR.MINOR.PATCH with a prerelease or not, is least or later; a
+// prerelease of least is not.
+func atLeast(version, least string) bool {
+	v, vok := versionParts(version)
+	m, mok := versionParts(least)
+
+	if !vok || !mok {
+		return false
+	}
+
+	for i := range v {
+		if v[i] != m[i] {
+			return v[i] > m[i]
+		}
+	}
+
+	return !strings.Contains(version, "-")
+}
+
+func versionParts(version string) ([3]int, bool) {
+	var out [3]int
+
+	core, _, _ := strings.Cut(strings.TrimPrefix(version, "v"), "-")
+
+	parts := strings.Split(core, ".")
+	if len(parts) != 3 || !strings.HasPrefix(version, "v") {
+		return out, false
+	}
+
+	for i, p := range parts {
+		n, err := strconv.Atoi(p)
+		if err != nil || n < 0 {
+			return out, false
+		}
+
+		out[i] = n
+	}
+
+	return out, true
 }
 
 func tool(spec plugin.Spec, kind string) plugin.SpecTool {

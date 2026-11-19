@@ -507,10 +507,16 @@ Moving them adds streaming. They read what other tasks left on the test
 workers, and Concourse streams it to the bookkeeping worker on every
 build: the tools
 (pipelinegen, bazelisk and the plugins), the trigger's checkout, the
-`start` task's `source` (the whole tree under test, with its history)
-and `batches`, each batch's `result` and, in a recording run, its
-`coverage`, which can be large. In a recording run `batch-end` also runs
-the correlators there, on that worker's CPU and memory. With a large tree,
+`start` task's `bookkeeping` and `batches`, each batch's `result` and, in
+a recording run, its `coverage`, which can be large. `bookkeeping` is what
+`batch-end` reads of the tree under test, the config, which the `start`
+task writes with `pipelinegen slice bookkeeping-files` when the pinned
+pipelinegen has it (a release from v0.4.2 on, or a build of a commit).
+With an older pipelinegen, and in a recording run of a suite whose batch
+is its own task file, whose slices `batch-end` observes in the tree, it
+takes `source`, the whole tree under test with its history, instead. In
+a recording run `batch-end` may also run the correlators there, on that
+worker's CPU and memory. With a large tree under an older pipelinegen,
 the streaming can cost more than the queueing it saves: measure before
 turning it on.
 

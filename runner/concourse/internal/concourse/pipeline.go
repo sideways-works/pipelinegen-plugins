@@ -1095,7 +1095,7 @@ func (g *gen) suiteJob(run, suite string) (M, error) {
 	}
 
 	plan = append(plan,
-		limited(g.toolTask("start", tags, names("trigger"), []string{"tools", "source", "gate", "batches"}, nil,
+		limited(g.toolTask("start", tags, names("trigger"), g.startOutputs(), nil,
 			g.env(run, suite, nil), "start"), stepsKey, g.stepMinutes()),
 		M{"load_var": "gate", "file": "gate/gate.json"},
 		M{"load_var": "batches", "file": "batches/batches.json"},
@@ -1307,18 +1307,50 @@ func (g *gen) batchStep(run, suite string) M {
 func (g *gen) withBatchEnd(run, suite string, task M) M {
 	rs := g.runSuite(run, suite)
 
+	// The end reads the tree's config from its root, and the tree itself only to observe what the batch
+	// left unobserved, which is every slice of a recording task file's batch: other ends take the
+	// bookkeeping files alone, and stream no tree to a worker of their own.
+	root := "source"
+	if g.bookkeepingFiles() && (g.suites[suite].Steps != nil || !rs.Records) {
+		root = bookkeeping
+	}
+
 	// The task may have died before writing result or coverage.
-	inputs := append(names("source", "trigger", "batches"), M{"name": "result", "optional": true})
+	inputs := append(names(root, "trigger", "batches"), M{"name": "result", "optional": true})
 	if rs.Records {
 		inputs = append(inputs, M{"name": "coverage", "optional": true})
 	}
 
-	args := []string{"report", "batch-end", "--batch", "((.:batch))", "--result", "result", "--root", "source"}
+	args := []string{"report", "batch-end", "--batch", "((.:batch))", "--result", "result", "--root", root}
 
 	task["ensure"] = g.onBookkeeping(limited(g.helper("batch-end", g.bookkeepingTags(run, suite), inputs, nil,
 		g.env(run, suite, M{"PIPELINEGEN_BATCH": "((.:batch))"}), args...), stepsKey, g.stepMinutes()), run, suite)
 
 	return task
+}
+
+// bookkeeping is the start task's output of what the batches' ends read of the tree under test.
+const bookkeeping = "bookkeeping"
+
+// minBookkeeping is the first pipelinegen release whose `slice bookkeeping-files` writes the bookkeeping
+// files and whose batch's end needs no tree beside them.
+const minBookkeeping = "v0.4.2"
+
+// bookkeepingFiles tells whether the pinned pipelinegen writes the bookkeeping files: a release from
+// minBookkeeping on, or a build of a commit, which the kit and trials of the tool pin.
+func (g *gen) bookkeepingFiles() bool {
+	t := tool(g.spec, plugin.ToolPipelinegen)
+
+	return t.Commit != "" || atLeast(t.Version, minBookkeeping)
+}
+
+func (g *gen) startOutputs() []string {
+	out := []string{"tools", "source", "gate", "batches"}
+	if g.bookkeepingFiles() {
+		out = append(out, bookkeeping)
+	}
+
+	return out
 }
 
 // prepareSteps gets the trusted keys and the trigger, to read the suite's

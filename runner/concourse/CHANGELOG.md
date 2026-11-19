@@ -6,6 +6,10 @@ Every release of concourse-runner, newest first. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- A batch's end takes the bookkeeping files instead of the tree under test when the pinned pipelinegen writes them (a release from v0.4.2 on, or a build of a commit): the suite job's start task writes them with `pipelinegen slice bookkeeping-files --root source --out bookkeeping`, its new output `bookkeeping`, and the end's root and input are `bookkeeping`. An end placed on a worker of its own (a `bookkeeping` placement) then streams the config instead of the whole checkout. A recording run of a suite whose batch is its own task file keeps `source` at its ends, as they observe its slices in the tree; with an older pipelinegen every end keeps `source`
+
 ## [0.4.1] - 2026-11-19
 
 The first release from the plugins repository. Its tag `runner/concourse/v0.4.0` exists without a release.
