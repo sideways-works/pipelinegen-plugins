@@ -68,6 +68,8 @@ func describe() plugin.Description {
 		// Concourse keeps a task's cache per job, step and worker.
 		CacheScopes: map[string]string{
 			"plan-cache": plugin.ScopeJob, "write-cache": plugin.ScopeJob, "cache": plugin.ScopeJob, packageCache: plugin.ScopeJob,
+			// a suite's bookkeeping keeps the tools it fetched, each checked by its pin every build
+			"tools": plugin.ScopeJob,
 		},
 	}
 }

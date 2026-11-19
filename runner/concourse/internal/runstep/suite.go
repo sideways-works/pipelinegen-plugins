@@ -55,6 +55,15 @@ func (t *Task) end([]string) int {
 		return 0
 	}
 
+	// an end that fetches the tools it calls itself, kept as its cache: one it can't fetch can't end the suite
+	if t.getenv("PIPELINEGEN_OWN_TOOLS") != "" {
+		if code := t.fetchTools(t.Env); code != 0 || !t.executable(tool) {
+			t.sayf("the tools could not be fetched (exit %d): the suite's end is not recorded", code)
+
+			return exitUnrecorded
+		}
+	}
+
 	if !t.executable(tool) {
 		t.sayf("no tools: the build broke before its start task had them; fetching them to end the suite")
 
@@ -242,4 +251,9 @@ func (t *Task) requested(client *http.Client, req *http.Request, to *bytes.Buffe
 // out prints a line on the task's stdout.
 func (t *Task) outf(format string, args ...any) {
 	fmt.Fprintf(t.Stdout, format+"\n", args...) //nolint:errcheck // a log line that can't be written can't be reported either
+}
+
+// batchEnd is a batch's end with the tools it fetched itself: pipelinegen's report batch-end with args.
+func (t *Task) batchEnd(args []string) int {
+	return t.last(t.Env, args...)
 }

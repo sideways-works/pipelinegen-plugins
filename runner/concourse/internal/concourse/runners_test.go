@@ -70,9 +70,14 @@ func TestWithSeveralRunnersThePipelineIsWrittenForThisOne(t *testing.T) {
 
 		seen++
 
+		// a suite's bookkeeping fetches no driver
+		plugins := "concourse https://github.com/o/plugins v1 abc - runner/concourse\n"
+		if task["task"] != "batch-end" && task["task"] != "end" {
+			plugins += "go-driver git@github.com:o/plugins.git - - c0ffee driver/go\n"
+		}
+
 		for k, want := range map[string]string{
-			"PIPELINEGEN_PLUGINS": "concourse https://github.com/o/plugins v1 abc - runner/concourse\n" +
-				"go-driver git@github.com:o/plugins.git - - c0ffee driver/go\n",
+			"PIPELINEGEN_PLUGINS":           plugins,
 			"PIPELINEGEN_PRIVATE":           "github.com/o/plugins",
 			"PIPELINEGEN_RUNNER":            "concourse",
 			"PIPELINEGEN_RUNNER_PROGRAM":    "concourse-runner",

@@ -594,9 +594,18 @@ func (g *gen) toolTask(name string, tags []string, inputs []M, outputs []string,
 // an empty field, and a path and sums only where a tool has them. Another runner's
 // pipeline holds the runs it owns, so this one fetches no other runner.
 func pluginLines(s plugin.Spec) string {
+	return pluginLinesOf(s, func(plugin.SpecTool) bool { return true })
+}
+
+// pluginLinesOf are the lines of the plugins keep keeps.
+func pluginLinesOf(s plugin.Spec, keep func(plugin.SpecTool) bool) string {
 	var b strings.Builder
 
 	for _, t := range plugins(s) {
+		if !keep(t) {
+			continue
+		}
+
 		fields := []string{t.Name, t.Repository, t.Version, t.SHA256, t.Commit}
 		if t.Path != "" || t.Sums != "" {
 			fields = append(fields, t.Path)
@@ -1158,12 +1167,26 @@ func (g *gen) endTask(run, suite string) M {
 	// be recorded pass.
 	inputs := []M{{"name": "tools", "optional": true}, {"name": "trigger", "optional": true}, {"name": "batches", "optional": true}}
 
-	return g.onBookkeeping(limited(withTags(M{"task": "end", "image": "planner", "config": M{
+	cfg := M{
 		"platform": "linux",
 		"inputs":   inputs,
 		"params":   env,
 		"run":      runStep("end"),
-	}}, g.bookkeepingTags(run, suite)), stepsKey, g.stepMinutes()), run, suite)
+	}
+
+	// an end that fetches its own tools keeps them as its cache
+	if g.ownTools() {
+		for _, k := range []string{"PIPELINEGEN_BAZELISK_VERSION", "PIPELINEGEN_BAZELISK_SHA256"} {
+			delete(env, k)
+		}
+
+		maps.Copy(env, g.bookkeepingEnv())
+
+		cfg["inputs"] = inputs[1:]
+		cfg["caches"] = caches("tools")
+	}
+
+	return g.onBookkeeping(limited(withTags(M{"task": "end", "image": "planner", "config": cfg}, g.bookkeepingTags(run, suite)), stepsKey, g.stepMinutes()), run, suite)
 }
 
 const (
@@ -1322,11 +1345,63 @@ func (g *gen) withBatchEnd(run, suite string, task M) M {
 	}
 
 	args := []string{"report", "batch-end", "--batch", "((.:batch))", "--result", "result", "--root", root}
+	env := g.env(run, suite, M{"PIPELINEGEN_BATCH": "((.:batch))"})
 
-	task["ensure"] = g.onBookkeeping(limited(g.helper("batch-end", g.bookkeepingTags(run, suite), inputs, nil,
-		g.env(run, suite, M{"PIPELINEGEN_BATCH": "((.:batch))"}), args...), stepsKey, g.stepMinutes()), run, suite)
+	end := g.helper("batch-end", g.bookkeepingTags(run, suite), inputs, nil, env, args...)
+	if g.ownTools() {
+		end = g.ownToolsTask("batch-end", g.bookkeepingTags(run, suite), inputs, env, append([]string{"batch-end"}, args...)...)
+	}
+
+	task["ensure"] = g.onBookkeeping(limited(end, stepsKey, g.stepMinutes()), run, suite)
 
 	return task
+}
+
+// ownTools tells whether a suite's bookkeeping fetches the tools it calls itself, kept in its task's cache
+// on the worker, instead of taking the start task's, which a bookkeeping placement would stream from the
+// suite's worker on every build: pipelinegen and the correlators, connectors and the runner, never the
+// drivers or bazelisk. It does so wherever it runs, so a placement moves it and changes nothing else. The
+// pinned pipelinegen gives a batch's end all it reads without the tree from minBookkeeping on. After its
+// first build on a worker the task streams nothing and downloads nothing: its tools are its cache.
+func (g *gen) ownTools() bool {
+	return g.bookkeepingFiles()
+}
+
+// bookkeepingEnv is the bootstrap's pins of what a suite's bookkeeping calls.
+func (g *gen) bookkeepingEnv() M {
+	env := g.bootstrapEnv()
+	// the runner stays among the pins, so the cache keeps the copy the bootstrap fetched
+	env["PIPELINEGEN_PLUGINS"] = pluginLinesOf(g.spec, func(t plugin.SpecTool) bool {
+		return t.Kind == plugin.KindCorrelator || t.Kind == plugin.KindConnector || t.Kind == plugin.KindRunner
+	})
+	env["PIPELINEGEN_OWN_TOOLS"] = "1"
+
+	delete(env, "PIPELINEGEN_BAZELISK_VERSION")
+	delete(env, "PIPELINEGEN_BAZELISK_SHA256")
+
+	return env
+}
+
+// ownToolsTask runs a runner's step that fetches the bookkeeping's tools into the task's cache, then
+// calls pipelinegen.
+func (g *gen) ownToolsTask(name string, tags []string, inputs []M, env M, step ...string) M {
+	params := g.bookkeepingEnv()
+	maps.Copy(params, env)
+	// where pipelinegen would look for Bazel, which the bookkeeping never runs
+	params["PIPELINEGEN_BAZELISK"] = "tools/bazelisk"
+	g.forTool(params)
+
+	if slices.ContainsFunc(inputs, func(in M) bool { return in["name"] == "trigger" }) {
+		params["PIPELINEGEN_TRIGGER"] = "trigger"
+	}
+
+	return withTags(M{"task": name, "image": "planner", "config": M{
+		"platform": "linux",
+		"inputs":   inputs,
+		"caches":   caches("tools"),
+		"params":   params,
+		"run":      runStep(step...),
+	}}, tags)
 }
 
 // bookkeeping is the start task's output of what the batches' ends read of the tree under test.

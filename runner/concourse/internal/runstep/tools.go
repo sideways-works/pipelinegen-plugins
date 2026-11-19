@@ -54,8 +54,11 @@ func (t *Task) fetchTools(env []string) int {
 		}
 	}
 
-	if code := f.bazelisk(getenv(env, "PIPELINEGEN_BAZELISK_VERSION"), getenv(env, "PIPELINEGEN_BAZELISK_SHA256")); code != 0 {
-		return code
+	// a suite's bookkeeping runs no Bazel, and its pins name no bazelisk
+	if v := getenv(env, "PIPELINEGEN_BAZELISK_VERSION"); v != "" {
+		if code := f.bazelisk(v, getenv(env, "PIPELINEGEN_BAZELISK_SHA256")); code != 0 {
+			return code
+		}
 	}
 
 	return f.prune()

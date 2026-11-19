@@ -8,6 +8,8 @@ Every release of concourse-runner, newest first. The format follows
 
 ### Changed
 
+- With a pipelinegen that writes the bookkeeping files, a batch's end and the suite job's end fetch the tools they call themselves, pipelinegen, the correlators, the connectors and the runner, never a driver or bazelisk, and keep them as their task's cache `tools` on the worker, instead of taking the `start` task's `tools`. A bookkeeping placement then streams no tools: a task fetches them once per worker and job, checked against their pins every build. An end that can't fetch them fails (exit 4) rather than leave its suite without an end
+
 - A batch's end takes the bookkeeping files instead of the tree under test when the pinned pipelinegen writes them (a release from v0.4.2 on, or a build of a commit): the suite job's start task writes them with `pipelinegen slice bookkeeping-files --root source --out bookkeeping`, its new output `bookkeeping`, and the end's root and input are `bookkeeping`. An end placed on a worker of its own (a `bookkeeping` placement) then streams the config instead of the whole checkout. A recording run of a suite whose batch is its own task file keeps `source` at its ends, as they observe its slices in the tree; with an older pipelinegen every end keeps `source`
 
 ## [0.4.1] - 2026-11-19

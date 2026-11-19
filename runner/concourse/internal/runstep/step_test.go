@@ -54,7 +54,7 @@ func TestAStepNamedWrongIsRefused(t *testing.T) {
 		}
 	}
 
-	if got := strings.Join(Names(), " "); got != "begin continuous-plan end pipeline plan proposed-plan proposed-write report-error "+
+	if got := strings.Join(Names(), " "); got != "batch-end begin continuous-plan end pipeline plan proposed-plan proposed-write report-error "+
 		"stale start sweep sweep-plan sweep-write tools" {
 		t.Errorf("steps %s", got)
 	}
@@ -560,5 +560,42 @@ func TestTheStartWritesTheBookkeepingFilesItsPipelineAsksFor(t *testing.T) {
 		if got := strings.Contains(string(calls), "slice bookkeeping-files --root source --out bookkeeping\n"); got != asked {
 			t.Errorf("with the output %t, the start called %q", asked, calls)
 		}
+	}
+}
+
+// A suite's bookkeeping fetches no bazelisk: its pins name none.
+func TestAFetchWithoutBazelisksPinFetchesNone(t *testing.T) {
+	standIn := "#!/bin/sh\n"
+	sum := sha256.Sum256([]byte(standIn))
+	hexSum := hex.EncodeToString(sum[:])
+
+	tk, out := task(t, "PIPELINEGEN_GITHUB_API=http://127.0.0.1:1", "PIPELINEGEN_BAZELISK_BASE=http://127.0.0.1:1",
+		"PIPELINEGEN_TOOL_REPOSITORY=o/pipelinegen", "PIPELINEGEN_TOOL_COMMIT=c0ffee",
+		"PIPELINEGEN_PLUGINS=runner o/pipelinegen-runner-x v1 "+hexSum+" -\n")
+
+	for _, p := range []string{tool, "tools/plugins/runner"} {
+		write(t, filepath.Join(tk.Dir, p), standIn, 0o700)
+	}
+
+	if code := tk.fetchTools(tk.Env); code != 0 {
+		t.Fatalf("exit %d\n%s", code, out)
+	}
+
+	if tk.exists("tools/bazelisk") {
+		t.Error("fetched a bazelisk no pin names")
+	}
+}
+
+// An end apart from its suite that can't fetch its tools fails, as its suite would never end.
+func TestAnEndThatCantFetchItsOwnToolsIsUnrecorded(t *testing.T) {
+	tk, out := task(t, "PIPELINEGEN_OWN_TOOLS=1", "PIPELINEGEN_GITHUB_API=http://127.0.0.1:1",
+		"PIPELINEGEN_TOOL_REPOSITORY=o/pipelinegen", "PIPELINEGEN_TOOL_VERSION=v1", "PIPELINEGEN_TOOL_SHA256="+strings.Repeat("a", 64))
+
+	if err := os.MkdirAll(filepath.Join(tk.Dir, "trigger"), 0o750); err != nil {
+		t.Fatal(err)
+	}
+
+	if code := tk.Run([]string{"end"}); code != exitUnrecorded || !strings.Contains(out.String(), "the suite's end is not recorded") {
+		t.Errorf("exit %d\n%s", code, out)
 	}
 }

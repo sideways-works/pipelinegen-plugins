@@ -70,6 +70,8 @@ var byName = map[string]def{
 	"pipeline":        {run: (*Task).pipeline, tools: true},
 	"stale":           {run: (*Task).stale, tools: true},
 	"start":           {run: (*Task).start, tools: true},
+	// A batch's end fetches the tools it calls itself, kept as its cache.
+	"batch-end": {run: (*Task).batchEnd, tools: true},
 	// The end fetches the tools only when the build broke before it had them.
 	"end":          {run: (*Task).end},
 	"report-error": {run: (*Task).reportError},

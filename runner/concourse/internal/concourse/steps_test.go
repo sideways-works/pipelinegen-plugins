@@ -443,17 +443,41 @@ func steppedSpecs(t *testing.T) map[string]plugin.Spec {
 	self, _ := fixture(t)
 	self.CI["self_set"] = true
 
-	return map[string]plugin.Spec{"plain": plain, "an older tool's locks": locked, "self_set": self}
+	apart, _ := fixture(t)
+	apart.CI[placedApart] = true
+
+	return map[string]plugin.Spec{"plain": plain, "an older tool's locks": locked, "self_set": self, "bookkeeping apart": apart}
+}
+
+// placedApart marks a stepped spec whose bookkeeping a placement puts on workers of its own.
+const placedApart = "test-bookkeeping-apart"
+
+// generatedFor generates a stepped spec, with the placement it stands for.
+func generatedFor(t *testing.T, spec plugin.Spec) M {
+	t.Helper()
+
+	var config map[string]any
+
+	if spec.CI[placedApart] == true {
+		spec.CI = maps.Clone(spec.CI)
+		delete(spec.CI, placedApart)
+
+		config = placementOf(nil, on(forBookkeeping, []any{"x"}))
+	}
+
+	p, err := GenerateWith(spec, t.TempDir(), config)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return p
 }
 
 func TestEveryPipelinegenStepMountsWhatItReads(t *testing.T) {
 	seen := map[string]bool{}
 
 	for variant, spec := range steppedSpecs(t) {
-		p, err := Generate(spec, t.TempDir())
-		if err != nil {
-			t.Fatal(err)
-		}
+		p := generatedFor(t, spec)
 
 		recording, taskFile := map[string]bool{}, map[string]bool{}
 
@@ -689,5 +713,75 @@ func TestARecordingDrivenSuitesBatchEndTakesTheBookkeepingFiles(t *testing.T) {
 
 	if !found {
 		t.Fatal("main-e2e has no batch end")
+	}
+}
+
+func TestBookkeepingFetchesOnlyTheToolsItCalls(t *testing.T) {
+	spec, root := fixture(t)
+
+	sum := strings.Repeat("b", 64)
+	spec.Tools = append(spec.Tools,
+		plugin.SpecTool{Name: "go-uses", Kind: plugin.KindCorrelator, Repository: "o/pipelinegen-correlator-go", Version: "v1", SHA256: sum},
+		plugin.SpecTool{Name: "go-units", Kind: plugin.KindSBOM, Repository: "o/pipelinegen-sbom-go", Version: "v1", SHA256: sum},
+		plugin.SpecTool{Name: "go", Kind: plugin.KindDriver, Repository: "o/pipelinegen-driver-go", Version: "v1", SHA256: sum},
+		plugin.SpecTool{Name: "concourse", Kind: plugin.KindRunner, Repository: "o/pipelinegen-runner-concourse", Version: "v1", SHA256: sum},
+	)
+
+	for _, older := range []bool{false, true} {
+		s := spec
+		if older {
+			s.Tools = slices.Clone(spec.Tools)
+			for i, tl := range s.Tools {
+				if tl.Kind == plugin.ToolPipelinegen {
+					s.Tools[i] = plugin.SpecTool{Name: tl.Name, Kind: tl.Kind, Repository: tl.Repository, Version: "v0.4.1", SHA256: strings.Repeat("a", 64)}
+				}
+			}
+		}
+
+		p, err := GenerateWith(s, root, placementOf(nil, on(forBookkeeping, []any{"x"})))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		tasks := 0
+
+		for _, j := range asSlice(p["jobs"]) {
+			walkTasks(asMap(j), func(task M) {
+				if task["task"] != "batch-end" && task["task"] != "end" {
+					return
+				}
+
+				tasks++
+
+				cfg := asMap(task["config"])
+				params := asMap(cfg["params"])
+				inputs := mounts(cfg, "inputs")
+				plugins := fmt.Sprint(params["PIPELINEGEN_PLUGINS"])
+
+				if older {
+					if !slices.Contains(inputs, "tools") || params["PIPELINEGEN_OWN_TOOLS"] != nil {
+						t.Errorf("an older tool's %s fetches its own tools: inputs %v", task["task"], inputs)
+					}
+
+					return
+				}
+
+				switch {
+				case slices.Contains(inputs, "tools"):
+					t.Errorf("%s takes the suite's tools: inputs %v", task["task"], inputs)
+				case !slices.Contains(mounts(cfg, "caches"), "tools"):
+					t.Errorf("%s keeps no cache for its tools", task["task"])
+				case params["PIPELINEGEN_OWN_TOOLS"] != "1" || params["PIPELINEGEN_BAZELISK_VERSION"] != nil:
+					t.Errorf("%s's pins: %v", task["task"], params)
+				case strings.Contains(plugins, "driver-go") || strings.Contains(plugins, "sbom-go") || !strings.Contains(plugins, "correlator-go") ||
+					!strings.Contains(plugins, "runner-concourse"):
+					t.Errorf("%s fetches %q, want the correlators and connectors alone", task["task"], plugins)
+				}
+			})
+		}
+
+		if tasks == 0 {
+			t.Fatal("no bookkeeping task")
+		}
 	}
 }

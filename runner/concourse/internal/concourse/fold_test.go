@@ -85,7 +85,13 @@ func TestJobsHoldFewTasks(t *testing.T) {
 				return
 			}
 
+			// A batch's end keeps the few tools it calls as its own cache, and hands them to no step: the
+			// steps after it need the start task's.
 			cfg := asMap(task["config"])
+			if slices.Contains(mounts(cfg, "caches"), "tools") {
+				return
+			}
+
 			if args := asSlice(asMap(cfg["run"])["args"]); len(args) >= 2 && strings.Contains(fmt.Sprint(args[1]), bootstrapScript) &&
 				!slices.Contains(mounts(cfg, "outputs"), "tools") {
 				t.Errorf("%v fetches the tools without them as its output", task["task"])
@@ -349,7 +355,8 @@ func TestTheEndTakesNoTreeEvenForAnOldLock(t *testing.T) {
 		end := asMap(jobByName(t, p, "main-backend")["ensure"])
 		got := fmt.Sprint(mounts(asMap(end["config"]), "inputs"))
 
-		if want := "[tools trigger batches]"; got != want {
+		// the pinned pipelinegen writes the bookkeeping files, so the end fetches its own tools too
+		if want := "[trigger batches]"; got != want {
 			t.Errorf("lock %v: the end task takes %s, want %s", locked, got, want)
 		}
 	}

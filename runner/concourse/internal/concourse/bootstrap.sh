@@ -6,13 +6,16 @@ set -eu
 runner=tools/plugins/$PIPELINEGEN_RUNNER
 
 # The end runs on an abort too, when the build may have broken before it
-# had anything to end with.
+# had anything to end with. One that fetches its own tools fails when it
+# can't: its suite would never end.
 if [ "${1:-}" = end ]; then
   if [ ! -d trigger ]; then
     echo "no trigger: the build broke before it could report" >&2
     exit 0
   fi
-  trap 'rc=$?; if [ "$rc" -ne 0 ]; then echo "the tools could not be fetched (exit $rc): the build broke before it could report" >&2; exit 0; fi' EXIT
+  if [ -z "${PIPELINEGEN_OWN_TOOLS:-}" ]; then
+    trap 'rc=$?; if [ "$rc" -ne 0 ]; then echo "the tools could not be fetched (exit $rc): the build broke before it could report" >&2; exit 0; fi' EXIT
+  fi
 fi
 
 # The error hooks post the suite's and the run's statuses as errored when
