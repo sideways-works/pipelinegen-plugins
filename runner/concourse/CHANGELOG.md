@@ -6,7 +6,7 @@ Every release of concourse-runner, newest first. The format follows
 
 ## [Unreleased]
 
-## [0.5.0]
+## [0.5.0] - 2026-11-20
 
 ### Added
 
