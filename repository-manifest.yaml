@@ -1,0 +1,22 @@
+repository: 1
+tags: "{path}/v{version}"
+plugins:
+  - manifest: connector/git/manifest.yaml
+  - manifest: connector/github/manifest.yaml
+  - manifest: correlator/go/manifest.yaml
+  - manifest: correlator/gorm/manifest.yaml
+  - manifest: correlator/locale/manifest.yaml
+  - manifest: correlator/oapi-codegen/manifest.yaml
+  - manifest: correlator/react/manifest.yaml
+  - manifest: correlator/sql/manifest.yaml
+  - manifest: driver/bazel/manifest.yaml
+  - manifest: driver/go/manifest.yaml
+  - manifest: driver/playwright/manifest.yaml
+  - manifest: driver/shell/manifest.yaml
+  - manifest: runner/concourse/manifest.yaml
+  - manifest: sbom/go/manifest.yaml
+  - manifest: sbom/locale/manifest.yaml
+  - manifest: sbom/npm/manifest.yaml
+  - manifest: sbom/openapi/manifest.yaml
+  - manifest: sbom/pg/manifest.yaml
+  - manifest: sbom/ts/manifest.yaml
