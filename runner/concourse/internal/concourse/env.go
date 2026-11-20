@@ -30,6 +30,10 @@ func checkEnv(spec plugin.Spec, ci settings) error {
 		return err
 	}
 
+	if err := checkPins(spec); err != nil {
+		return err
+	}
+
 	for _, r := range spec.Runs {
 		for _, rs := range r.Suites {
 			where := "run " + r.Name + ", suite " + rs.Suite
