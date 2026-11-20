@@ -3,7 +3,7 @@ module github.com/sideways-works/pipelinegen-plugins/runner/concourse
 go 1.27.1
 
 require (
-	github.com/sideways-works/pipelinegen v0.4.0
+	github.com/sideways-works/pipelinegen v0.4.2
 	github.com/sideways-works/plugkit v0.1.0
 	go.yaml.in/yaml/v3 v3.0.5
 )
