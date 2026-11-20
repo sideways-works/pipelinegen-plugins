@@ -49,7 +49,7 @@ suites:
       - run: command
         with:
           each: [bazelisk, "--output_user_root={cache}/bazel/root", "--output_base={cache}/bazel/base", --max_idle_secs=5, run, "{name}"]
-  connector: {tag: slice-plugins-connector, image: golang, params: *params, steps: *bazel-run}
+  forge: {tag: slice-plugins-forge, image: golang, params: *params, steps: *bazel-run}
   correlator: {tag: slice-plugins-correlator, image: golang, params: *params, steps: *bazel-run}
   driver: {tag: slice-plugins-driver, image: golang, params: *params, steps: *bazel-run}
   runner: {tag: slice-plugins-runner, image: golang, params: *params, steps: *bazel-run}
@@ -62,14 +62,14 @@ runs:
     trigger: {branch: main, continuous: true}
     compare: last_passed
     select: affected
-    suites: {lint: {}, connector: {}, correlator: {}, driver: {}, runner: {}, sbom: {}, templates: {}, tools: {}}
+    suites: {lint: {}, forge: {}, correlator: {}, driver: {}, runner: {}, sbom: {}, templates: {}, tools: {}}
   nightly:
     trigger:
       timer: {start: "3:00", stop: "4:00", location: Europe/Berlin}
       branch: main
     compare: none
     select: all
-    suites: {lint: {}, connector: {}, correlator: {}, driver: {}, runner: {}, sbom: {}, templates: {}, tools: {}}
+    suites: {lint: {}, forge: {}, correlator: {}, driver: {}, runner: {}, sbom: {}, templates: {}, tools: {}}
 
 everything_on:
   # the pinned tools and the targets every slice runs through

@@ -14,13 +14,13 @@ how it can be used, and how to reproduce it.
 Each plugin runs where pipelinegen calls it. The sbom plugins and the
 correlators run while a pipeline plans or records, the drivers in a
 suite's batch tasks, the runner when the pipeline is made, and the
-connectors for each exchange with a git host. Each section below says
+forges for each exchange with a git host. Each section below says
 where a plugin runs and what it touches, then lists the reports we most
 want for it.
 
-### connector/git
+### forge/git
 
-git-connector runs in CI, in the steps of a pipeline that pipelinegen
+git-forge runs in CI, in the steps of a pipeline that pipelinegen
 generates, and picks the proposed changes of a plain git server among its
 branches. It holds no token and sends nothing: pipelinegen checks each
 request it asks for, then sends it with the tokens.
@@ -31,23 +31,23 @@ request it asks for, then sends it with the tokens.
 - a change id that differs from the one pipelinegen's records hold for
   the branch, which would lose or mix up a change's earlier runs;
 - a token or other secret reaching an answer, a message or a log line of
-  the connector's own.
+  the forge's own.
 
-### connector/github
+### forge/github
 
-github-connector runs in CI, in the steps of a pipeline that pipelinegen
+github-forge runs in CI, in the steps of a pipeline that pipelinegen
 generates. It lists a repository's pull requests, sets commit statuses
 and keeps a comment. It holds no token and sends nothing: pipelinegen
 checks each request it asks for, then sends it with the tokens.
 
-- a pull request from a fork, or from a repository the connector can't
+- a pull request from a fork, or from a repository the forge can't
   tell, reported as coming from the repository itself: its code would run
   with the pipeline's credentials;
 - a request it asks for that reaches a host other than the repository's
   API, or a body that carries more than the call needs;
 - a comment that isn't pipelinegen's, edited or deleted;
 - a token or other secret reaching an answer, a message or a log line of
-  the connector's own.
+  the forge's own.
 
 ### correlator/go
 

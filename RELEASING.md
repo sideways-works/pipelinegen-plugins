@@ -46,7 +46,7 @@ none of the others.
 
 1. The sbom plugins: sbom/go, sbom/pg, sbom/locale, sbom/openapi,
    sbom/npm and sbom/ts, each `v0.4.0`. With them, every plugin that
-   requires no other: connector/git, connector/github, driver/bazel,
+   requires no other: forge/git, forge/github, driver/bazel,
    driver/go, driver/playwright, driver/shell, runner/concourse and
    correlator/react, which bundles ts-sbom from the
    same commit.

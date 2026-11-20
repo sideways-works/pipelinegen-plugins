@@ -1,8 +1,6 @@
 """Every plugin and template: the launcher's lint checks that this list is the one it finds."""
 
 UNITS = [
-    "connector/git",
-    "connector/github",
     "correlator/go",
     "correlator/gorm",
     "correlator/locale",
@@ -13,6 +11,8 @@ UNITS = [
     "driver/go",
     "driver/playwright",
     "driver/shell",
+    "forge/git",
+    "forge/github",
     "runner/concourse",
     "sbom/go",
     "sbom/locale",
@@ -20,9 +20,9 @@ UNITS = [
     "sbom/openapi",
     "sbom/pg",
     "sbom/ts",
-    "templates/connector",
     "templates/correlator",
     "templates/driver",
+    "templates/forge",
     "templates/runner",
     "templates/sbom",
 ]

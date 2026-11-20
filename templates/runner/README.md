@@ -4,7 +4,7 @@ A minimal runner plugin for
 [pipelinegen](https://github.com/sideways-works/pipelinegen): it writes a
 Concourse pipeline for a config's branch and timer runs, and says in a
 notice which runs it leaves out (pull requests, continuous runs, a
-connector's changes).
+forge's changes).
 
 Each run gets a planning job. Each of its suites gets a job that takes the
 tree and the batches from the plan, runs the suite's prepare task, every

@@ -1,0 +1,12 @@
+{"forge": {
+  "remote": "{server}/team/app.git",
+  "config": {"api": "{server}/api"},
+  "responses": [
+    {"method": "GET", "path": "/api/repos/team/app/changes", "query": "base=main",
+     "status": 200, "body_file": "changes.json"}
+  ],
+  "calls": {
+    "changes": {"base": "main"},
+    "links": {"commit": "1111111111111111111111111111111111111111", "file": "cart/cart.go", "change": "7"}
+  }
+}}

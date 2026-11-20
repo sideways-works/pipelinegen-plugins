@@ -12,3 +12,5 @@ go.work.sum
 
 # the Node workspace's installed packages
 /node_modules/
+/templates/*/example-*
+!/templates/*/example-*/

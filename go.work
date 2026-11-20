@@ -2,8 +2,8 @@ go 1.27.1
 
 use (
 	.
-	./connector/git
-	./connector/github
+	./forge/git
+	./forge/github
 	./correlator/go
 	./correlator/go/cover
 	./correlator/gorm
@@ -21,7 +21,7 @@ use (
 	./sbom/npm
 	./sbom/openapi
 	./sbom/pg
-	./templates/connector
+	./templates/forge
 	./templates/correlator
 	./templates/driver
 	./templates/runner

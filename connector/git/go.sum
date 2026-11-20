@@ -1,6 +1,0 @@
-github.com/bazelbuild/buildtools v0.0.0-20260904073137-eaa4d125b423 h1:scNMqf+FgmWYYwsX4TNjQcDLZu5kbWSwNsbrGkiF23I=
-github.com/bazelbuild/buildtools v0.0.0-20260904073137-eaa4d125b423/go.mod h1:jWjcMGVH6hAgMG98abRQOIvoFFLPx/p3e5eeTGIHUMc=
-github.com/sideways-works/pipelinegen v0.3.1 h1:SO9GXSs13+aCyGhsjjCl3LQZqkah4aKCr6iJZcSjQio=
-github.com/sideways-works/pipelinegen v0.3.1/go.mod h1:pwy1nF67pcfWzUmSBfTE6QcZbD1qek+u7gI0shNMVpg=
-go.yaml.in/yaml/v3 v3.0.5 h1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw=
-go.yaml.in/yaml/v3 v3.0.5/go.mod h1:HVTZu1O7/Vkt2N+BFy8Zza+lnLsABggaTM2ZpNIGuKg=

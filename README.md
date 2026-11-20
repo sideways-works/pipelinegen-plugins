@@ -4,14 +4,14 @@ This repository holds the plugins of
 [pipelinegen](https://github.com/sideways-works/pipelinegen), which runs
 only the test slices a change can break. The sbom plugins say what
 exists and the correlators say who uses it. The drivers run a suite's
-tests, the runner writes the CI pipeline, and the connectors talk to a
+tests, the runner writes the CI pipeline, and the forges talk to a
 git host. Each plugin is a Go module or Node package with its own README,
 releases and history. To start a new one, copy the template of its kind.
 
 | Plugin | Program | What it does |
 |---|---|---|
-| [connector/git](connector/git) | `git-connector` | changes from a plain git server's branches |
-| [connector/github](connector/github) | `github-connector` | pull requests, statuses and comments on GitHub |
+| [forge/git](forge/git) | `git-forge` | changes from a plain git server's branches |
+| [forge/github](forge/github) | `github-forge` | pull requests, statuses and comments on GitHub |
 | [correlator/go](correlator/go) | `go-correlator` | who uses which Go declaration, and what a Go test ran |
 | [correlator/gorm](correlator/gorm) | `gorm-correlator` | which PostgreSQL tables Go code reaches through GORM |
 | [correlator/locale](correlator/locale) | `locale-correlator` | which message catalog keys a test looked up |

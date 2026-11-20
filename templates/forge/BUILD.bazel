@@ -1,0 +1,9 @@
+load("//tools:defs.bzl", "template")
+
+filegroup(
+    name = "files",
+    srcs = glob(["**"]),
+    visibility = ["//:__pkg__"],
+)
+
+template(dir = "templates/forge")

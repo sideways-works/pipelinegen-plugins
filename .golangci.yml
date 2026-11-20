@@ -121,7 +121,7 @@ linters:
           - gosec
         text: "G(204|304|306)"
       # These plugins' tests also take their paths from their own fixtures.
-      - path: (^|/)(connector/git|connector/github|correlator/go|correlator/locale|sbom/locale)/(.*/)?[^/]*_test\.go
+      - path: (^|/)(forge/git|forge/github|correlator/go|correlator/locale|sbom/locale)/(.*/)?[^/]*_test\.go
         linters:
           - gosec
         text: "G70[23]"
