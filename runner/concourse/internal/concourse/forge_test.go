@@ -140,7 +140,7 @@ func TestAHandOffReachesTheTriggerAsItWasWritten(t *testing.T) {
 	}
 }
 
-// A pipelinegen before v0.6.0 names the forge connector: the runner reads its runs and tools as
+// A pipelinegen before v0.7.0 names the forge connector: the runner reads its runs and tools as
 // forges all the same.
 func TestAnOlderPipelinegensConnectorIsAForge(t *testing.T) {
 	spec, _ := fixture(t)
@@ -170,7 +170,11 @@ func TestAnOlderPipelinegensConnectorIsAForge(t *testing.T) {
 
 	olderForges(&req.Spec, []byte(older))
 
-	got, _ := json.Marshal(plugin.PipelineRequest{Spec: req.Spec}) //nolint:errcheck // compared below
+	got, err := json.Marshal(plugin.PipelineRequest{Spec: req.Spec})
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	if string(got) != string(data) {
 		t.Fatalf("an older pipelinegen's spec reads as\n%s\nwant\n%s", got, data)
 	}
