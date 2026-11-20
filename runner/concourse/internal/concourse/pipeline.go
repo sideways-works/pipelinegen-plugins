@@ -607,12 +607,17 @@ func pluginLinesOf(s plugin.Spec, keep func(plugin.SpecTool) bool) string {
 		}
 
 		fields := []string{t.Name, t.Repository, t.Version, t.SHA256, t.Commit}
-		if t.Path != "" || t.Sums != "" {
+		if t.Path != "" || t.Sums != "" || t.Zip != nil {
 			fields = append(fields, t.Path)
 		}
 
-		if t.Sums != "" {
+		if t.Sums != "" || t.Zip != nil {
 			fields = append(fields, t.Sums)
+		}
+
+		// a zip's URL and sha256 follow every other field
+		if t.Zip != nil {
+			fields = append(fields, t.Zip.URL, t.Zip.SHA256)
 		}
 
 		for i, f := range fields {

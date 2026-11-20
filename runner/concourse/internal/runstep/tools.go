@@ -2,10 +2,12 @@ package runstep
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"os"
@@ -15,6 +17,7 @@ import (
 
 	"github.com/sideways-works/pipelinegen/plugin"
 	"github.com/sideways-works/plugkit/pin"
+	"github.com/sideways-works/plugkit/store"
 )
 
 var errUnread = errors.New("unreadable")
@@ -96,6 +99,9 @@ type toolPin struct {
 	// sums, in place of sum, is the checksum of the release's SHA256SUMS,
 	// whose line for the tool's file checks that file.
 	sums string
+	// zipURL and zipSum pin a plugin packed as a zip, in place of a release
+	// or a commit.
+	zipURL, zipSum string
 }
 
 // program names the tool's files: by its path (driver/go holds go-driver),
@@ -144,17 +150,17 @@ func pluginPins(lines string) []toolPin {
 			continue
 		}
 
-		for len(f) < 7 {
+		for len(f) < 9 {
 			f = append(f, "")
 		}
 
-		for i := 2; i < 7; i++ {
+		for i := 1; i < 9; i++ {
 			if f[i] == "-" {
 				f[i] = ""
 			}
 		}
 
-		out = append(out, toolPin{name: f[0], repo: f[1], version: f[2], sum: f[3], commit: f[4], path: f[5], sums: f[6]})
+		out = append(out, toolPin{name: f[0], repo: f[1], version: f[2], sum: f[3], commit: f[4], path: f[5], sums: f[6], zipURL: f[7], zipSum: f[8]})
 	}
 
 	return out
@@ -163,8 +169,9 @@ func pluginPins(lines string) []toolPin {
 type fetcher struct {
 	t   *Task
 	env []string
-	// pinned are the cache's entries this build's pins name.
-	pinned []string
+	// pinned are the cache's entries this build's pins name, and zips those of
+	// its plugins dir.
+	pinned, zips []string
 }
 
 // verified says the file is there, executable, and has the checksum.
@@ -263,6 +270,10 @@ func (f *fetcher) download(req *http.Request, sum, file, mismatch string) int {
 // ./cmd/<program> built at a commit, which has no checksum and is cached by
 // its commit.
 func (f *fetcher) fetch(p toolPin, dest string) int {
+	if p.zipURL != "" {
+		return f.zip(p, dest)
+	}
+
 	name := p.program()
 
 	if p.commit != "" {
@@ -659,9 +670,77 @@ func (f *fetcher) prune() int {
 		}
 	}
 
+	// the store's own entries start with a dot
+	entries, _ := filepath.Glob(filepath.Join(f.t.path("cache"), zipsDir, "*")) //nolint:errcheck // a valid pattern
+	for _, e := range entries {
+		name := filepath.Base(e)
+		if strings.HasPrefix(name, ".") || slices.Contains(f.zips, name) {
+			continue
+		}
+
+		if code := f.t.remove(filepath.Join("cache", zipsDir, name)); code != 0 {
+			return code
+		}
+
+		dropped = append(dropped, zipsDir+"/"+name)
+	}
+
 	if len(dropped) > 0 {
 		f.t.outf("dropped from the job's cache, as no pin names them: %s", strings.Join(dropped, " "))
 	}
 
 	return 0
 }
+
+// zipsDir is where the task's cache keeps the plugins pinned by a zip, unpacked, by the zip's sha256.
+const zipsDir = "plugins"
+
+// zip places a plugin pinned by a zip with pipelinegen's own store (plugkit's): it downloads the zip,
+// checks it against its sha256 before opening it, and unpacks it into the task's cache, where the next
+// build on this worker finds it. tools/plugins gets the program for this platform, where a batch runs its
+// drivers from, as it does a release's.
+func (f *fetcher) zip(p toolPin, dest string) int {
+	dir, err := filepath.Abs(f.t.path(filepath.Join("cache", zipsDir)))
+	if err != nil {
+		f.t.sayf("%v", err)
+
+		return 1
+	}
+
+	f.zips = append(f.zips, strings.ToLower(p.zipSum))
+
+	s := store.Store{Dir: dir, Client: f.t.HTTP, Log: f.t.Stderr}
+
+	r, err := s.Resolve(context.Background(), store.Pin{Zip: &store.Zip{URL: p.zipURL, SHA256: p.zipSum}}, zipPlatform)
+	if err == nil && r.Program == "" {
+		err = fmt.Errorf("%w: it holds assets alone, and pipelinegen runs a plugin as a program", errZip)
+	}
+
+	if err != nil {
+		f.t.sayf("plugin %s: %v", p.name, err)
+
+		return 1
+	}
+
+	data, err := os.ReadFile(r.Program)
+	if err == nil {
+		err = os.WriteFile(f.t.path(dest+".tmp"), data, 0o755) //nolint:gosec // an executable
+	}
+
+	if err == nil {
+		err = os.Rename(f.t.path(dest+".tmp"), f.t.path(dest))
+	}
+
+	if err != nil {
+		f.t.sayf("plugin %s: %v", p.name, err)
+
+		return 1
+	}
+
+	return 0
+}
+
+// zipPlatform is the platform the tasks run on, as the bootstrap's releases are.
+const zipPlatform = "linux/amd64"
+
+var errZip = errors.New("zip")
