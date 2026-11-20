@@ -116,6 +116,27 @@ bazel run //:release -- build OUT
 - `//:release -- build OUT` builds every plugin whose newest tag is on
   `HEAD`, each into `OUT/<kind>/<name>`.
 
+## Manifests
+
+Each plugin's directory holds a `manifest.yaml`: its name and kind, its
+program, a description, and how to build it, in a Go or Node image pinned
+by digest, for the platforms a release has. `pipelinegen plugin build
+<kind>/<name> --zip OUT` builds it into one zip that a config pins by its
+URL and sha256, and a config that pins a commit builds it from the same
+manifest. The Go build is the release's (`-trimpath`, `-s -w -buildid=`,
+`CGO_ENABLED=0`, no `go.work`) with `-buildvcs=false`, and the modules come
+from the Go module proxy, so the build has a network; it records neither a
+commit nor a version, which only a release's tag gives. A Node build runs
+`npm ci` and the plugin's `build` script in a copy of the repository, as
+`npm ci` writes `node_modules`. The templates have a manifest each, which
+`pipelinegen plugin new` renames with the rest.
+
+`repository-manifest.yaml` at the root lists every plugin's manifest, and
+its tags are `{path}/v{version}`, the release tags. A manifest's `files`
+can't leave the plugin's directory, so each plugin keeps a copy of the
+root's `LICENSE`: `//:checks` fails when a copy differs from the root's,
+when a plugin has no manifest, or when the list misses one.
+
 To try a pipelinegen that isn't released yet, set
 `PIPELINEGEN_SOURCE=<dir>` in the environment: the release command and
 pipelinegen are then built from that checkout of pipelinegen.
