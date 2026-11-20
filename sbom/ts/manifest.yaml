@@ -1,6 +1,7 @@
 name: ts-sbom
 kind: sbom
 program: ts-sbom
+runtime: "node >=26"
 description: "Lists the modules and exports of a TypeScript or JavaScript project"
 build:
   # npm ci writes node_modules, so the workspace is built in a copy of the repository;

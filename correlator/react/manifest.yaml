@@ -1,6 +1,7 @@
 name: react-correlator
 kind: correlator
 program: react-correlator
+runtime: "node >=26"
 description: "Records which modules and components of a React app each test slice runs"
 build:
   # npm ci writes node_modules, so the workspace is built in a copy of the repository;
