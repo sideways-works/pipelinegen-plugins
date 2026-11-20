@@ -40,16 +40,14 @@ func walkSelected(t *testing.T, base, head string, on map[string]bool, ss []Slic
 	var bound [2][]map[string]string
 
 	for side, root := range []string{base, head} {
-		tree := load(t, root)
-		inv := listUnits(t, root)
-		sets := allSets(t, tree)
+		l := loadSide(t, root)
 
 		for _, s := range ss {
-			got := units(closure(sets, tree.roots(s), on)[Executed])
+			got := units(closure(l.sets, l.tree.roots(s), on)[Executed])
 
 			m := map[string]string{}
 			for id := range got {
-				m[id] = inv.digests[id] + "?"
+				m[id] = l.inv.digests[id] + "?"
 			}
 
 			bound[side] = append(bound[side], m)

@@ -1,6 +1,10 @@
 package graph
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"io/fs"
 	"maps"
 	"os"
 	"path/filepath"
@@ -75,6 +79,65 @@ func shopSlices() []Slice {
 			List: []string{"go:shop/money#func:Total", "go:shop/money#func:build", "go:shop/orders#func:Cancel"},
 		},
 	}
+}
+
+// loadedSide is a tree as the selection tests compare it: loaded, with its names set, its link
+// sets and what go-sbom lists of it.
+type loadedSide struct {
+	tree *Tree
+	sets []LinkSet
+	inv  inventory
+}
+
+// sides keeps each loaded side by its files' contents: the selection tests ask the same two trees
+// under every narrowing level, and many cases' base is the same fixture, while loading one runs
+// the go command, which made a test of nine levels take minutes. What a side answers names units
+// by their paths in the tree, so two roots of the same files share one. A tree whose files change
+// is loaded again.
+var sides = map[string]loadedSide{}
+
+func loadSide(t *testing.T, root string) loadedSide {
+	t.Helper()
+
+	key := contentKey(t, root)
+	if l, ok := sides[key]; ok {
+		return l
+	}
+
+	tree := load(t, root)
+	l := loadedSide{tree: tree, sets: allSets(t, tree), inv: listUnits(t, root)}
+	sides[key] = l
+
+	return l
+}
+
+// contentKey is a digest of every file under root, its path and its content.
+func contentKey(t *testing.T, root string) string {
+	t.Helper()
+
+	h := sha256.New()
+
+	err := filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+
+		data, err := os.ReadFile(p) //nolint:gosec // a file of the test's own tree
+		if err != nil {
+			return fmt.Errorf("content key: %w", err)
+		}
+
+		rel, _ := filepath.Rel(root, p)                       //nolint:errcheck // under root
+		_, _ = fmt.Fprintf(h, "%s\x00%d\x00", rel, len(data)) //nolint:errcheck // a hash never fails to write
+		h.Write(data)
+
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 func load(t *testing.T, root string) *Tree {
@@ -179,9 +242,8 @@ func selectedWith(t *testing.T, base, head string, narrowings []string, ss []Sli
 	var trees [2]side
 
 	for i, root := range []string{base, head} {
-		tree := load(t, root)
-		allSets(t, tree)
-		trees[i] = side{inv: listUnits(t, root), a: tree.Bind(Request{Slices: ss, Narrowings: narrowings, Setup: setup})}
+		l := loadSide(t, root)
+		trees[i] = side{inv: l.inv, a: l.tree.Bind(Request{Slices: ss, Narrowings: narrowings, Setup: setup})}
 	}
 
 	var out [2][]string
