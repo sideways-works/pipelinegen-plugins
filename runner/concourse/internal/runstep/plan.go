@@ -334,7 +334,7 @@ func (t *Task) copyFile(from, to string) int {
 	return t.writeFile(to, string(data))
 }
 
-// handoffRun hands on a connector's change: the mock resource's version is
+// handoffRun hands on a forge's change: the mock resource's version is
 // its run.json.
 func (t *Task) handoffRun(from, to string) int {
 	if err := os.MkdirAll(t.path(to), 0o750); err != nil {

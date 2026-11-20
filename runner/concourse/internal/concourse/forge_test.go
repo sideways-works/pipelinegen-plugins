@@ -1,12 +1,16 @@
 package concourse
 
 import (
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
+
+	"github.com/sideways-works/pipelinegen/plugin"
 )
 
 func findJob(p M, name string) M {
@@ -33,12 +37,12 @@ func findResource(p M, name string) M {
 	return nil
 }
 
-func TestAConnectorsRunIsSweptPlannedAndHandedOn(t *testing.T) {
+func TestAForgesRunIsSweptPlannedAndHandedOn(t *testing.T) {
 	spec, root := fixture(t)
 
 	for i, r := range spec.Runs {
 		if r.Trigger.Kind == "pull_requests" {
-			spec.Runs[i].Trigger.Connector, spec.Runs[i].Trigger.SweepEvery = "git", "1m"
+			spec.Runs[i].Trigger.Forge, spec.Runs[i].Trigger.SweepEvery = "git", "1m"
 		}
 	}
 
@@ -49,7 +53,7 @@ func TestAConnectorsRunIsSweptPlannedAndHandedOn(t *testing.T) {
 
 	out := text(t, p)
 	if strings.Contains(out, "type: github-pr") || findJob(p, "plan-pr") != nil {
-		t.Fatal("a connector's run has a pull request resource or a planning job")
+		t.Fatal("a forge's run has a pull request resource or a planning job")
 	}
 
 	planned := findResource(p, "planned-pr")
@@ -67,7 +71,7 @@ func TestAConnectorsRunIsSweptPlannedAndHandedOn(t *testing.T) {
 
 	sweep := text(t, findJob(p, "sweep-pr"))
 	if strings.Contains(sweep, "get: planned") || !strings.Contains(sweep, "file: handoffs/((.:handoff))/run.json") ||
-		!regexp.MustCompile(`- sweep-write\n\s*- --connector\n`).MatchString(sweep) {
+		!regexp.MustCompile(`- sweep-write\n\s*- --forge\n`).MatchString(sweep) {
 		t.Errorf("the sweep job:\n%s", sweep)
 	}
 
@@ -99,7 +103,7 @@ func TestAHandOffReachesTheTriggerAsItWasWritten(t *testing.T) {
 	writeTestFile(t, filepath.Join(dir, "sweep", "plan", "x", "run.json"), runJSON)
 	writeTestFile(t, filepath.Join(dir, "plans", "x", "plan.json"), "{}\n")
 	writeFakeTool(t, dir, "#!/bin/sh\nmkdir -p \"${13}\"\necho '[\"1\"]' > \"${13}/gate.json\"\n")
-	mustStep(t, dir, append(os.Environ(), "PIPELINEGEN_RUN=pr"), "sweep-write", "--connector")
+	mustStep(t, dir, append(os.Environ(), "PIPELINEGEN_RUN=pr"), "sweep-write", "--forge")
 
 	data, err := os.ReadFile(filepath.Join(dir, "handoffs", "x", "run.json"))
 	if err != nil || string(data) != runJSON {
@@ -133,5 +137,45 @@ func TestAHandOffReachesTheTriggerAsItWasWritten(t *testing.T) {
 
 	if got, err := os.ReadFile(filepath.Join(dir, "trigger", "run.json")); err != nil || string(got) != runJSON {
 		t.Fatalf("the trigger's run.json %q %v", got, err)
+	}
+}
+
+// A pipelinegen before v0.6.0 names the forge connector: the runner reads its runs and tools as
+// forges all the same.
+func TestAnOlderPipelinegensConnectorIsAForge(t *testing.T) {
+	spec, _ := fixture(t)
+
+	for i, r := range spec.Runs {
+		if r.Trigger.Kind == "pull_requests" {
+			spec.Runs[i].Trigger.Forge = "git"
+		}
+	}
+
+	spec.Tools = append(spec.Tools, plugin.SpecTool{Name: "git", Kind: plugin.KindForge, Repository: "o/r"})
+
+	data, err := json.Marshal(plugin.PipelineRequest{Spec: spec})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	older := strings.ReplaceAll(strings.ReplaceAll(string(data), `"forge":"git"`, `"connector":"git"`), `"kind":"forge"`, `"kind":"connector"`)
+	if older == string(data) {
+		t.Fatal("the fixture names no forge")
+	}
+
+	var req plugin.PipelineRequest
+	if err := json.Unmarshal([]byte(older), &req); err != nil {
+		t.Fatal(err)
+	}
+
+	olderForges(&req.Spec, []byte(older))
+
+	got, _ := json.Marshal(plugin.PipelineRequest{Spec: req.Spec}) //nolint:errcheck // compared below
+	if string(got) != string(data) {
+		t.Fatalf("an older pipelinegen's spec reads as\n%s\nwant\n%s", got, data)
+	}
+
+	if !slices.Contains(describe().Capabilities, capOlderChanges) {
+		t.Fatal("an older pipelinegen won't find the runner builds a forge's runs")
 	}
 }

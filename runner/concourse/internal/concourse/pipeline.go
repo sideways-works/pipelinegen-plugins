@@ -265,7 +265,7 @@ func (g *gen) resources() []any {
 				every = t.SweepEvery
 			}
 
-			if t.Connector != "" {
+			if t.Forge != "" {
 				out = append(out, g.plannedMock(name))
 			} else {
 				out = append(out, g.pullRequests(name, t), g.planned(name, t))
@@ -343,13 +343,13 @@ func (g *gen) planned(run string, pr plugin.SpecTrigger) M {
 	return M{"name": plannedResource(run), "type": "github-pr", "source": src, "check_every": "never"}
 }
 
-// byConnector runs have no pull request resource or planning job: the
+// byForge runs have no pull request resource or planning job: the
 // sweep plans each change and hands it on.
-func (g *gen) byConnector(run string) bool { return g.runs[run].Trigger.Connector != "" }
+func (g *gen) byForge(run string) bool { return g.runs[run].Trigger.Forge != "" }
 
 const mockType = "mock"
 
-// plannedMock is a connector run's hand-off. mock refuses unknown source
+// plannedMock is a forge run's hand-off. mock refuses unknown source
 // keys, so the log line is what keeps two hand-offs' versions apart.
 func (g *gen) plannedMock(run string) M {
 	return M{"name": plannedResource(run), "type": mockType, "check_every": "never", "source": M{
@@ -375,7 +375,7 @@ func (g *gen) trigger(run string, tags []string, passed []string) []any {
 		return withTags(step, tags)
 	}
 
-	if t.Kind == "pull_requests" && t.Connector != "" {
+	if t.Kind == "pull_requests" && t.Forge != "" {
 		return []any{withTags(M{"get": "handoff", "resource": plannedResource(run), "trigger": true, "version": "every"}, tags)}
 	}
 
@@ -436,8 +436,8 @@ func (g *gen) jobs() ([]any, error) {
 	jobs := []any{g.pipelineJob()}
 
 	for _, r := range g.spec.Runs {
-		// A connector's changes are planned by the sweep alone.
-		if !g.byConnector(r.Name) {
+		// A forge's changes are planned by the sweep alone.
+		if !g.byForge(r.Name) {
 			jobs = append(jobs, g.planJob(r.Name))
 		}
 
@@ -958,9 +958,9 @@ func (g *gen) proposedPlanJob(run string) M {
 // putHandOff skips the put's own get, which would fetch the head again for
 // nothing.
 func (g *gen) putHandOff(run string, tags []string, input, dir string) M {
-	// A connector's run.json is the mock version's string.
+	// A forge's run.json is the mock version's string.
 	params := M{"path": dir}
-	if g.byConnector(run) {
+	if g.byForge(run) {
 		params = M{"file": dir + "/run.json"}
 	}
 
@@ -982,8 +982,8 @@ func (g *gen) sweepJob(run string) M {
 		g.baseGet(run, tags),
 	}
 
-	// A connector's own sweep puts the hand-offs, so only its timer triggers it.
-	if g.byConnector(run) {
+	// A forge's own sweep puts the hand-offs, so only its timer triggers it.
+	if g.byForge(run) {
 		inputs = slices.Delete(inputs, 1, 2)
 	}
 
@@ -1104,7 +1104,7 @@ func (g *gen) suiteJob(run, suite string) (M, error) {
 
 	plan := []any{gets}
 
-	if g.byConnector(run) {
+	if g.byForge(run) {
 		plan = append(plan, timeout(handOffTrigger(tags), g.stepMinutes()))
 	}
 
@@ -1130,7 +1130,7 @@ func (g *gen) suiteJob(run, suite string) (M, error) {
 		"ensure":   g.endTask(run, suite),
 	}
 
-	if g.byConnector(run) {
+	if g.byForge(run) {
 		delete(job, "on_error")
 		delete(job, "on_abort")
 	}
@@ -1380,7 +1380,7 @@ func retriedOnError(task M) M {
 
 // ownTools tells whether a suite's bookkeeping fetches the tools it calls itself, kept in its task's cache
 // on the worker, instead of taking the start task's, which a bookkeeping placement would stream from the
-// suite's worker on every build: pipelinegen and the correlators, connectors and the runner, never the
+// suite's worker on every build: pipelinegen and the correlators, forges and the runner, never the
 // drivers or bazelisk. It does so wherever it runs, so a placement moves it and changes nothing else. The
 // pinned pipelinegen gives a batch's end all it reads without the tree from minBookkeeping on. After its
 // first build on a worker the task streams nothing and downloads nothing: its tools are its cache.
@@ -1393,7 +1393,7 @@ func (g *gen) bookkeepingEnv() M {
 	env := g.bootstrapEnv()
 	// the runner stays among the pins, so the cache keeps the copy the bootstrap fetched
 	env["PIPELINEGEN_PLUGINS"] = pluginLinesOf(g.spec, func(t plugin.SpecTool) bool {
-		return t.Kind == plugin.KindCorrelator || t.Kind == plugin.KindConnector || t.Kind == plugin.KindRunner
+		return t.Kind == plugin.KindCorrelator || t.Kind == plugin.KindForge || t.Kind == plugin.KindRunner
 	})
 	env["PIPELINEGEN_OWN_TOOLS"] = "1"
 
@@ -1838,11 +1838,11 @@ func handOffTrigger(tags []string) M {
 	}}, tags)
 }
 
-// sweepWrite hands on a connector's change as its run.json, the mock
+// sweepWrite hands on a forge's change as its run.json, the mock
 // resource's version.
 func (g *gen) sweepWrite(run string) []string {
-	if g.byConnector(run) {
-		return []string{"sweep-write", "--connector"}
+	if g.byForge(run) {
+		return []string{"sweep-write", "--forge"}
 	}
 
 	return []string{"sweep-write"}

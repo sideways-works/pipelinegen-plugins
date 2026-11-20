@@ -6,6 +6,12 @@ Every release of concourse-runner, newest first. The format follows
 
 ## [Unreleased]
 
+## [0.6.0]
+
+### Changed
+
+- Breaking: requires pipelinegen v0.6.0, whose plugin kind connector is now forge. A run whose changes come from a forge is read from the spec's `forge`, the capability is `forge_changes`, and the step that hands on such a run's change is `sweep-write --forge`. A pipelinegen before v0.6.0, which names the kind, the run's field and the capability connector, still gets its pipeline: the runner reads those names too
+
 ## [0.5.0] - 2026-11-20
 
 ### Added

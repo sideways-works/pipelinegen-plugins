@@ -1,7 +1,7 @@
 github.com/bazelbuild/buildtools v0.0.0-20260904073137-eaa4d125b423 h1:scNMqf+FgmWYYwsX4TNjQcDLZu5kbWSwNsbrGkiF23I=
 github.com/bazelbuild/buildtools v0.0.0-20260904073137-eaa4d125b423/go.mod h1:jWjcMGVH6hAgMG98abRQOIvoFFLPx/p3e5eeTGIHUMc=
-github.com/sideways-works/pipelinegen v0.5.0 h1:iBJM7OHsA04YwNYQ6rSQ38UrFGcWgGc5mc/a8vxJbTU=
-github.com/sideways-works/pipelinegen v0.5.0/go.mod h1:SSdxo1qSKiqMa4kutENmeQATpPKHlCDIUPqDK7PID8Q=
+github.com/sideways-works/pipelinegen v0.5.1-0.20261120065403-4e3e5193b7bb h1:zmuV+hx5frOyVdyd6iKE8jU7q8FSlBwFRSdb+SXN3z0=
+github.com/sideways-works/pipelinegen v0.5.1-0.20261120065403-4e3e5193b7bb/go.mod h1:SSdxo1qSKiqMa4kutENmeQATpPKHlCDIUPqDK7PID8Q=
 github.com/sideways-works/plugkit v0.4.0 h1:XnnkAj8lJ6b9LrWH9YqYCd6OhjLRBHvqArKVmGPZ5Ic=
 github.com/sideways-works/plugkit v0.4.0/go.mod h1:6BrhMc6a9ZF2EhzOTpwBWxfGIybeSP6bnMSBhKMyKsU=
 go.yaml.in/yaml/v3 v3.0.5 h1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw=

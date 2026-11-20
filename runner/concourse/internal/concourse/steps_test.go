@@ -775,7 +775,7 @@ func TestBookkeepingFetchesOnlyTheToolsItCalls(t *testing.T) {
 					t.Errorf("%s's pins: %v", task["task"], params)
 				case strings.Contains(plugins, "driver-go") || strings.Contains(plugins, "sbom-go") || !strings.Contains(plugins, "correlator-go") ||
 					!strings.Contains(plugins, "runner-concourse"):
-					t.Errorf("%s fetches %q, want the correlators and connectors alone", task["task"], plugins)
+					t.Errorf("%s fetches %q, want the correlators and forges alone", task["task"], plugins)
 				}
 			})
 		}

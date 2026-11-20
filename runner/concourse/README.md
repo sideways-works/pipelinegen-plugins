@@ -349,13 +349,13 @@ later write finds the plan, shuts its gate and hands nothing on.
 A suite job that is new takes the newest hand-off only, so heads planned
 before it ever ran wait for the sweep.
 
-### A connector's changes
+### A forge's changes
 
-A run whose changes come from a connector (`trigger: {changes: ...}` with,
-say, the plain git connector's review branches) has no pull request
+A run whose changes come from a forge (`trigger: {changes: ...}` with,
+say, the plain git forge's review branches) has no pull request
 resource and no planning job. Only its sweep notices new changes: every
 `sweep_every` (one minute by default), `pipelinegen unplanned` asks the
-connector for the changes, plans each new head at once in its own
+forge for the changes, plans each new head at once in its own
 checkout, and hands each one on. A sweep costs one `ls-remote` of the
 code's remote and one read of the store, so a minute is cheap. A
 different period goes on the trigger:
@@ -534,7 +534,7 @@ a recording run, its `coverage`, which can be large. `bookkeeping` is what
 task writes with `pipelinegen slice bookkeeping-files` when the pinned
 pipelinegen has it (a release from v0.4.2 on, or a build of a commit).
 With such a pipelinegen the bookkeeping tasks also fetch the tools they
-call, pipelinegen, the correlators, the connectors and the runner, into
+call, pipelinegen, the correlators, the forges and the runner, into
 their own cache on the worker, once per worker and job; with an older one
 they take the `start` task's tools (pipelinegen, bazelisk and every
 plugin), streamed too.
@@ -784,7 +784,7 @@ The requests and answers follow pipelinegen's
 [plugin protocol](https://github.com/sideways-works/pipelinegen/blob/main/docs/plugins.md).
 `describe` declares the kind `runner` and the capabilities `pipeline`,
 `repeat-at-run-time` (`across`), `job-caches`, `rerun`,
-`connector_changes`, `ssh_keys`, `continuous`, `steps`,
+`forge_changes` (and `connector_changes`, its name before pipelinegen v0.6.0), `ssh_keys`, `continuous`, `steps`,
 `placement` (it reads the [placement](#placement) from its own config) and
 `packages` (see [packages and cached images](#packages-and-cached-images)).
 `pipeline` reads the spec and the repository's root (for the include

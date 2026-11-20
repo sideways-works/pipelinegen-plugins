@@ -38,6 +38,8 @@ func pipeline(in []byte) (any, error) {
 		return nil, err
 	}
 
+	olderForges(&req.Spec, in)
+
 	pkgs, err := ReadPackages(in)
 	if err != nil {
 		return nil, err
@@ -63,7 +65,7 @@ func pipeline(in []byte) (any, error) {
 func describe() plugin.Description {
 	return plugin.Description{
 		Protocol: plugin.Protocol, Kind: plugin.KindRunner, Name: "concourse-runner", Version: Version,
-		Capabilities:  []string{plugin.CallPipeline, "repeat-at-run-time", "job-caches", "rerun", plugin.CapConnectorChanges, plugin.CapSSHKeys, capContinuous, plugin.CapSteps, capPlacement, capPackages},
+		Capabilities:  []string{plugin.CallPipeline, "repeat-at-run-time", "job-caches", "rerun", plugin.CapForgeChanges, capOlderChanges, plugin.CapSSHKeys, capContinuous, plugin.CapSteps, capPlacement, capPackages},
 		ResourceTypes: []string{mockType},
 		// Concourse keeps a task's cache per job, step and worker.
 		CacheScopes: map[string]string{

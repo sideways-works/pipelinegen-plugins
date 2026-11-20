@@ -71,14 +71,14 @@ func (t *Task) planHead() bool {
 func (t *Task) sweepWrite(args []string) int {
 	fs := flag.NewFlagSet("sweep-write", flag.ContinueOnError)
 	fs.SetOutput(t.Stderr)
-	connector := fs.Bool("connector", false, "hand on a connector's run.json")
+	forge := fs.Bool("forge", false, "hand on a forge's run.json")
 
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
 
 	handoff := t.handoff
-	if *connector {
+	if *forge {
 		handoff = t.handoffRun
 	}
 
