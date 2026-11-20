@@ -1,0 +1,11 @@
+name: react-correlator
+kind: correlator
+program: react-correlator
+description: "Records which modules and components of a React app each test slice runs"
+build:
+  # npm ci writes node_modules, so the workspace is built in a copy of the repository
+  image: node:26.10.0@sha256:9965105b7a4e201d7f07268402bb4971670592b46c9b9058cc643961199a1ab6
+  run: [sh, -c, "cp -R ../.. /tmp/w && cd /tmp/w/correlator/react && npm ci --ignore-scripts --no-audit --no-fund && npm run --silent build && cp dist/react-correlator.mjs {out}/"]
+  network: true
+platforms: [any]
+files: [LICENSE, NOTICE, dist/playwright.mjs]

@@ -1,0 +1,11 @@
+name: example-sbom
+kind: sbom
+program: example-sbom
+description: "An example sbom plugin, the template pipelinegen plugin new starts one from"
+build:
+  image: golang:1.27.1@sha256:162be5298a40ed317005c8339c6de4d10d3eef336d66dc8e9259b03ab9d3a6d2
+  run: [go, build, -trimpath, -buildvcs=false, "-ldflags=-s -w -buildid=", -o, "{out}/example-sbom", ./cmd/example-sbom]
+  env: {CGO_ENABLED: "0", GOOS: "{os}", GOARCH: "{arch}", GOWORK: "off", GOTOOLCHAIN: local}
+  # the modules come from the Go module proxy
+  network: true
+platforms: [linux/amd64, linux/arm64, darwin/amd64, darwin/arm64]
