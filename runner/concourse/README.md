@@ -784,7 +784,7 @@ The requests and answers follow pipelinegen's
 [plugin protocol](https://github.com/sideways-works/pipelinegen/blob/main/docs/plugins.md).
 `describe` declares the kind `runner` and the capabilities `pipeline`,
 `repeat-at-run-time` (`across`), `job-caches`, `rerun`,
-`forge_changes` (and `connector_changes`, its name before pipelinegen v0.6.0), `ssh_keys`, `continuous`, `steps`,
+`forge_changes` (and `connector_changes`, its name before pipelinegen v0.7.0), `ssh_keys`, `continuous`, `steps`,
 `placement` (it reads the [placement](#placement) from its own config) and
 `packages` (see [packages and cached images](#packages-and-cached-images)).
 `pipeline` reads the spec and the repository's root (for the include
