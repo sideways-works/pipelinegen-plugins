@@ -4,7 +4,8 @@ program: git-connector
 description: "Connects pipelinegen to a plain git server with no host API: cgit, gitweb, a bare repository over ssh"
 build:
   image: golang:1.27.1@sha256:162be5298a40ed317005c8339c6de4d10d3eef336d66dc8e9259b03ab9d3a6d2
-  run: [go, build, -trimpath, -buildvcs=false, "-ldflags=-s -w -buildid=", -o, "{out}/git-connector", ./cmd/git-connector]
+  # stamped as a release is: v<version> when built through a tag, else dev+<commit>
+  run: [sh, -c, 'v=v{version}; [ "$v" != v ] || v=dev+$(printf %.12s {commit}); exec go build -trimpath -buildvcs=false -ldflags="-s -w -buildid= -X main.Version=$v" -o {out}/git-connector ./cmd/git-connector']
   env: {CGO_ENABLED: "0", GOOS: "{os}", GOARCH: "{arch}", GOWORK: "off", GOTOOLCHAIN: local}
   # the modules come from the Go module proxy
   network: true
