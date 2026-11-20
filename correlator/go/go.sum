@@ -1,9 +1,11 @@
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
-github.com/sideways-works/pipelinegen v0.3.1 h1:SO9GXSs13+aCyGhsjjCl3LQZqkah4aKCr6iJZcSjQio=
-github.com/sideways-works/pipelinegen v0.3.1/go.mod h1:pwy1nF67pcfWzUmSBfTE6QcZbD1qek+u7gI0shNMVpg=
+github.com/sideways-works/pipelinegen v0.5.1-0.20261120065403-4e3e5193b7bb h1:zmuV+hx5frOyVdyd6iKE8jU7q8FSlBwFRSdb+SXN3z0=
+github.com/sideways-works/pipelinegen v0.5.1-0.20261120065403-4e3e5193b7bb/go.mod h1:SSdxo1qSKiqMa4kutENmeQATpPKHlCDIUPqDK7PID8Q=
 github.com/sideways-works/pipelinegen-plugins/sbom/go v0.4.0 h1:G42MF6dGequl1ukWqSembN5MhSzgQbPl8Fi3AERsF8o=
 github.com/sideways-works/pipelinegen-plugins/sbom/go v0.4.0/go.mod h1:dcZHU4Erw77XAiuBPz3EZqYDpUqxP3pNuxr9gVv50nk=
+github.com/sideways-works/plugkit v0.4.0 h1:XnnkAj8lJ6b9LrWH9YqYCd6OhjLRBHvqArKVmGPZ5Ic=
+github.com/sideways-works/plugkit v0.4.0/go.mod h1:6BrhMc6a9ZF2EhzOTpwBWxfGIybeSP6bnMSBhKMyKsU=
 golang.org/x/mod v0.41.0 h1:qJmnOUb4YB+FsEuM3HcWucdZASCPGhsX6uljO6pog0c=
 golang.org/x/mod v0.41.0/go.mod h1:Ek9pY8RKWXwsWvd3rQiHYtMqkjSUV+s1Rj7j4H5Ur6o=
 golang.org/x/sync v0.23.0 h1:KameEIfc1IkluZyXWLn39Wd4tURc6GbCiISGiZm2bQk=

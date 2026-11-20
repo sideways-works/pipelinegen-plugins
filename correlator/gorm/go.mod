@@ -4,7 +4,7 @@ go 1.27.1
 
 require (
 	github.com/pganalyze/pg_query_go/v6 v6.2.5
-	github.com/sideways-works/pipelinegen v0.3.1
+	github.com/sideways-works/pipelinegen v0.5.1-0.20261120065403-4e3e5193b7bb
 	github.com/sideways-works/pipelinegen-plugins/sbom/go v0.4.0
 	github.com/sideways-works/pipelinegen-plugins/sbom/pg v0.4.0
 	github.com/wasilibs/go-pgquery v0.0.0-20261106060434-4301e51f8dbf
@@ -17,6 +17,7 @@ require (
 require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/sideways-works/plugkit v0.4.0 // indirect
 	github.com/tetratelabs/wazero v1.12.0 // indirect
 	github.com/wasilibs/wazero-helpers v0.0.0-20250123031827-cd30c44769bb // indirect
 	golang.org/x/sync v0.24.0 // indirect
