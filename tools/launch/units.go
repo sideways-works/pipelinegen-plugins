@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -194,8 +195,71 @@ func (l *Launch) All(ctx context.Context, lint bool) error {
 // Checks are the checks of the whole repository: .tool-versions and each .node-version against the
 // pinned tools, pipelinegen's check of the repository and the subjects of the commits HEAD brings.
 func (l *Launch) Checks(ctx context.Context) error {
-	return errors.Join(l.versions(ctx), l.unitsListed(), l.Check(ctx), l.Subjects(ctx))
+	return errors.Join(l.versions(ctx), l.unitsListed(), CheckManifests(l.workspace), l.Check(ctx), l.Subjects(ctx))
 }
+
+var listedManifest = regexp.MustCompile(`(?m)^\s*-\s*manifest:\s*(\S+)\s*$`)
+
+// CheckManifests fails unless repository-manifest.yaml lists exactly the plugins there are, each
+// with its manifest.yaml, and each plugin's LICENSE is the root's byte for byte: a plugin's zip
+// ships the LICENSE of its own directory, as a manifest's files can't leave it.
+func CheckManifests(root string) error {
+	data, err := os.ReadFile(filepath.Join(root, "repository-manifest.yaml")) //nolint:gosec // the repository's own file
+	if err != nil {
+		return fmt.Errorf("manifests: %w", err)
+	}
+
+	var listed []string
+	for _, m := range listedManifest.FindAllStringSubmatch(string(data), -1) {
+		listed = append(listed, path.Dir(m[1]))
+	}
+
+	slices.Sort(listed)
+
+	units, err := Units(root)
+	if err != nil {
+		return err
+	}
+
+	plugins := slices.DeleteFunc(slices.Clone(units), func(u string) bool { return u == toolsUnit || strings.HasPrefix(u, "templates/") })
+
+	var errs []error
+
+	if !slices.Equal(listed, plugins) {
+		errs = append(errs, fmt.Errorf("%w: repository-manifest.yaml lists %v, the plugins are %v", errManifests, listed, plugins))
+	}
+
+	license, err := os.ReadFile(filepath.Join(root, "LICENSE")) //nolint:gosec // the repository's own file
+	if err != nil {
+		return fmt.Errorf("manifests: %w", err)
+	}
+
+	for _, u := range units {
+		if u == toolsUnit {
+			continue
+		}
+
+		if !exists(filepath.Join(root, filepath.FromSlash(u), "manifest.yaml")) {
+			errs = append(errs, fmt.Errorf("%w: %s has no manifest.yaml", errManifests, u))
+		}
+
+		if strings.HasPrefix(u, "templates/") {
+			continue
+		}
+
+		own, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(u), "LICENSE")) //nolint:gosec // a plugin's own file
+		if err != nil || !bytes.Equal(own, license) {
+			errs = append(errs, fmt.Errorf("%w: %s/LICENSE is not the root's LICENSE: copy it there", errManifests, u))
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+var errManifests = errors.New("manifests")
+
+// toolsUnit is the unit of this repository's own tools, which is no plugin.
+const toolsUnit = "tools"
 
 var listed = regexp.MustCompile(`(?m)^\s*"([^"]+)",\s*$`)
 

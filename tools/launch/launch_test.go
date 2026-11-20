@@ -82,3 +82,38 @@ func TestUnitsAndModules(t *testing.T) {
 		t.Fatalf("modules: got %q", mods)
 	}
 }
+
+func TestCheckManifests(t *testing.T) {
+	root := t.TempDir()
+	write(t, root, "driver/go/go.mod", "driver/go/manifest.yaml", "sbom/ts/package.json", "sbom/ts/manifest.yaml",
+		"templates/sbom/go.mod", "templates/sbom/manifest.yaml", "tools/go.mod")
+
+	license := []byte("Apache License\n")
+	for _, f := range []string{"LICENSE", "driver/go/LICENSE", "sbom/ts/LICENSE"} {
+		if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(f)), license, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	listing := "repository: 1\nplugins:\n  - manifest: driver/go/manifest.yaml\n  - manifest: sbom/ts/manifest.yaml\n"
+	if err := os.WriteFile(filepath.Join(root, "repository-manifest.yaml"), []byte(listing), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := CheckManifests(root); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(filepath.Join(root, "sbom", "ts", "LICENSE"), []byte("MIT\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	write(t, root, "correlator/sql/go.mod")
+
+	err := CheckManifests(root)
+	for _, want := range []string{"sbom/ts/LICENSE is not the root's", "correlator/sql has no manifest.yaml", "the plugins are [correlator/sql driver/go sbom/ts]"} {
+		if err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("got %v, want %q", err, want)
+		}
+	}
+}
