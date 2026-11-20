@@ -210,7 +210,22 @@ repository's own parts from its include file.
   names it. A plugin pinned by a commit instead of a release is built from
   that commit, from `./cmd/<name>` in the plugin's `path` (the
   repository's root without one), with `GOWORK=off` as its release is
-  built. A release's file is
+  built, while the pipeline pins pipelinegen by a commit or by a release
+  before v0.5.0. A pipelinegen release from v0.5.0 on builds a commit's
+  plugin from the `manifest.yaml` in its directory, in a container: a
+  task could only do that privileged, with a container runtime of its
+  own in its image, which would hand a pull request's code root on the
+  worker. With such a pin, a plugin pinned by a commit, the runner
+  included, is refused when the pipeline is written: build it into a zip
+  (`pipelinegen plugin build <dir> --zip <out.zip>`), host it over https,
+  and pin that (`pipelinegen plugin add --zip <url> --sha256 <sha256>`).
+  A plugin pinned by a zip (`zip: {url, sha256}`, pipelinegen v0.5.0 on)
+  is downloaded, checked against its sha256 before it is opened, and
+  unpacked into the job's cache under `plugins/<sha256>` with
+  pipelinegen's own store, once per worker; `tools/plugins/<name>` gets
+  its `linux/amd64` program. The runner itself is fetched by the
+  bootstrap before anything that unpacks a zip runs, so it takes a
+  release. A release's file is
   `<name>-linux-amd64`, or, for a Node plugin, whose release has no such
   file, the script `<name>.mjs`, checked the same way and run by its own
   `node` shebang. `<name>` is the program the repository holds: a

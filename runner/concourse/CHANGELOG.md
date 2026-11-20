@@ -6,6 +6,18 @@ Every release of concourse-runner, newest first. The format follows
 
 ## [Unreleased]
 
+## [0.5.0]
+
+### Added
+
+- A plugin pinned by a zip (`zip: {url, sha256}`, pipelinegen v0.5.0 on) is fetched into `tools/plugins/<name>`: downloaded over https, checked against its sha256 before it is opened, and unpacked by pipelinegen's own store (plugkit's) into the job's cache under `plugins/<sha256>`, once per worker; its `linux/amd64` program is the one placed. A zip no pin names any more leaves the cache as a release does. The plugin lines carry a zip's url and sha256 after the other fields
+
+### Changed
+
+- With pipelinegen pinned by a release from v0.5.0 on, a plugin pinned by a commit, the runner included, is refused when the pipeline is written: pipelinegen builds such a plugin from its `manifest.yaml` in a container, which a task could run only privileged with a container runtime in its image, handing a pull request's code root on the worker. Build it into a zip with `pipelinegen plugin build` and pin the zip. With pipelinegen pinned by a commit, or by a release before v0.5.0, a commit's plugin is built with `go build` as before
+- A runner pinned by a zip is refused when the pipeline is written: the bootstrap fetches the runner before anything that unpacks a zip runs. A zip pin with a pipelinegen release before v0.5.0, which can't read it, is refused too
+- Requires pipelinegen v0.5.0 and plugkit v0.4.0
+
 ## [0.4.2] - 2026-11-20
 
 ### Changed
