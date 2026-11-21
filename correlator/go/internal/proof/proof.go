@@ -712,6 +712,9 @@ func export(ctx context.Context, repo, commit, dir string) error {
 
 	untarErr := untar(out, dir)
 
+	// The tar ends before git's padding to a whole record; git exits only once that is read too.
+	_, _ = io.Copy(io.Discard, out) //nolint:errcheck // only so git can end
+
 	if err := cmd.Wait(); err != nil {
 		return fmt.Errorf("git archive %s: %w: %s", commit, err, strings.TrimSpace(stderr.String()))
 	}
