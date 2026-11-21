@@ -4,7 +4,7 @@ go 1.27.1
 
 require (
 	github.com/sideways-works/pipelinegen v0.7.0
-	github.com/sideways-works/plugkit v0.6.0
+	github.com/sideways-works/plugkit v0.7.1
 	go.yaml.in/yaml/v3 v3.0.5
 )
 
