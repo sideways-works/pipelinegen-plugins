@@ -6,6 +6,8 @@ Every release of concourse-runner, newest first. The format follows
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-11-21
+
 ### Fixed
 
 - Fetching a plugin no longer hangs on a machine short of pipe space: git archive's padding after the tar is read to its end, so git exits (plugkit v0.7.1)
