@@ -127,8 +127,14 @@ build writes `dist/<program>.mjs`, `.node-version` naming the Node
 `workspaces`. [correlator/react](correlator/react) and [sbom/ts](sbom/ts)
 are two of them.
 
-## Licence
+## More
+
+See [AUTHORS](AUTHORS), [CONTRIBUTING](CONTRIBUTING.md) and
+[SECURITY](SECURITY.md).
+
+## License
 
 The plugins belong to Sideways Works and are licensed under the
-[Apache License 2.0](LICENSE). See [NOTICE](NOTICE), [AUTHORS](AUTHORS),
-[CONTRIBUTING](CONTRIBUTING.md) and [SECURITY](SECURITY.md).
+[Apache License, Version 2.0](LICENSE), every folder of this repository.
+Each plugin carries a copy of the LICENSE and its own NOTICE; the
+repository's is [NOTICE](NOTICE).
