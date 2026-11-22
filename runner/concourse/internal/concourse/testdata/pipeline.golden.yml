@@ -30,7 +30,7 @@ jobs:
             - get: planner
               tags:
                 - planner
-          timeout: 20m
+          timeout: 500m
         - config:
             caches:
                 - path: cache
@@ -47,7 +47,7 @@ jobs:
                 PIPELINEGEN_CONCOURSE_URL: https://ci.example
                 PIPELINEGEN_LIMIT: limits.steps=20
                 PIPELINEGEN_PIPELINE: fixture
-                PIPELINEGEN_PIPELINE_SHA256: bc9af9155f5ec54253abb6e62649939a03812d55aa818e4fe1d56a2d42dfe43e
+                PIPELINEGEN_PIPELINE_SHA256: 1dd8bca30fd810f99d970798e4244c111c11813fd801ffdee85a4bab0638842a
                 PIPELINEGEN_PIPELINE_STEP: "1"
                 PIPELINEGEN_PLUGINS: ""
                 PIPELINEGEN_PRIVATE: ""
@@ -225,7 +225,7 @@ jobs:
           tags:
             - planner
           task: stale
-          timeout: 20m
+          timeout: 500m
     - name: plan-main
       plan:
         - in_parallel:
@@ -238,7 +238,7 @@ jobs:
             - get: planner
               tags:
                 - planner
-          timeout: 60m
+          timeout: 540m
         - config:
             caches:
                 - path: cache
@@ -437,7 +437,7 @@ jobs:
           tags:
             - planner
           task: plan
-          timeout: 60m
+          timeout: 540m
     - ensure:
         config:
             caches:
@@ -631,7 +631,7 @@ jobs:
                 path: sh
         image: planner
         task: end
-        timeout: 20m
+        timeout: 500m
       name: main-backend
       on_abort:
         config:
@@ -827,7 +827,7 @@ jobs:
                     - report-error
                 path: sh
         task: report-error
-        timeout: 20m
+        timeout: 500m
       on_error:
         config:
             image_resource:
@@ -1022,7 +1022,7 @@ jobs:
                     - report-error
                 path: sh
         task: report-error
-        timeout: 20m
+        timeout: 500m
       plan:
         - in_parallel:
             - get: trigger
@@ -1032,7 +1032,7 @@ jobs:
               trigger: true
               version: every
             - get: planner
-          timeout: 20m
+          timeout: 500m
         - config:
             caches:
                 - path: cache
@@ -1229,7 +1229,7 @@ jobs:
                 path: sh
           image: planner
           task: start
-          timeout: 20m
+          timeout: 500m
         - file: gate/gate.json
           load_var: gate
         - file: batches/batches.json
@@ -1447,7 +1447,7 @@ jobs:
                                 path: sh
                         image: planner
                         task: batch-end
-                        timeout: 20m
+                        timeout: 500m
                       try:
                         file: source/ci/backend-slice.yml
                         on_error:
@@ -1460,7 +1460,7 @@ jobs:
                                 PIPELINEGEN_RUN_FILE: batches/run.json
                                 PIPELINEGEN_SUITE: backend
                             task: batch
-                            timeout: 120m
+                            timeout: 600m
                         params:
                             PIPELINEGEN_BATCH: ((.:batch))
                             PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/main-backend
@@ -1469,7 +1469,7 @@ jobs:
                             PIPELINEGEN_RUN_FILE: batches/run.json
                             PIPELINEGEN_SUITE: backend
                         task: batch
-                        timeout: 120m
+                        timeout: 600m
                   fail_fast: false
     - ensure:
         config:
@@ -1666,7 +1666,7 @@ jobs:
         tags:
             - browsers
         task: end
-        timeout: 20m
+        timeout: 500m
       name: main-e2e
       on_abort:
         config:
@@ -1864,7 +1864,7 @@ jobs:
         tags:
             - browsers
         task: report-error
-        timeout: 20m
+        timeout: 500m
       on_error:
         config:
             image_resource:
@@ -2061,7 +2061,7 @@ jobs:
         tags:
             - browsers
         task: report-error
-        timeout: 20m
+        timeout: 500m
       plan:
         - in_parallel:
             - get: trigger
@@ -2075,7 +2075,7 @@ jobs:
             - get: planner
               tags:
                 - browsers
-          timeout: 20m
+          timeout: 500m
         - config:
             caches:
                 - path: cache
@@ -2274,7 +2274,7 @@ jobs:
           tags:
             - browsers
           task: start
-          timeout: 20m
+          timeout: 500m
         - file: gate/gate.json
           load_var: gate
         - file: batches/batches.json
@@ -2294,7 +2294,7 @@ jobs:
                   tags:
                     - browsers
                   task: prepare
-                  timeout: 120m
+                  timeout: 600m
                 - across:
                     - max_in_flight: all
                       values: ((.:batches))
@@ -2507,7 +2507,7 @@ jobs:
                         tags:
                             - browsers
                         task: batch-end
-                        timeout: 20m
+                        timeout: 500m
                       try:
                         file: source/ci/e2e-slice.yml
                         on_error:
@@ -2524,7 +2524,7 @@ jobs:
                             tags:
                                 - browsers
                             task: batch
-                            timeout: 120m
+                            timeout: 600m
                         params:
                             GITHUB_TOKEN: ((github_token))
                             PIPELINEGEN_BATCH: ((.:batch))
@@ -2537,7 +2537,7 @@ jobs:
                         tags:
                             - browsers
                         task: batch
-                        timeout: 120m
+                        timeout: 600m
                   fail_fast: false
                 - file: gate/whole-reconcile.json
                   load_var: whole_0
@@ -2577,7 +2577,7 @@ jobs:
                       tags:
                         - browsers
                       task: collect-reconcile
-                      timeout: 20m
+                      timeout: 500m
                     - ensure:
                         config:
                             inputs:
@@ -2611,7 +2611,7 @@ jobs:
                         tags:
                             - browsers
                         task: whole.reconcile-ends
-                        timeout: 20m
+                        timeout: 500m
                       file: source/ci/reconcile.yml
                       output_mapping:
                         result: result-whole.reconcile
@@ -2625,7 +2625,7 @@ jobs:
                       tags:
                         - browsers
                       task: whole.reconcile
-                      timeout: 120m
+                      timeout: 600m
     - name: plan-nightly
       plan:
         - in_parallel:
@@ -2641,7 +2641,7 @@ jobs:
             - get: planner
               tags:
                 - planner
-          timeout: 60m
+          timeout: 540m
         - config:
             caches:
                 - path: cache
@@ -2840,7 +2840,7 @@ jobs:
           tags:
             - planner
           task: plan
-          timeout: 60m
+          timeout: 540m
     - ensure:
         config:
             caches:
@@ -3034,7 +3034,7 @@ jobs:
                 path: sh
         image: planner
         task: end
-        timeout: 20m
+        timeout: 500m
       name: nightly-backend
       on_abort:
         config:
@@ -3230,7 +3230,7 @@ jobs:
                     - report-error
                 path: sh
         task: report-error
-        timeout: 20m
+        timeout: 500m
       on_error:
         config:
             image_resource:
@@ -3425,7 +3425,7 @@ jobs:
                     - report-error
                 path: sh
         task: report-error
-        timeout: 20m
+        timeout: 500m
       plan:
         - in_parallel:
             - get: trigger
@@ -3434,7 +3434,7 @@ jobs:
               resource: branch-main
               trigger: true
             - get: planner
-          timeout: 20m
+          timeout: 500m
         - config:
             caches:
                 - path: cache
@@ -3631,7 +3631,7 @@ jobs:
                 path: sh
           image: planner
           task: start
-          timeout: 20m
+          timeout: 500m
         - file: gate/gate.json
           load_var: gate
         - file: batches/batches.json
@@ -3849,7 +3849,7 @@ jobs:
                                 path: sh
                         image: planner
                         task: batch-end
-                        timeout: 20m
+                        timeout: 500m
                       try:
                         file: source/ci/backend-slice.yml
                         on_error:
@@ -3862,7 +3862,7 @@ jobs:
                                 PIPELINEGEN_RUN_FILE: batches/run.json
                                 PIPELINEGEN_SUITE: backend
                             task: batch
-                            timeout: 120m
+                            timeout: 600m
                         params:
                             PIPELINEGEN_BATCH: ((.:batch))
                             PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/nightly-backend
@@ -3871,7 +3871,7 @@ jobs:
                             PIPELINEGEN_RUN_FILE: batches/run.json
                             PIPELINEGEN_SUITE: backend
                         task: batch
-                        timeout: 120m
+                        timeout: 600m
                   fail_fast: false
     - ensure:
         config:
@@ -4068,7 +4068,7 @@ jobs:
         tags:
             - browsers
         task: end
-        timeout: 20m
+        timeout: 500m
       name: nightly-e2e
       on_abort:
         config:
@@ -4266,7 +4266,7 @@ jobs:
         tags:
             - browsers
         task: report-error
-        timeout: 20m
+        timeout: 500m
       on_error:
         config:
             image_resource:
@@ -4463,7 +4463,7 @@ jobs:
         tags:
             - browsers
         task: report-error
-        timeout: 20m
+        timeout: 500m
       plan:
         - in_parallel:
             - get: trigger
@@ -4476,7 +4476,7 @@ jobs:
             - get: planner
               tags:
                 - browsers
-          timeout: 20m
+          timeout: 500m
         - config:
             caches:
                 - path: cache
@@ -4675,7 +4675,7 @@ jobs:
           tags:
             - browsers
           task: start
-          timeout: 20m
+          timeout: 500m
         - file: gate/gate.json
           load_var: gate
         - file: batches/batches.json
@@ -4695,7 +4695,7 @@ jobs:
                   tags:
                     - browsers
                   task: prepare
-                  timeout: 120m
+                  timeout: 600m
                 - across:
                     - max_in_flight: all
                       values: ((.:batches))
@@ -4908,7 +4908,7 @@ jobs:
                         tags:
                             - browsers
                         task: batch-end
-                        timeout: 20m
+                        timeout: 500m
                       try:
                         file: source/ci/e2e-slice.yml
                         on_error:
@@ -4924,7 +4924,7 @@ jobs:
                             tags:
                                 - browsers
                             task: batch
-                            timeout: 120m
+                            timeout: 600m
                         params:
                             PIPELINEGEN_BATCH: ((.:batch))
                             PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/nightly-e2e
@@ -4936,7 +4936,7 @@ jobs:
                         tags:
                             - browsers
                         task: batch
-                        timeout: 120m
+                        timeout: 600m
                   fail_fast: false
                 - file: gate/whole-reconcile.json
                   load_var: whole_0
@@ -4976,7 +4976,7 @@ jobs:
                       tags:
                         - browsers
                       task: collect-reconcile
-                      timeout: 20m
+                      timeout: 500m
                     - ensure:
                         config:
                             inputs:
@@ -5010,7 +5010,7 @@ jobs:
                         tags:
                             - browsers
                         task: whole.reconcile-ends
-                        timeout: 20m
+                        timeout: 500m
                       file: source/ci/reconcile.yml
                       output_mapping:
                         result: result-whole.reconcile
@@ -5024,7 +5024,7 @@ jobs:
                       tags:
                         - browsers
                       task: whole.reconcile
-                      timeout: 120m
+                      timeout: 600m
     - name: plan-pr
       plan:
         - in_parallel:
@@ -5043,7 +5043,7 @@ jobs:
             - get: planner
               tags:
                 - planner
-          timeout: 60m
+          timeout: 540m
         - config:
             caches:
                 - path: cache
@@ -5237,7 +5237,7 @@ jobs:
           tags:
             - planner
           task: begin
-          timeout: 20m
+          timeout: 500m
         - config:
             caches:
                 - path: cache
@@ -5438,7 +5438,7 @@ jobs:
           tags:
             - planner
           task: plan
-          timeout: 60m
+          timeout: 540m
         - config:
             caches:
                 - path: cache
@@ -5634,7 +5634,7 @@ jobs:
           tags:
             - planner
           task: write
-          timeout: 60m
+          timeout: 540m
         - file: handoff/gate.json
           load_var: planned
         - across:
@@ -5649,7 +5649,7 @@ jobs:
               put: planned-pr
               tags:
                 - planner
-              timeout: 60m
+              timeout: 540m
     - name: sweep-pr
       plan:
         - in_parallel:
@@ -5674,7 +5674,7 @@ jobs:
             - get: planner
               tags:
                 - planner
-          timeout: 60m
+          timeout: 540m
         - config:
             caches:
                 - path: cache
@@ -5869,7 +5869,7 @@ jobs:
           tags:
             - planner
           task: sweep
-          timeout: 60m
+          timeout: 540m
         - file: gate/gate.json
           load_var: gate
         - across:
@@ -6076,7 +6076,7 @@ jobs:
                   tags:
                     - planner
                   task: plan
-                  timeout: 60m
+                  timeout: 540m
                 - config:
                     caches:
                         - path: cache
@@ -6271,7 +6271,7 @@ jobs:
                   tags:
                     - planner
                   task: write
-                  timeout: 60m
+                  timeout: 540m
                 - file: handoffs/list.json
                   load_var: handoffs
                 - across:
@@ -6286,7 +6286,7 @@ jobs:
                       put: planned-pr
                       tags:
                         - planner
-                      timeout: 60m
+                      timeout: 540m
     - ensure:
         config:
             caches:
@@ -6480,7 +6480,7 @@ jobs:
                 path: sh
         image: planner
         task: end
-        timeout: 20m
+        timeout: 500m
       name: pr-backend
       on_abort:
         config:
@@ -6676,7 +6676,7 @@ jobs:
                     - report-error
                 path: sh
         task: report-error
-        timeout: 20m
+        timeout: 500m
       on_error:
         config:
             image_resource:
@@ -6871,7 +6871,7 @@ jobs:
                     - report-error
                 path: sh
         task: report-error
-        timeout: 20m
+        timeout: 500m
       plan:
         - in_parallel:
             - get: trigger
@@ -6881,7 +6881,7 @@ jobs:
               trigger: true
               version: every
             - get: planner
-          timeout: 20m
+          timeout: 500m
         - config:
             caches:
                 - path: cache
@@ -7078,7 +7078,7 @@ jobs:
                 path: sh
           image: planner
           task: start
-          timeout: 20m
+          timeout: 500m
         - file: gate/gate.json
           load_var: gate
         - file: batches/batches.json
@@ -7296,7 +7296,7 @@ jobs:
                                 path: sh
                         image: planner
                         task: batch-end
-                        timeout: 20m
+                        timeout: 500m
                       try:
                         file: source/ci/backend-slice.yml
                         on_error:
@@ -7309,7 +7309,7 @@ jobs:
                                 PIPELINEGEN_RUN_FILE: batches/run.json
                                 PIPELINEGEN_SUITE: backend
                             task: batch
-                            timeout: 120m
+                            timeout: 600m
                         params:
                             PIPELINEGEN_BATCH: ((.:batch))
                             PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/pr-backend
@@ -7318,7 +7318,7 @@ jobs:
                             PIPELINEGEN_RUN_FILE: batches/run.json
                             PIPELINEGEN_SUITE: backend
                         task: batch
-                        timeout: 120m
+                        timeout: 600m
                   fail_fast: false
     - ensure:
         config:
@@ -7515,7 +7515,7 @@ jobs:
         tags:
             - browsers
         task: end
-        timeout: 20m
+        timeout: 500m
       name: pr-e2e
       on_abort:
         config:
@@ -7713,7 +7713,7 @@ jobs:
         tags:
             - browsers
         task: report-error
-        timeout: 20m
+        timeout: 500m
       on_error:
         config:
             image_resource:
@@ -7910,7 +7910,7 @@ jobs:
         tags:
             - browsers
         task: report-error
-        timeout: 20m
+        timeout: 500m
       plan:
         - in_parallel:
             - get: trigger
@@ -7924,7 +7924,7 @@ jobs:
             - get: planner
               tags:
                 - browsers
-          timeout: 20m
+          timeout: 500m
         - config:
             caches:
                 - path: cache
@@ -8123,7 +8123,7 @@ jobs:
           tags:
             - browsers
           task: start
-          timeout: 20m
+          timeout: 500m
         - file: gate/gate.json
           load_var: gate
         - file: batches/batches.json
@@ -8143,7 +8143,7 @@ jobs:
                   tags:
                     - browsers
                   task: prepare
-                  timeout: 120m
+                  timeout: 600m
                 - across:
                     - max_in_flight: all
                       values: ((.:batches))
@@ -8356,7 +8356,7 @@ jobs:
                         tags:
                             - browsers
                         task: batch-end
-                        timeout: 20m
+                        timeout: 500m
                       try:
                         file: source/ci/e2e-slice.yml
                         on_error:
@@ -8372,7 +8372,7 @@ jobs:
                             tags:
                                 - browsers
                             task: batch
-                            timeout: 120m
+                            timeout: 600m
                         params:
                             PIPELINEGEN_BATCH: ((.:batch))
                             PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/pr-e2e
@@ -8384,7 +8384,7 @@ jobs:
                         tags:
                             - browsers
                         task: batch
-                        timeout: 120m
+                        timeout: 600m
                   fail_fast: false
                 - file: gate/whole-reconcile.json
                   load_var: whole_0
@@ -8424,7 +8424,7 @@ jobs:
                       tags:
                         - browsers
                       task: collect-reconcile
-                      timeout: 20m
+                      timeout: 500m
                     - ensure:
                         config:
                             inputs:
@@ -8458,7 +8458,7 @@ jobs:
                         tags:
                             - browsers
                         task: whole.reconcile-ends
-                        timeout: 20m
+                        timeout: 500m
                       file: source/ci/reconcile.yml
                       output_mapping:
                         result: result-whole.reconcile
@@ -8472,7 +8472,7 @@ jobs:
                       tags:
                         - browsers
                       task: whole.reconcile
-                      timeout: 120m
+                      timeout: 600m
 resource_types:
     - name: github-pr
       source:

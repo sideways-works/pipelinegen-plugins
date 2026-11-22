@@ -199,7 +199,7 @@ func TestSerialGroupAndInclude(t *testing.T) {
 
 	s := text(t, p)
 
-	for _, want := range []string{"timeout: 30m", "timeout: 90m", "serial_groups:\n        - e2e", "max_in_flight: 1", "name: title", "name: old"} {
+	for _, want := range []string{"timeout: 510m", "timeout: 570m", "serial_groups:\n        - e2e", "max_in_flight: 1", "name: title", "name: old"} {
 		if !strings.Contains(s, want) {
 			t.Errorf("pipeline lacks %q", want)
 		}

@@ -6,6 +6,10 @@ Every release of concourse-runner, newest first. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- Every step's `timeout` has the wait for a worker on top of its own limit, `worker_wait_minutes` in the runner's config (480 by default, 0 for none). Concourse counts a step's wait for a worker inside its timeout, so with every worker at its limit of active tasks a batch failed without having started; pipelinegen's own steps and a driven suite's batches still end within their minutes, counted from their start
+
 ## [0.6.1] - 2026-11-21
 
 ### Fixed

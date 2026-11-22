@@ -32,7 +32,7 @@ jobs:
             - get: planner
               tags:
                 - planner
-          timeout: 20m
+          timeout: 500m
         - config:
             caches:
                 - path: cache
@@ -51,7 +51,7 @@ jobs:
                 PIPELINEGEN_LIMIT: limits.steps=20
                 PIPELINEGEN_PACKAGE_CACHE: pkgcache
                 PIPELINEGEN_PIPELINE: fixture
-                PIPELINEGEN_PIPELINE_SHA256: c6624e114b35838a7d9751b4c80007f0a9bc5ca9c7079a7dfd5cbe65125ca53a
+                PIPELINEGEN_PIPELINE_SHA256: 6876aab934cf8a15b68bc16bc006246bafe4d8e46377215e1ee20b8f3b2def82
                 PIPELINEGEN_PIPELINE_STEP: "1"
                 PIPELINEGEN_PLUGINS: ""
                 PIPELINEGEN_PRIVATE: ""
@@ -295,7 +295,7 @@ jobs:
           tags:
             - planner
           task: stale
-          timeout: 20m
+          timeout: 500m
     - name: plan-main
       plan:
         - in_parallel:
@@ -308,7 +308,7 @@ jobs:
             - get: planner
               tags:
                 - planner
-          timeout: 60m
+          timeout: 540m
         - config:
             caches:
                 - path: cache
@@ -575,7 +575,7 @@ jobs:
           tags:
             - planner
           task: plan
-          timeout: 60m
+          timeout: 540m
     - ensure:
         config:
             caches:
@@ -837,7 +837,7 @@ jobs:
                 path: sh
         image: planner
         task: end
-        timeout: 20m
+        timeout: 500m
       name: main-backend
       on_abort:
         config:
@@ -1172,7 +1172,7 @@ jobs:
                     - report-error
                 path: sh
         task: report-error
-        timeout: 20m
+        timeout: 500m
       on_error:
         config:
             caches:
@@ -1506,7 +1506,7 @@ jobs:
                     - report-error
                 path: sh
         task: report-error
-        timeout: 20m
+        timeout: 500m
       plan:
         - in_parallel:
             - get: trigger
@@ -1516,7 +1516,7 @@ jobs:
               trigger: true
               version: every
             - get: planner
-          timeout: 20m
+          timeout: 500m
         - config:
             caches:
                 - path: cache
@@ -1781,7 +1781,7 @@ jobs:
                 path: sh
           image: planner
           task: start
-          timeout: 20m
+          timeout: 500m
         - file: gate/gate.json
           load_var: gate
         - file: batches/batches.json
@@ -1827,9 +1827,9 @@ jobs:
                               printf '{"source": %s, "version": {"digest": "%s"}}' "$BASE" "$BASE_DIGEST" | /opt/resource/in "$OUT" > /dev/null
                         path: sh
                   task: image-111111111111
-                  timeout: 20m
+                  timeout: 500m
                 - get: builder
-                  timeout: 20m
+                  timeout: 500m
                 - config:
                     caches:
                         - path: cache
@@ -1930,7 +1930,7 @@ jobs:
                         path: sh
                   image: builder
                   task: prepare
-                  timeout: 120m
+                  timeout: 600m
                 - across:
                     - max_in_flight: all
                       values: ((.:batches))
@@ -2207,7 +2207,7 @@ jobs:
                                 path: sh
                         image: planner
                         task: batch-end
-                        timeout: 20m
+                        timeout: 500m
                       try:
                         config:
                             caches:
@@ -2421,9 +2421,9 @@ jobs:
                                     path: sh
                             image: cached-111111111111
                             task: batch
-                            timeout: 120m
+                            timeout: 600m
                         task: batch
-                        timeout: 120m
+                        timeout: 600m
                   fail_fast: false
     - ensure:
         config:
@@ -2688,7 +2688,7 @@ jobs:
         tags:
             - browsers
         task: end
-        timeout: 20m
+        timeout: 500m
       name: main-e2e
       on_abort:
         config:
@@ -3025,7 +3025,7 @@ jobs:
         tags:
             - browsers
         task: report-error
-        timeout: 20m
+        timeout: 500m
       on_error:
         config:
             caches:
@@ -3361,7 +3361,7 @@ jobs:
         tags:
             - browsers
         task: report-error
-        timeout: 20m
+        timeout: 500m
       plan:
         - in_parallel:
             - get: trigger
@@ -3375,7 +3375,7 @@ jobs:
             - get: planner
               tags:
                 - browsers
-          timeout: 20m
+          timeout: 500m
         - config:
             caches:
                 - path: cache
@@ -3642,7 +3642,7 @@ jobs:
           tags:
             - browsers
           task: start
-          timeout: 20m
+          timeout: 500m
         - file: gate/gate.json
           load_var: gate
         - file: batches/batches.json
@@ -3690,7 +3690,7 @@ jobs:
                   tags:
                     - browsers
                   task: image-222222222222
-                  timeout: 20m
+                  timeout: 500m
                 - file: source/ci/e2e-prepare.yml
                   image: cached-222222222222
                   params:
@@ -3702,7 +3702,7 @@ jobs:
                   tags:
                     - browsers
                   task: prepare
-                  timeout: 120m
+                  timeout: 600m
                 - across:
                     - max_in_flight: all
                       values: ((.:batches))
@@ -3983,7 +3983,7 @@ jobs:
                         tags:
                             - browsers
                         task: batch-end
-                        timeout: 20m
+                        timeout: 500m
                       try:
                         file: source/ci/e2e-slice.yml
                         image: cached-222222222222
@@ -4002,7 +4002,7 @@ jobs:
                             tags:
                                 - browsers
                             task: batch
-                            timeout: 120m
+                            timeout: 600m
                         params:
                             GITHUB_TOKEN: ((github_token))
                             PIPELINEGEN_BATCH: ((.:batch))
@@ -4015,7 +4015,7 @@ jobs:
                         tags:
                             - browsers
                         task: batch
-                        timeout: 120m
+                        timeout: 600m
                   fail_fast: false
                 - file: gate/whole-reconcile.json
                   load_var: whole_0
@@ -4128,7 +4128,7 @@ jobs:
                       tags:
                         - browsers
                       task: collect-reconcile
-                      timeout: 20m
+                      timeout: 500m
                     - ensure:
                         config:
                             caches:
@@ -4235,7 +4235,7 @@ jobs:
                         tags:
                             - browsers
                         task: whole.reconcile-ends
-                        timeout: 20m
+                        timeout: 500m
                       file: source/ci/reconcile.yml
                       image: cached-222222222222
                       output_mapping:
@@ -4250,7 +4250,7 @@ jobs:
                       tags:
                         - browsers
                       task: whole.reconcile
-                      timeout: 120m
+                      timeout: 600m
     - name: plan-nightly
       plan:
         - in_parallel:
@@ -4266,7 +4266,7 @@ jobs:
             - get: planner
               tags:
                 - planner
-          timeout: 60m
+          timeout: 540m
         - config:
             caches:
                 - path: cache
@@ -4533,7 +4533,7 @@ jobs:
           tags:
             - planner
           task: plan
-          timeout: 60m
+          timeout: 540m
     - ensure:
         config:
             caches:
@@ -4795,7 +4795,7 @@ jobs:
                 path: sh
         image: planner
         task: end
-        timeout: 20m
+        timeout: 500m
       name: nightly-backend
       on_abort:
         config:
@@ -5130,7 +5130,7 @@ jobs:
                     - report-error
                 path: sh
         task: report-error
-        timeout: 20m
+        timeout: 500m
       on_error:
         config:
             caches:
@@ -5464,7 +5464,7 @@ jobs:
                     - report-error
                 path: sh
         task: report-error
-        timeout: 20m
+        timeout: 500m
       plan:
         - in_parallel:
             - get: trigger
@@ -5473,7 +5473,7 @@ jobs:
               resource: branch-main
               trigger: true
             - get: planner
-          timeout: 20m
+          timeout: 500m
         - config:
             caches:
                 - path: cache
@@ -5738,7 +5738,7 @@ jobs:
                 path: sh
           image: planner
           task: start
-          timeout: 20m
+          timeout: 500m
         - file: gate/gate.json
           load_var: gate
         - file: batches/batches.json
@@ -5784,9 +5784,9 @@ jobs:
                               printf '{"source": %s, "version": {"digest": "%s"}}' "$BASE" "$BASE_DIGEST" | /opt/resource/in "$OUT" > /dev/null
                         path: sh
                   task: image-111111111111
-                  timeout: 20m
+                  timeout: 500m
                 - get: builder
-                  timeout: 20m
+                  timeout: 500m
                 - config:
                     caches:
                         - path: cache
@@ -5887,7 +5887,7 @@ jobs:
                         path: sh
                   image: builder
                   task: prepare
-                  timeout: 120m
+                  timeout: 600m
                 - across:
                     - max_in_flight: all
                       values: ((.:batches))
@@ -6164,7 +6164,7 @@ jobs:
                                 path: sh
                         image: planner
                         task: batch-end
-                        timeout: 20m
+                        timeout: 500m
                       try:
                         config:
                             caches:
@@ -6378,9 +6378,9 @@ jobs:
                                     path: sh
                             image: cached-111111111111
                             task: batch
-                            timeout: 120m
+                            timeout: 600m
                         task: batch
-                        timeout: 120m
+                        timeout: 600m
                   fail_fast: false
     - ensure:
         config:
@@ -6645,7 +6645,7 @@ jobs:
         tags:
             - browsers
         task: end
-        timeout: 20m
+        timeout: 500m
       name: nightly-e2e
       on_abort:
         config:
@@ -6982,7 +6982,7 @@ jobs:
         tags:
             - browsers
         task: report-error
-        timeout: 20m
+        timeout: 500m
       on_error:
         config:
             caches:
@@ -7318,7 +7318,7 @@ jobs:
         tags:
             - browsers
         task: report-error
-        timeout: 20m
+        timeout: 500m
       plan:
         - in_parallel:
             - get: trigger
@@ -7331,7 +7331,7 @@ jobs:
             - get: planner
               tags:
                 - browsers
-          timeout: 20m
+          timeout: 500m
         - config:
             caches:
                 - path: cache
@@ -7598,7 +7598,7 @@ jobs:
           tags:
             - browsers
           task: start
-          timeout: 20m
+          timeout: 500m
         - file: gate/gate.json
           load_var: gate
         - file: batches/batches.json
@@ -7646,7 +7646,7 @@ jobs:
                   tags:
                     - browsers
                   task: image-222222222222
-                  timeout: 20m
+                  timeout: 500m
                 - file: source/ci/e2e-prepare.yml
                   image: cached-222222222222
                   params:
@@ -7658,7 +7658,7 @@ jobs:
                   tags:
                     - browsers
                   task: prepare
-                  timeout: 120m
+                  timeout: 600m
                 - across:
                     - max_in_flight: all
                       values: ((.:batches))
@@ -7939,7 +7939,7 @@ jobs:
                         tags:
                             - browsers
                         task: batch-end
-                        timeout: 20m
+                        timeout: 500m
                       try:
                         file: source/ci/e2e-slice.yml
                         image: cached-222222222222
@@ -7957,7 +7957,7 @@ jobs:
                             tags:
                                 - browsers
                             task: batch
-                            timeout: 120m
+                            timeout: 600m
                         params:
                             PIPELINEGEN_BATCH: ((.:batch))
                             PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/nightly-e2e
@@ -7969,7 +7969,7 @@ jobs:
                         tags:
                             - browsers
                         task: batch
-                        timeout: 120m
+                        timeout: 600m
                   fail_fast: false
                 - file: gate/whole-reconcile.json
                   load_var: whole_0
@@ -8082,7 +8082,7 @@ jobs:
                       tags:
                         - browsers
                       task: collect-reconcile
-                      timeout: 20m
+                      timeout: 500m
                     - ensure:
                         config:
                             caches:
@@ -8189,7 +8189,7 @@ jobs:
                         tags:
                             - browsers
                         task: whole.reconcile-ends
-                        timeout: 20m
+                        timeout: 500m
                       file: source/ci/reconcile.yml
                       image: cached-222222222222
                       output_mapping:
@@ -8204,7 +8204,7 @@ jobs:
                       tags:
                         - browsers
                       task: whole.reconcile
-                      timeout: 120m
+                      timeout: 600m
     - name: plan-pr
       plan:
         - in_parallel:
@@ -8223,7 +8223,7 @@ jobs:
             - get: planner
               tags:
                 - planner
-          timeout: 60m
+          timeout: 540m
         - config:
             caches:
                 - path: cache
@@ -8485,7 +8485,7 @@ jobs:
           tags:
             - planner
           task: begin
-          timeout: 20m
+          timeout: 500m
         - config:
             caches:
                 - path: cache
@@ -8754,7 +8754,7 @@ jobs:
           tags:
             - planner
           task: plan
-          timeout: 60m
+          timeout: 540m
         - config:
             caches:
                 - path: cache
@@ -9018,7 +9018,7 @@ jobs:
           tags:
             - planner
           task: write
-          timeout: 60m
+          timeout: 540m
         - file: handoff/gate.json
           load_var: planned
         - across:
@@ -9033,7 +9033,7 @@ jobs:
               put: planned-pr
               tags:
                 - planner
-              timeout: 60m
+              timeout: 540m
     - name: sweep-pr
       plan:
         - in_parallel:
@@ -9058,7 +9058,7 @@ jobs:
             - get: planner
               tags:
                 - planner
-          timeout: 60m
+          timeout: 540m
         - config:
             caches:
                 - path: cache
@@ -9321,7 +9321,7 @@ jobs:
           tags:
             - planner
           task: sweep
-          timeout: 60m
+          timeout: 540m
         - file: gate/gate.json
           load_var: gate
         - across:
@@ -9596,7 +9596,7 @@ jobs:
                   tags:
                     - planner
                   task: plan
-                  timeout: 60m
+                  timeout: 540m
                 - config:
                     caches:
                         - path: cache
@@ -9859,7 +9859,7 @@ jobs:
                   tags:
                     - planner
                   task: write
-                  timeout: 60m
+                  timeout: 540m
                 - file: handoffs/list.json
                   load_var: handoffs
                 - across:
@@ -9874,7 +9874,7 @@ jobs:
                       put: planned-pr
                       tags:
                         - planner
-                      timeout: 60m
+                      timeout: 540m
     - ensure:
         config:
             caches:
@@ -10136,7 +10136,7 @@ jobs:
                 path: sh
         image: planner
         task: end
-        timeout: 20m
+        timeout: 500m
       name: pr-backend
       on_abort:
         config:
@@ -10471,7 +10471,7 @@ jobs:
                     - report-error
                 path: sh
         task: report-error
-        timeout: 20m
+        timeout: 500m
       on_error:
         config:
             caches:
@@ -10805,7 +10805,7 @@ jobs:
                     - report-error
                 path: sh
         task: report-error
-        timeout: 20m
+        timeout: 500m
       plan:
         - in_parallel:
             - get: trigger
@@ -10815,7 +10815,7 @@ jobs:
               trigger: true
               version: every
             - get: planner
-          timeout: 20m
+          timeout: 500m
         - config:
             caches:
                 - path: cache
@@ -11080,7 +11080,7 @@ jobs:
                 path: sh
           image: planner
           task: start
-          timeout: 20m
+          timeout: 500m
         - file: gate/gate.json
           load_var: gate
         - file: batches/batches.json
@@ -11126,9 +11126,9 @@ jobs:
                               printf '{"source": %s, "version": {"digest": "%s"}}' "$BASE" "$BASE_DIGEST" | /opt/resource/in "$OUT" > /dev/null
                         path: sh
                   task: image-111111111111
-                  timeout: 20m
+                  timeout: 500m
                 - get: builder
-                  timeout: 20m
+                  timeout: 500m
                 - config:
                     caches:
                         - path: cache
@@ -11229,7 +11229,7 @@ jobs:
                         path: sh
                   image: builder
                   task: prepare
-                  timeout: 120m
+                  timeout: 600m
                 - across:
                     - max_in_flight: all
                       values: ((.:batches))
@@ -11506,7 +11506,7 @@ jobs:
                                 path: sh
                         image: planner
                         task: batch-end
-                        timeout: 20m
+                        timeout: 500m
                       try:
                         config:
                             caches:
@@ -11720,9 +11720,9 @@ jobs:
                                     path: sh
                             image: cached-111111111111
                             task: batch
-                            timeout: 120m
+                            timeout: 600m
                         task: batch
-                        timeout: 120m
+                        timeout: 600m
                   fail_fast: false
     - ensure:
         config:
@@ -11987,7 +11987,7 @@ jobs:
         tags:
             - browsers
         task: end
-        timeout: 20m
+        timeout: 500m
       name: pr-e2e
       on_abort:
         config:
@@ -12324,7 +12324,7 @@ jobs:
         tags:
             - browsers
         task: report-error
-        timeout: 20m
+        timeout: 500m
       on_error:
         config:
             caches:
@@ -12660,7 +12660,7 @@ jobs:
         tags:
             - browsers
         task: report-error
-        timeout: 20m
+        timeout: 500m
       plan:
         - in_parallel:
             - get: trigger
@@ -12674,7 +12674,7 @@ jobs:
             - get: planner
               tags:
                 - browsers
-          timeout: 20m
+          timeout: 500m
         - config:
             caches:
                 - path: cache
@@ -12941,7 +12941,7 @@ jobs:
           tags:
             - browsers
           task: start
-          timeout: 20m
+          timeout: 500m
         - file: gate/gate.json
           load_var: gate
         - file: batches/batches.json
@@ -12989,7 +12989,7 @@ jobs:
                   tags:
                     - browsers
                   task: image-222222222222
-                  timeout: 20m
+                  timeout: 500m
                 - file: source/ci/e2e-prepare.yml
                   image: cached-222222222222
                   params:
@@ -13001,7 +13001,7 @@ jobs:
                   tags:
                     - browsers
                   task: prepare
-                  timeout: 120m
+                  timeout: 600m
                 - across:
                     - max_in_flight: all
                       values: ((.:batches))
@@ -13282,7 +13282,7 @@ jobs:
                         tags:
                             - browsers
                         task: batch-end
-                        timeout: 20m
+                        timeout: 500m
                       try:
                         file: source/ci/e2e-slice.yml
                         image: cached-222222222222
@@ -13300,7 +13300,7 @@ jobs:
                             tags:
                                 - browsers
                             task: batch
-                            timeout: 120m
+                            timeout: 600m
                         params:
                             PIPELINEGEN_BATCH: ((.:batch))
                             PIPELINEGEN_JOB_URL: https://ci.example/teams/fixture/pipelines/fixture/jobs/pr-e2e
@@ -13312,7 +13312,7 @@ jobs:
                         tags:
                             - browsers
                         task: batch
-                        timeout: 120m
+                        timeout: 600m
                   fail_fast: false
                 - file: gate/whole-reconcile.json
                   load_var: whole_0
@@ -13425,7 +13425,7 @@ jobs:
                       tags:
                         - browsers
                       task: collect-reconcile
-                      timeout: 20m
+                      timeout: 500m
                     - ensure:
                         config:
                             caches:
@@ -13532,7 +13532,7 @@ jobs:
                         tags:
                             - browsers
                         task: whole.reconcile-ends
-                        timeout: 20m
+                        timeout: 500m
                       file: source/ci/reconcile.yml
                       image: cached-222222222222
                       output_mapping:
@@ -13547,7 +13547,7 @@ jobs:
                       tags:
                         - browsers
                       task: whole.reconcile
-                      timeout: 120m
+                      timeout: 600m
     - name: image-111111111111
       plan:
         - in_parallel:
@@ -13561,7 +13561,7 @@ jobs:
               resource: golang
               tags:
                 - planner
-          timeout: 20m
+          timeout: 500m
         - config:
             image_resource:
                 source:
@@ -13667,7 +13667,7 @@ jobs:
           tags:
             - planner
           task: look
-          timeout: 20m
+          timeout: 500m
         - file: gate/missing.json
           load_var: missing
         - across:
@@ -13700,14 +13700,14 @@ jobs:
               tags:
                 - planner
               task: build
-              timeout: 20m
+              timeout: 500m
             - no_get: true
               params:
                 image: image/image.tar
               put: cached-111111111111
               tags:
                 - planner
-              timeout: 20m
+              timeout: 500m
     - name: image-222222222222
       plan:
         - in_parallel:
@@ -13721,7 +13721,7 @@ jobs:
               resource: golang
               tags:
                 - planner
-          timeout: 20m
+          timeout: 500m
         - config:
             image_resource:
                 source:
@@ -13827,7 +13827,7 @@ jobs:
           tags:
             - planner
           task: look
-          timeout: 20m
+          timeout: 500m
         - file: gate/missing.json
           load_var: missing
         - across:
@@ -13860,14 +13860,14 @@ jobs:
               tags:
                 - planner
               task: build
-              timeout: 20m
+              timeout: 500m
             - no_get: true
               params:
                 image: image/image.tar
               put: cached-222222222222
               tags:
                 - planner
-              timeout: 20m
+              timeout: 500m
 resource_types:
     - name: github-pr
       source:

@@ -72,6 +72,8 @@ type gen struct {
 	pkgs        Packages
 	// included are the include's registry-image sources, by name.
 	included map[string]M
+	// workerWait is added to every step's limit, for the wait for a worker.
+	workerWait int
 }
 
 // Generate writes the pipeline for a spec; root is the repository's
@@ -94,17 +96,12 @@ func GenerateAll(spec plugin.Spec, pkgs Packages, root string, config map[string
 		return nil, err
 	}
 
-	conf, err := readConfig(config)
+	place, wait, err := fromConfig(spec, config)
 	if err != nil {
 		return nil, err
 	}
 
-	place := newPlacer(spec, conf)
-	if err := place.check(spec); err != nil {
-		return nil, err
-	}
-
-	g := &gen{spec: spec, ci: ci, place: place, runs: map[string]plugin.SpecRun{}, suites: map[string]plugin.SpecSuite{}, pkgs: pkgs}
+	g := &gen{spec: spec, ci: ci, place: place, runs: map[string]plugin.SpecRun{}, suites: map[string]plugin.SpecSuite{}, pkgs: pkgs, workerWait: wait}
 
 	for _, r := range spec.Runs {
 		g.runs[r.Name] = r
@@ -178,6 +175,7 @@ func (g *gen) pipeline(types, resources []any) (M, error) {
 	}
 
 	g.withInstalls(p)
+	waitForWorkers(p["jobs"], g.workerWait)
 
 	return p, nil
 }

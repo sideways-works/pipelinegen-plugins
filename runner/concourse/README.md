@@ -129,6 +129,9 @@ A suite's bookkeeping that no rule places runs with its suite. In the
 example, the nightly's suites run on `nightly`, e2e on `browsers` in every
 other run, and everything else on `small`.
 
+The same block takes `worker_wait_minutes`, how long a step may wait for
+a worker on top of its own limit; see [Time limits](#time-limits).
+
 The runner refuses, before it writes anything, a key it doesn't know, a
 rule with an unknown `for`, without `tags` or with an empty tag, one that
 names a run or a suite its `for` can't have or the spec lacks, and one that
@@ -615,7 +618,8 @@ never set over a newer one.
 Every step the runner writes has a `timeout`, so a step that hangs ends
 and its job goes on to its `ensure`, which reports it, instead of holding
 the run pending; in a continuous run the next round would wait behind it.
-The minutes come from the spec:
+The minutes come from the spec, and each has the wait for a worker on top
+(below):
 
 - each of the suite's own tasks (the prepare, each batch, each
   whole-suite check) has the suite's `minutes` in the run, on its own, so
@@ -629,6 +633,17 @@ The minutes come from the spec:
 - pipelinegen's own steps have `limits.steps`: the start task, each
   batch's end, the checks' collect and report, the end task, the
   pipeline job.
+
+Concourse counts a step's wait for a worker, when every worker it may run
+on is at its limit of active tasks, inside the step's `timeout`. So each
+`timeout` is the step's minutes plus `worker_wait_minutes` from the
+runner's config (480 by default; 0 adds nothing), and a step that waited
+for a worker still has its own minutes once it runs. pipelinegen counts its
+own limits from its start: its own steps and a driven suite's batches
+(`steps`) end within their minutes whatever the wait was. A suite's own
+task file has no limit of its own besides the step's, so a batch of it
+that hangs with a worker free runs for its minutes and the wait. A job the
+include file brings keeps the limits it gives.
 
 A step in an `ensure` or another hook carries its own `timeout`: Concourse
 runs a hook after a limit ended the step, outside that limit. A timeout

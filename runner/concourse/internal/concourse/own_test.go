@@ -33,6 +33,9 @@ func TestOwnPipelineMovedIsTheSame(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// before.yml was written before a step's limit had the wait for a worker on top
+	req.Config["worker_wait_minutes"] = 0
+
 	p, err := GenerateWith(req.Spec, dir, req.Config)
 	if err != nil {
 		t.Fatal(err)

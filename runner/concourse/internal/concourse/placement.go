@@ -40,6 +40,8 @@ var placeable = map[string]struct{ run, suite bool }{
 
 type runnerConfig struct {
 	Placement *placement `json:"placement"`
+	// WorkerWaitMinutes is how long a step may wait for a worker on top of its own limit.
+	WorkerWaitMinutes *int `json:"worker_wait_minutes"`
 }
 
 // The first matching rule places a step, else the default. An empty tag

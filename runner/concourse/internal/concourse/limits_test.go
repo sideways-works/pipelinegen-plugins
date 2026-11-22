@@ -145,13 +145,14 @@ func TestEachStepHasItsLimit(t *testing.T) {
 		}
 	})
 
-	for task, want := range map[string]string{
-		"pr-e2e/start": "15m", "pr-e2e/batch": "70m", "pr-e2e/batch-end": "15m", "pr-e2e/end": "15m",
-		"pr-backend/start": "15m", "pr-backend/batch": "70m",
-		"plan-full/plan": "345m", "plan-main/plan": "45m", "plan-pr/plan": "45m", "plan-pr/write": "45m",
-		"sweep-pr/sweep": "45m", "sweep-pr/plan": "45m", "sweep-pr/write": "45m",
+	// each limit has the wait for a worker on top
+	for task, own := range map[string]int{
+		"pr-e2e/start": 15, "pr-e2e/batch": 70, "pr-e2e/batch-end": 15, "pr-e2e/end": 15,
+		"pr-backend/start": 15, "pr-backend/batch": 70,
+		"plan-full/plan": 345, "plan-main/plan": 45, "plan-pr/plan": 45, "plan-pr/write": 45,
+		"sweep-pr/sweep": 45, "sweep-pr/plan": 45, "sweep-pr/write": 45,
 	} {
-		if got := limits[task]; got != want {
+		if got, want := limits[task], fmt.Sprintf("%dm", own+defaultWorkerWaitMinutes); got != want {
 			t.Errorf("%s: limit %v, want %s", task, got, want)
 		}
 	}
