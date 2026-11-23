@@ -836,7 +836,7 @@ func (g *gen) planJob(run string) M {
 		step, outputs = []string{"continuous-plan", "--plan-minutes", strconv.Itoa(g.planMinutes())}, []string{"handoff"}
 	}
 
-	task := limited(g.toolTask("plan", tags, names("trigger"), outputs, []string{"plan-cache"}, g.env(run, "", env), step...),
+	task := limited(g.toolTask("plan", tags, names("trigger"), outputs, []string{"plan-cache"}, g.withPlans(g.env(run, "", env)), step...),
 		planKey, g.planMinutes()+g.runs[run].WaitMinutes)
 
 	// The whole plan task runs in the prepare image, since a separate task
@@ -915,6 +915,18 @@ func (g *gen) untrusted(run string) M {
 	return env
 }
 
+// withPlans gives a step that writes a run's plan the key of the plans' bucket, when the config
+// names one: the plan task of a branch's run and the write tasks of a proposed change's planning
+// and of the sweep. No other step holds it; a step that runs a proposed change's code never does.
+func (g *gen) withPlans(env M) M {
+	if p := g.spec.Plans; p != nil {
+		env[plugin.EnvPlansAccessKeyID] = "((" + p.AccessKeyID + "))"
+		env[plugin.EnvPlansSecretAccessKey] = "((" + p.SecretAccessKey + "))"
+	}
+
+	return env
+}
+
 // trusted is for a step that writes and runs none of the change's code.
 func (g *gen) trusted(run string) M { return g.env(run, "", nil) }
 
@@ -938,7 +950,7 @@ func (g *gen) proposedPlanJob(run string) M {
 	plan := limited(g.toolTask("plan", tags, names("trigger", "base"), []string{"plan"}, []string{"plan-cache"},
 		g.untrusted(run), "proposed-plan"), planKey, g.planMinutes())
 	write := limited(g.toolTask("write", tags, names("trigger", "plan"), []string{"handoff"}, []string{"write-cache"},
-		g.trusted(run), "proposed-write"), planKey, g.planMinutes())
+		g.withPlans(g.trusted(run)), "proposed-write"), planKey, g.planMinutes())
 
 	gets := g.gets(tags, inputs, g.planMinutes())
 
@@ -992,7 +1004,7 @@ func (g *gen) sweepJob(run string) M {
 	plan := limited(g.toolTask("plan", tags, names("sweep", "base"), []string{"plans"}, []string{"plan-cache"},
 		g.untrusted(run), "sweep-plan"), planKey, g.planMinutes())
 	write := limited(g.toolTask("write", tags, names("sweep", "plans"), []string{"handoffs"}, []string{"write-cache"},
-		g.trusted(run), g.sweepWrite(run)...), planKey, g.planMinutes())
+		g.withPlans(g.trusted(run)), g.sweepWrite(run)...), planKey, g.planMinutes())
 
 	if img := g.ci.Planner.PrepareImage; img != "" {
 		gets = timeout(M{"in_parallel": append(inputs, withTags(M{"get": img}, tags))}, g.planMinutes())

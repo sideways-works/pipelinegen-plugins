@@ -739,6 +739,15 @@ from `GITHUB_TOKEN`. The runner hands each step only what it does:
   token as a secret and no other purpose's: the runner refuses the
   pipeline otherwise.
 
+When the config copies plans to a bucket (`plans.s3`, see pipelinegen's
+[keeping plans](https://github.com/sideways-works/pipelinegen/blob/main/docs/how-to/keeping-plans.md)),
+the spec names the two variables of its key, and the runner gives them, as
+`PIPELINEGEN_PLANS_ACCESS_KEY_ID` and `PIPELINEGEN_PLANS_SECRET_ACCESS_KEY`,
+to the steps that write a run's plan and to no other: the `plan` task of a
+branch's, a timer's or a continuous run's planning job, and the `write`
+tasks of a pull request run's planning job and of its sweep. The tasks that
+plan a pull request's code never hold them.
+
 The git resources take `concourse.repository` as the config gives it, so
 its password names the read token's var. With one token nothing changes.
 
