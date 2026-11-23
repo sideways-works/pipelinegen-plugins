@@ -6,6 +6,8 @@ Every release of concourse-runner, newest first. The format follows
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-23
+
 ### Added
 
 - With `plans.s3` in the config, the key of the plans' bucket goes as `PIPELINEGEN_PLANS_ACCESS_KEY_ID` and `PIPELINEGEN_PLANS_SECRET_ACCESS_KEY` to the steps that write a run's plan alone: a branch run's `plan` task and the `write` tasks of a pull request run's planning and sweep (requires pipelinegen v0.8.0)
