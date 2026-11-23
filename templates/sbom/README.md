@@ -8,7 +8,7 @@ answers `describe`, `detect` and `units`, each per file.
 
 It passes pipelinegen's conformance kit on its fixture,
 `testdata/kit`. Start a new sbom from it: the root
-[README](../../README.md#adding-a-plugin) says how to make a plugin of it.
+[CONTRIBUTING](../../CONTRIBUTING.md#adding-a-plugin) says how to make a plugin of it.
 
 ```sh
 bazel run //templates/sbom:test     # its tests, the kit among them

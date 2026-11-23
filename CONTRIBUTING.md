@@ -1,8 +1,8 @@
 # Contributing to the pipelinegen plugins
 
-Thank you for wanting to help. Below: setting up a working copy, what
-every change has to pass, how to write commits, and how a plugin is
-released. Each plugin's README says what it does, what its tests need
+Thank you for wanting to help. Below: setting up a working copy, the
+layout, what every change has to pass, how to write commits, how to add
+a plugin, and how a plugin is released. Each plugin's README says what it does, what its tests need
 and how to run its conformance kit. The protocol the plugins speak is in
 pipelinegen's book:
 [plugins](https://github.com/sideways-works/pipelinegen/blob/main/docs/plugins.md)
@@ -35,6 +35,25 @@ else uses it: each target builds, tests and lints a module on its own
 (`GOWORK=off`), as its release does, and a Go plugin that uses another's
 library takes a released version of it, never the copy beside it. The root's `package.json` makes the Node plugins one npm workspace
 (see [Releases](#releases)).
+
+## Layout
+
+```
+<kind>/<name>/      a plugin: a Go module (github.com/sideways-works/pipelinegen-plugins/<kind>/<name>)
+                    or a Node package, with its README, docs, LICENSE and the NOTICE its release needs
+templates/<kind>/   a minimal plugin of each kind that passes pipelinegen's conformance kit
+tools/              the launcher every bazel run target runs, and the commit-msg hook
+pipelinegen.yaml    this repository's own CI: a suite per kind, each plugin's tests a slice
+MODULE.bazel        the pinned Go SDK, golangci-lint, Node and gh, by checksum per platform
+go.mod              the root module: no package, it names the repository for release versions
+go.work             every module at once, for an editor; builds, tests and releases leave it off
+package.json        the Node plugins' npm workspace, with one lockfile
+```
+
+Every plugin builds, tests and releases on its own, and none imports
+another's code from this checkout. A plugin that uses another's library
+(a correlator spelling its sbom's ids) requires a released version of it,
+like any other module.
 
 ## What every change passes
 
@@ -72,6 +91,34 @@ one passing.
 
 Open a pull request against `main`.
 
+## Adding a plugin
+
+1. Copy the template of its kind, `templates/<kind>`, to `<kind>/<name>`,
+   and name the program `<name>-<kind>` (a driver named `rust` is
+   `rust-driver`, under `cmd/rust-driver`).
+2. Set the module path in `go.mod` to
+   `github.com/sideways-works/pipelinegen-plugins/<kind>/<name>`, and the
+   imports with it; add the module to `go.work`.
+3. Make its `BUILD.bazel` the plugin's: `plugin(dir = "<kind>/<name>",
+   tags = ["slice-plugins-<kind>"])` from `//tools:defs.bzl` in place of
+   `template(...)`, which gives it `:test`, `:lint` and `:release`, and
+   list it in `tools/units.bzl`.
+4. Give it a README that says what it does and how to pin it, its `LICENSE`
+   (the root's), and the `NOTICE` that
+   `bazel run //<kind>/<name>:release -- notice` writes.
+
+Its `:test` and `:lint` then become slices of this repository's own CI
+([pipelinegen.yaml](pipelinegen.yaml)), in its kind's suite and the lint
+suite, and run when its files change. `//:lint` fails until
+`tools/units.bzl` lists it, and `pipelinegen check`, which `//:lint`
+runs, fails while any file of the repository is in no slice.
+
+A Node plugin is a package with `test`, `lint` and `build` scripts whose
+build writes `dist/<program>.mjs`, `.node-version` naming the Node
+`MODULE.bazel` pins, and a place in the root `package.json`'s
+`workspaces`. [correlator/react](correlator/react) and [sbom/ts](sbom/ts)
+are two of them.
+
 ## Releases
 
 Each plugin is released on its own, from a tag `<kind>/<name>/vX.Y.Z` on
@@ -82,6 +129,14 @@ of the clone, so its programs record this repository's commit and their
 version, and a nested module released with it is tagged
 `<kind>/<name>/<sub>/vX.Y.Z` on the same commit. [RELEASING](RELEASING.md)
 says in which order the plugins are released.
+
+A release has the same contents as before the plugins moved here: the
+programs under their old names (`go-driver-linux-amd64`,
+`react-correlator.mjs`), `plugin.json`, `LICENSE`, `NOTICE` and
+`SHA256SUMS`. Every plugin's first release here is `v0.4.0`. A config
+pins a release by `sums`, the checksum of its `SHA256SUMS`, so one pin
+serves every platform; `sha256:` with one program's line
+(`go-driver-linux-amd64`) in its place pins that file alone.
 
 ```sh
 bazel run //<kind>/<name>:release -- build OUT [VERSION]

@@ -18,7 +18,7 @@ public release's checksum or built from its commit.
 
 It passes pipelinegen's conformance kit with the placement in
 `testdata/kit/config.json`. Start a new runner from it: the root
-[README](../../README.md#adding-a-plugin) says how to make a plugin of it,
+[CONTRIBUTING](../../CONTRIBUTING.md#adding-a-plugin) says how to make a plugin of it,
 and [runner/concourse](../../runner/concourse) is a complete one.
 
 ```sh

@@ -9,7 +9,7 @@ answers `describe`, `detect` and `links`, each per file.
 
 It passes pipelinegen's conformance kit on its fixture,
 `testdata/kit`. Start a new correlator from it: the root
-[README](../../README.md#adding-a-plugin) says how to make a plugin of it.
+[CONTRIBUTING](../../CONTRIBUTING.md#adding-a-plugin) says how to make a plugin of it.
 
 ```sh
 bazel run //templates/correlator:test     # its tests, the kit among them
