@@ -28,7 +28,7 @@ run, the templates piperun expands:
 | `plan` | `pipelinegen plan --out`: the change's code (Bazel, the planner's prepare, the plugins) with the read token alone, writing nothing remote. Its plan goes on as an artifact. |
 | `plan-write` | `pipelinegen plan --from --emit`: pinned, with the store and report tokens, running none of the change's code. It writes the plan's record and the statuses, and emits the templates below. |
 | `<suite>-prepare` | `pipelinegen slice prepare`, when the suite has a prepare step. |
-| `<suite>-slices` | The pool of the suite's selected slices, longest first. Each session runs `pipelinegen slice run --feed`; a sidecar writes the confirmed slices' ends every 30 seconds (`report flush`), and the session's end closes what is left (`report batch-end`). |
+| `<suite>-slices` | The pool of the suite's selected slices, longest first. Each session runs `pipelinegen slice run --feed`, and its pinned `finally` step writes the confirmed slices' ends and closes what is left (`report batch-end`). The session runs the change's code and holds no writing token, so the slices show as each session ends, not one by one. |
 | `<suite>-end` | `pipelinegen report suite`, once the pool and the prepare have ended, however they did. |
 
 A step that runs the change's code (the first plan step, the prepare and

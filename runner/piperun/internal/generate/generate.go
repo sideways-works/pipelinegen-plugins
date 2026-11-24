@@ -443,8 +443,9 @@ func (g *gen) prepare(run string, rs plugin.SpecRunSuite, su plugin.SpecSuite, i
 	}, nil
 }
 
-// pool is the template of the suite's pool: each session runs its slices as they are fed, a sidecar
-// writes the confirmed slices' ends as they come, and the session's end closes what is left.
+// pool is the template of the suite's pool: each session runs its slices as they are fed, and the
+// session's end writes the confirmed slices' ends and closes what is left. The session step runs the
+// change's code, so it never writes records itself: the slices show as each session ends.
 func (g *gen) pool(run string, rs plugin.SpecRunSuite, su plugin.SpecSuite, inputs map[string]Input, caches map[string]string, after []After) Job {
 	args := []string{"slice", "run", "--root", ".", "--feed", "$PIPERUN_FEED", "--pools", dirPools}
 	if su.Steps.Prepare {
@@ -454,13 +455,11 @@ func (g *gen) pool(run string, rs plugin.SpecRunSuite, su plugin.SpecSuite, inpu
 	session := g.suiteStep(run, rs, su, su.Image, rs.Secrets.Batch, args...)
 	session.Caches = caches
 
-	flush := g.bookkeeping(run, su.Name, "report", "flush", "--every", "30s", "--confirmed", "$PIPERUN_CONFIRMED")
 	end := g.bookkeeping(run, su.Name, "report", "batch-end", "--confirmed", "$PIPERUN_CONFIRMED", "--requeued", "$PIPERUN_REQUEUED", "--pools", dirPools)
 
 	return Job{
 		After: after, Needs: g.set.needs(su.Name), Inputs: inputs, Minutes: rs.Minutes,
 		Steps:   []Step{{Uses: "git"}, session},
-		Sidecar: &flush,
 		Finally: []Step{end},
 		Retry:   &Retry{On: []string{"crash", "setup"}, Attempts: 2},
 	}

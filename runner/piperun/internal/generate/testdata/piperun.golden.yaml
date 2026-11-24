@@ -185,29 +185,6 @@ pipelines:
             caches:
               gobuild: /root/.cache/go-build
               gomod: /go/pkg/mod
-        sidecar:
-          run:
-            - /piperun/tools/pipelinegen
-            - report
-            - flush
-            - --every
-            - 30s
-            - --confirmed
-            - $PIPERUN_CONFIRMED
-          image: golang
-          tools:
-            - pipelinegen
-          env:
-            PIPELINEGEN_PIPELINE_STEP: "1"
-            PIPELINEGEN_RUN: main
-            PIPELINEGEN_RUN_FILE: pools/run.json
-            PIPELINEGEN_SUITE: go
-            PIPELINEGEN_TRUSTED: '{"runs":["main","nightly"]}'
-          secrets:
-            PIPELINEGEN_REPORT_TOKEN: github_report
-            PIPELINEGEN_STORE_TOKEN: github_store
-          trust: pinned
-          rerun: safe
         finally:
           - run:
               - /piperun/tools/pipelinegen
@@ -344,29 +321,6 @@ pipelines:
             caches:
               npm: /root/.npm
             privileged: true
-        sidecar:
-          run:
-            - /piperun/tools/pipelinegen
-            - report
-            - flush
-            - --every
-            - 30s
-            - --confirmed
-            - $PIPERUN_CONFIRMED
-          image: golang
-          tools:
-            - pipelinegen
-          env:
-            PIPELINEGEN_PIPELINE_STEP: "1"
-            PIPELINEGEN_RUN: main
-            PIPELINEGEN_RUN_FILE: pools/run.json
-            PIPELINEGEN_SUITE: web
-            PIPELINEGEN_TRUSTED: '{"runs":["main","nightly"]}'
-          secrets:
-            PIPELINEGEN_REPORT_TOKEN: github_report
-            PIPELINEGEN_STORE_TOKEN: github_store
-          trust: pinned
-          rerun: safe
         finally:
           - run:
               - /piperun/tools/pipelinegen
@@ -540,29 +494,6 @@ pipelines:
             caches:
               gobuild: /root/.cache/go-build
               gomod: /go/pkg/mod
-        sidecar:
-          run:
-            - /piperun/tools/pipelinegen
-            - report
-            - flush
-            - --every
-            - 30s
-            - --confirmed
-            - $PIPERUN_CONFIRMED
-          image: golang
-          tools:
-            - pipelinegen
-          env:
-            PIPELINEGEN_PIPELINE_STEP: "1"
-            PIPELINEGEN_RUN: nightly
-            PIPELINEGEN_RUN_FILE: pools/run.json
-            PIPELINEGEN_SUITE: go
-            PIPELINEGEN_TRUSTED: '{"runs":["main","nightly"]}'
-          secrets:
-            PIPELINEGEN_REPORT_TOKEN: github_report
-            PIPELINEGEN_STORE_TOKEN: github_store
-          trust: pinned
-          rerun: safe
         finally:
           - run:
               - /piperun/tools/pipelinegen
