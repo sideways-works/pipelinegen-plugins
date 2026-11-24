@@ -55,6 +55,7 @@ suites:
   runner: {tag: slice-plugins-runner, image: golang, params: *params, steps: *bazel-run}
   sbom: {tag: slice-plugins-sbom, image: golang, params: *params, steps: *bazel-run}
   templates: {tag: slice-plugins-templates, image: golang, params: *params, steps: *bazel-run}
+  store: {tag: slice-plugins-store, image: golang, params: *params, steps: *bazel-run}
   tools: {tag: slice-plugins-tools, image: golang, params: *params, steps: *bazel-run}
 
 runs:
@@ -62,14 +63,14 @@ runs:
     trigger: {branch: main, continuous: true}
     compare: last_passed
     select: affected
-    suites: {lint: {}, forge: {}, correlator: {}, driver: {}, runner: {}, sbom: {}, templates: {}, tools: {}}
+    suites: {lint: {}, forge: {}, correlator: {}, driver: {}, runner: {}, sbom: {}, store: {}, templates: {}, tools: {}}
   nightly:
     trigger:
       timer: {start: "3:00", stop: "4:00", location: Europe/Berlin}
       branch: main
     compare: none
     select: all
-    suites: {lint: {}, forge: {}, correlator: {}, driver: {}, runner: {}, sbom: {}, templates: {}, tools: {}}
+    suites: {lint: {}, forge: {}, correlator: {}, driver: {}, runner: {}, sbom: {}, store: {}, templates: {}, tools: {}}
 
 everything_on:
   # the pinned tools and the targets every slice runs through

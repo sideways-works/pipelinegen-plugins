@@ -17,6 +17,7 @@ use (
 	./driver/shell
 	./runner/concourse
 	./runner/piperun
+	./store/s3
 	./sbom/go
 	./sbom/locale
 	./sbom/npm

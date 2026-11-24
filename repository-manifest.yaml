@@ -21,3 +21,4 @@ plugins:
   - manifest: sbom/openapi/manifest.yaml
   - manifest: sbom/pg/manifest.yaml
   - manifest: sbom/ts/manifest.yaml
+  - manifest: store/s3/manifest.yaml

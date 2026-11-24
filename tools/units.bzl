@@ -21,6 +21,7 @@ UNITS = [
     "sbom/openapi",
     "sbom/pg",
     "sbom/ts",
+    "store/s3",
     "templates/correlator",
     "templates/driver",
     "templates/forge",
