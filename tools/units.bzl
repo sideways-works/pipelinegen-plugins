@@ -14,6 +14,7 @@ UNITS = [
     "forge/git",
     "forge/github",
     "runner/concourse",
+    "runner/piperun",
     "sbom/go",
     "sbom/locale",
     "sbom/npm",

@@ -1,0 +1,12 @@
+load("//tools:defs.bzl", "plugin")
+
+filegroup(
+    name = "files",
+    srcs = glob(["**"]),
+    visibility = ["//:__pkg__"],
+)
+
+plugin(
+    dir = "runner/piperun",
+    tags = ["slice-plugins-runner"],
+)

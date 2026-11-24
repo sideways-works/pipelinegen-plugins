@@ -1,0 +1,10 @@
+{
+  "resource": {"remote": "https://github.com/example/shop.git", "credential": "github_read"},
+  "images": {
+    "golang": {"ref": "golang:1.27.4", "digest": "sha256:205c7636d74e0ffbe3d007162df7d74f859f5a8c8322dfb9f907977686c126cf"},
+    "node": {"ref": "node:24", "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"}
+  },
+  "planner": {"image": "golang", "needs": "w.labels.includes('trusted')"},
+  "needs": {"default": "w.memory.total >= 8 * GiB", "web": "w.memory.total >= 16 * GiB"},
+  "caches": {"go": {"gomod": "/go/pkg/mod", "gobuild": "/root/.cache/go-build"}, "web": {"npm": "/root/.npm"}}
+}

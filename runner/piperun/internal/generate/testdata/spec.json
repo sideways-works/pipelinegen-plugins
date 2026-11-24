@@ -1,0 +1,20 @@
+{
+  "pipeline": "shop",
+  "github": {"repository": "example/shop", "token_var": "github_store", "tokens": {"read": "github_read", "changes": "github_changes", "report": "github_report", "store": "github_store"}},
+  "runs": [
+    {"name": "main", "trigger": {"kind": "continuous", "branch": "main"},
+     "suites": [{"suite": "go", "records": true, "minutes": 30, "minutes_key": "suites.go.minutes"},
+                {"suite": "web", "records": true, "minutes": 45, "minutes_key": "suites.web.minutes", "params": {"NODE_OPTIONS": "--max-old-space-size=4096"}, "secrets": {"batch": {"API_KEY": "web_test_key"}}}]},
+    {"name": "nightly", "trigger": {"kind": "timer", "branch": "main", "timer": {"start": "3:00", "stop": "4:00", "location": "Europe/Berlin"}},
+     "suites": [{"suite": "go", "records": true, "minutes": 30, "minutes_key": "suites.go.minutes"}]}
+  ],
+  "suites": [
+    {"name": "go", "run_slice": "", "image": "golang", "parallel": 4, "steps": {"drivers": ["go"]}},
+    {"name": "web", "run_slice": "", "image": "node", "parallel": 2, "privileged": true, "steps": {"prepare": true, "drivers": ["playwright"]}}
+  ],
+  "tools": [{"name": "pipelinegen", "kind": "pipelinegen", "repository": "sideways-works/pipelinegen", "version": "v0.9.0", "sums": "e87746893962c59fb41657cc8532390d7cf03cafb8dd72943121afd6211015b1"}],
+  "config_files": ["pipelinegen.yaml"],
+  "branch": "main",
+  "trusted": "{\"runs\":[\"main\",\"nightly\"]}",
+  "limits": {"plan": 60, "steps": 20}
+}
