@@ -1,0 +1,14 @@
+{
+  "label": "//forge/git:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-forge",
+  "updated": "2026-11-25T07:10:46.579390385Z",
+  "failures": [
+    {
+      "test": "forge.git.test",
+      "tail": "Computing main repo mapping: \nComputing main repo mapping: \nLoading: \nLoading: 0 packages loaded\nLoading: 0 packages loaded\n    currently loading: \nLoading: 0 packages loaded\n    currently loading: \nWARNING: Target pattern parsing failed.\nERROR: Skipping 'forge.git.test': no such target '//:forge.git.test': target 'forge.git.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nERROR: no such target '//:forge.git.test': target 'forge.git.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nINFO: Elapsed time: 33.819s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 35.810626449,
+  "cpu_seconds": 8.996149
+}
