@@ -76,6 +76,7 @@ func (f *fakeS3) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		if f.lose > 0 {
 			f.lose--
+
 			w.WriteHeader(http.StatusInternalServerError)
 
 			return

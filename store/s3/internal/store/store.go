@@ -266,34 +266,13 @@ func (s *Store) write(ctx context.Context, u Update, at time.Time) (string, erro
 			return "", err
 		}
 
-		live := exists && !cur.Deleted
-
-		switch {
-		case u.Any:
-		case u.Expect == "" && live, u.Expect != "" && (!live || cur.Version != u.Expect):
-			return "", ErrStale
+		if err := admits(u, cur, exists); err != nil || u.Delete && (!exists || cur.Deleted) {
+			return "", err
 		}
 
-		if u.Delete && !live {
-			return "", nil
-		}
-
-		next := head{Deleted: u.Delete}
-		next.Name, next.Version, next.Time = u.Name, v, at
-
-		// a delete's head is unique too, so a retry can tell its own
-		if u.Delete {
-			tomb, err := newID()
-			if err != nil {
-				return "", err
-			}
-
-			next.Version = tomb
-		}
-
-		body, err := json.Marshal(next)
+		next, body, err := nextHead(u, v, at)
 		if err != nil {
-			return "", fmt.Errorf("%w: %w", ErrStore, err)
+			return "", err
 		}
 
 		match := ""
@@ -325,6 +304,42 @@ func (s *Store) write(ctx context.Context, u Update, at time.Time) (string, erro
 	}
 
 	return "", fmt.Errorf("%w: %s moved under %d writes in a row", ErrStore, u.Name, tries)
+}
+
+// admits refuses an update expecting a version the record's head doesn't hold.
+func admits(u Update, cur head, exists bool) error {
+	live := exists && !cur.Deleted
+
+	switch {
+	case u.Any:
+	case u.Expect == "" && live, u.Expect != "" && (!live || cur.Version != u.Expect):
+		return ErrStale
+	}
+
+	return nil
+}
+
+// nextHead is the head an update writes, and its body.
+func nextHead(u Update, v string, at time.Time) (head, []byte, error) {
+	next := head{Deleted: u.Delete}
+	next.Name, next.Version, next.Time = u.Name, v, at
+
+	// a delete's head is unique too, so a retry can tell its own
+	if u.Delete {
+		tomb, err := newID()
+		if err != nil {
+			return head{}, nil, err
+		}
+
+		next.Version = tomb
+	}
+
+	body, err := json.Marshal(next)
+	if err != nil {
+		return head{}, nil, fmt.Errorf("%w: %w", ErrStore, err)
+	}
+
+	return next, body, nil
 }
 
 // putVersion writes the update's files as a new version, created once. Its key is random, so an
@@ -366,8 +381,7 @@ func newID() (string, error) {
 // transient is an error a request may not have when sent again: no answer, or the service's own
 // failure (5xx); a refusal of the request itself is no such error.
 func transient(err error) bool {
-	var e *s3.Error
-	if errors.As(err, &e) {
+	if e, ok := errors.AsType[*s3.Error](err); ok {
 		return e.Status >= 500
 	}
 
