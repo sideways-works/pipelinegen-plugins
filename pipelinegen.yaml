@@ -23,15 +23,16 @@ concourse:
     image: {repository: golang, tag: 1.27.1}
     digest: sha256:162be5298a40ed317005c8339c6de4d10d3eef336d66dc8e9259b03ab9d3a6d2
     bootstrap:
-      release: {version: v0.3.1, sha256: 119fac88198818624591c11fdfc6cad908a98c8eea3643c995cfdf76f75f9b12}
+      release: {version: v0.11.0, sha256: 1dbc37a8f71c21544bc4e086f5b3946d0c924af91a8c15c2a049236a98164221}
       bazelisk: {version: v1.30.0, sha256: a248ae2b2b62b5baebb748f6fba7203bff1a27e5d01b55399a8406744cb539e8}
   include: ci/root.yml
 
 plugins:
   - name: concourse
     kind: runner
-    repository: sideways-works/pipelinegen-runner-concourse
-    release: {version: v0.3.1, sha256: 2c73971737f97b80798390087a779364be01dbf9e42c4f05d9fd12d9eec2b346}
+    repository: https://github.com/sideways-works/pipelinegen-plugins
+    path: runner/concourse
+    release: {version: v0.9.0, sums: 223f13be325a5b62a811ddccd817c2013a1fdcc21405b17c209b3cb23f95cdd9}
 
 suites:
   lint:
