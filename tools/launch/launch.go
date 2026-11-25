@@ -270,7 +270,7 @@ func ChildEnv(env []string, paths ...string) []string {
 func (l *Launch) env() []string { return ChildEnv(l.Env, l.paths...) }
 
 func (l *Launch) command(ctx context.Context, dir string, env []string, name string, args ...string) *exec.Cmd {
-	cmd := exec.CommandContext(ctx, name, args...) //nolint:gosec // the repository's own tools and programs
+	cmd := exec.CommandContext(ctx, LookPath(env, name), args...) //nolint:gosec // the repository's own tools and programs
 	cmd.Dir = dir
 	cmd.Env = env
 	cmd.Stdout, cmd.Stderr = l.Stdout, l.Stderr
@@ -279,6 +279,23 @@ func (l *Launch) command(ctx context.Context, dir string, env []string, name str
 	cmd.WaitDelay = 30 * time.Second
 
 	return cmd
+}
+
+// LookPath is the program name names on env's PATH, which puts the pinned tools first, rather than
+// on the launcher's own; name itself when no directory there holds it, or when it is a path.
+func LookPath(env []string, name string) string {
+	if strings.ContainsRune(name, filepath.Separator) {
+		return name
+	}
+
+	for _, dir := range filepath.SplitList(getenv(env, "PATH")) {
+		p := filepath.Join(dir, name)
+		if fi, err := os.Stat(p); err == nil && fi.Mode().IsRegular() && fi.Mode().Perm()&0o111 != 0 {
+			return p
+		}
+	}
+
+	return name
 }
 
 // run runs name in dir with the children's environment, its output the target's.

@@ -117,3 +117,24 @@ func TestCheckManifests(t *testing.T) {
 		}
 	}
 }
+
+func TestLookPathSearchesTheChildrensPath(t *testing.T) {
+	pinned, other := t.TempDir(), t.TempDir()
+	if err := os.WriteFile(filepath.Join(pinned, "tool"), []byte("#!/bin/sh\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Setenv("PATH", other)
+
+	if got := LookPath(ChildEnv(os.Environ(), pinned), "tool"); got != filepath.Join(pinned, "tool") {
+		t.Errorf("a tool only the children's PATH holds: %q", got)
+	}
+
+	if got := LookPath([]string{"PATH=" + other}, "tool"); got != "tool" {
+		t.Errorf("a tool no directory holds: %q", got)
+	}
+
+	if got := LookPath([]string{"PATH=" + pinned}, "./tool"); got != "./tool" {
+		t.Errorf("a path: %q", got)
+	}
+}
