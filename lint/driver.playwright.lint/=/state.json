@@ -1,0 +1,14 @@
+{
+  "label": "//driver/playwright:lint",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-lint",
+  "updated": "2026-11-25T07:11:03.117355878Z",
+  "failures": [
+    {
+      "test": "driver.playwright.lint",
+      "tail": "Computing main repo mapping: \nLoading: \nLoading: 0 packages loaded\nWARNING: Target pattern parsing failed.\nERROR: Skipping 'driver.playwright.lint': no such target '//:driver.playwright.lint': target 'driver.playwright.lint' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nERROR: no such target '//:driver.playwright.lint': target 'driver.playwright.lint' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nINFO: Elapsed time: 0.065s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 0.078521203,
+  "cpu_seconds": 0.1858380000000004
+}
