@@ -138,6 +138,11 @@ func (l *Launch) setUp(tools map[string]string) error {
 			l.goTool = p
 		case toolNode:
 			l.node = p
+			// the Node distribution's own bin directory, which holds npm and npx beside node: the
+			// runfiles hold node alone
+			if dist, err := filepath.EvalSymlinks(p); err == nil {
+				p = dist
+			}
 		case cmdLint:
 			l.lint = p
 

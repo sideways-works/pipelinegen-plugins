@@ -17,6 +17,7 @@ _DATA = [
     "//tools:gh",
     "//tools:golangci-lint",
     "//tools:node",
+    "//tools:npm",
     "@go_sdk//:bin/go",
     "@go_sdk//:files",
 ]

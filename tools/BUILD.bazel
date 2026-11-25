@@ -78,6 +78,18 @@ alias(
     visibility = ["//visibility:public"],
 )
 
+# The npm the pinned Node ships with, beside it in its bin directory.
+alias(
+    name = "npm",
+    actual = select({
+        ":darwin_amd64": "@node_darwin_amd64//:npm",
+        ":darwin_arm64": "@node_darwin_arm64//:npm",
+        ":linux_amd64": "@node_linux_amd64//:npm",
+        ":linux_arm64": "@node_linux_arm64//:npm",
+    }),
+    visibility = ["//visibility:public"],
+)
+
 config_setting(
     name = "darwin_amd64",
     constraint_values = [
