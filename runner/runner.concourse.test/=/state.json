@@ -1,6 +1,12 @@
 {
   "label": "//runner/concourse:test",
-  "state": "running",
+  "state": "errored",
   "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-runner",
-  "updated": "2026-11-25T17:05:28.34009803Z"
+  "updated": "2026-11-25T17:05:41.417632418Z",
+  "failures": [
+    {
+      "test": "(stopped)",
+      "tail": "batch 0 stopped while slice runner.concourse.test ran; its time limit is 120 minutes (suites.runner.minutes): the build log says `timeout exceeded` when that was the cause; raise suites.runner.minutes if the batch needs longer"
+    }
+  ]
 }
