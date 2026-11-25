@@ -1,0 +1,14 @@
+{
+  "label": "//correlator/react:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-correlator",
+  "updated": "2026-11-25T07:34:21.50842891Z",
+  "failures": [
+    {
+      "test": "correlator.react.test",
+      "tail": "\nAnalyzing: target //correlator/react:test (108 packages loaded, 1270 targets configured)\n\nINFO: Analyzed target //correlator/react:test (111 packages loaded, 14391 targets configured).\n[5 / 14] checking cached actions\nINFO: Found 1 target...\nTarget //correlator/react:test up-to-date:\n  bazel-bin/correlator/react/test_/test\nINFO: Elapsed time: 4.336s, Critical Path: 0.68s\nINFO: 7 processes: 7 action cache hit, 5 internal, 2 processwrapper-sandbox.\nINFO: Build completed successfully, 7 total actions\nINFO: Running command line: bazel-bin/correlator/react/test_/test '--go=rules_go++go_sdk+go_sdk/bin/go' '--lint=+http_archive+golangci_lint_linux_amd64/golangci-lint' '--node=+http_archive+node_linux_amd64/bin/node' '--gh=+http_archive+gh_linux_amd64/bin/gh' test correlator/react\n== test correlator/react\nnpm ci --ignore-scripts --no-audit --no-fund in .: exec: \"npm\": executable file not found in $PATH\nfailed: correlator/react"
+    }
+  ],
+  "seconds": 4.414505524,
+  "cpu_seconds": 19.758643999999947
+}
