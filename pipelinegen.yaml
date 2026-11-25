@@ -49,7 +49,7 @@ suites:
     steps: &bazel-run
       - run: command
         with:
-          each: [bazelisk, "--output_user_root={cache}/bazel/root", "--output_base={cache}/bazel/base", --max_idle_secs=5, run, "{name}"]
+          each: [bazelisk, "--output_user_root={cache}/bazel/root", "--output_base={cache}/bazel/base", --max_idle_secs=5, run, "{label}"]
   forge: {tag: slice-plugins-forge, image: golang, params: *params, steps: *bazel-run}
   correlator: {tag: slice-plugins-correlator, image: golang, params: *params, steps: *bazel-run}
   driver: {tag: slice-plugins-driver, image: golang, params: *params, steps: *bazel-run}
