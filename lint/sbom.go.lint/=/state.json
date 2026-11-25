@@ -1,0 +1,7 @@
+{
+  "label": "//sbom/go:lint",
+  "state": "passed",
+  "updated": "2026-11-25T12:14:01.641936345Z",
+  "seconds": 16.782514224,
+  "cpu_seconds": 51.171818
+}
