@@ -1,0 +1,14 @@
+{
+  "label": "//driver/go:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-driver",
+  "updated": "2026-11-25T07:10:59.818800966Z",
+  "failures": [
+    {
+      "test": "driver.go.test",
+      "tail": "Computing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nLoading: \nLoading: 0 packages loaded\nWARNING: Target pattern parsing failed.\nERROR: Skipping 'driver.go.test': no such target '//:driver.go.test': target 'driver.go.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nERROR: no such target '//:driver.go.test': target 'driver.go.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nINFO: Elapsed time: 6.916s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 7.452689062,
+  "cpu_seconds": 6.911897
+}

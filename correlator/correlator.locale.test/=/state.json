@@ -1,0 +1,14 @@
+{
+  "label": "//correlator/locale:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-correlator",
+  "updated": "2026-11-25T07:12:56.554524871Z",
+  "failures": [
+    {
+      "test": "correlator.locale.test",
+      "tail": "Computing main repo mapping: \nComputing main repo mapping: \nLoading: \nLoading: 0 packages loaded\nLoading: 0 packages loaded\n    currently loading: \nLoading: 0 packages loaded\n    currently loading: \nWARNING: Target pattern parsing failed.\nERROR: Skipping 'correlator.locale.test': no such target '//:correlator.locale.test': target 'correlator.locale.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nERROR: no such target '//:correlator.locale.test': target 'correlator.locale.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nINFO: Elapsed time: 31.445s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 33.08359096,
+  "cpu_seconds": 9.384881
+}

@@ -1,0 +1,14 @@
+{
+  "label": "//sbom/locale:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-sbom",
+  "updated": "2026-11-25T07:11:30.034686896Z",
+  "failures": [
+    {
+      "test": "sbom.locale.test",
+      "tail": "Computing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nLoading: \nLoading: 0 packages loaded\nWARNING: Target pattern parsing failed.\nERROR: Skipping 'sbom.locale.test': no such target '//:sbom.locale.test': target 'sbom.locale.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nERROR: no such target '//:sbom.locale.test': target 'sbom.locale.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nINFO: Elapsed time: 8.240s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 8.777256181,
+  "cpu_seconds": 6.230786999999999
+}

@@ -1,0 +1,14 @@
+{
+  "label": "//sbom/openapi:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-sbom",
+  "updated": "2026-11-25T07:10:59.738246537Z",
+  "failures": [
+    {
+      "test": "sbom.openapi.test",
+      "tail": "Computing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nLoading: \nLoading: 0 packages loaded\nWARNING: Target pattern parsing failed.\nERROR: Skipping 'sbom.openapi.test': no such target '//:sbom.openapi.test': target 'sbom.openapi.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nERROR: no such target '//:sbom.openapi.test': target 'sbom.openapi.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nINFO: Elapsed time: 6.224s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 6.290049202,
+  "cpu_seconds": 6.431208
+}

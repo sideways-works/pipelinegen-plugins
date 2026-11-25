@@ -1,0 +1,14 @@
+{
+  "label": "//sbom/go:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-sbom",
+  "updated": "2026-11-25T07:08:46.962422402Z",
+  "failures": [
+    {
+      "test": "sbom.go.test",
+      "tail": "Computing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nLoading: \nLoading: 0 packages loaded\nLoading: 0 packages loaded\n    currently loading: \nWARNING: Target pattern parsing failed.\nERROR: Skipping 'sbom.go.test': no such target '//:sbom.go.test': target 'sbom.go.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nERROR: no such target '//:sbom.go.test': target 'sbom.go.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nINFO: Elapsed time: 33.363s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 35.623254343,
+  "cpu_seconds": 9.295107
+}

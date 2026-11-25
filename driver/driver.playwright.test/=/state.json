@@ -1,0 +1,14 @@
+{
+  "label": "//driver/playwright:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-driver",
+  "updated": "2026-11-25T07:11:26.442570785Z",
+  "failures": [
+    {
+      "test": "driver.playwright.test",
+      "tail": "Starting local Bazel server (9.2.0) and connecting to it...\nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nLoading: \nLoading: 0 packages loaded\nWARNING: Target pattern parsing failed.\nERROR: Skipping 'driver.playwright.test': no such target '//:driver.playwright.test': target 'driver.playwright.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nERROR: no such target '//:driver.playwright.test': target 'driver.playwright.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nINFO: Elapsed time: 6.193s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 6.243629412,
+  "cpu_seconds": 6.153498
+}

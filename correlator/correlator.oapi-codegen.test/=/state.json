@@ -1,0 +1,14 @@
+{
+  "label": "//correlator/oapi-codegen:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-correlator",
+  "updated": "2026-11-25T07:12:51.181106508Z",
+  "failures": [
+    {
+      "test": "correlator.oapi-codegen.test",
+      "tail": "Starting local Bazel server (9.2.0) and connecting to it...\nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nLoading: \nLoading: 0 packages loaded\nWARNING: Target pattern parsing failed.\nERROR: Skipping 'correlator.oapi-codegen.test': no such target '//:correlator.oapi-codegen.test': target 'correlator.oapi-codegen.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nERROR: no such target '//:correlator.oapi-codegen.test': target 'correlator.oapi-codegen.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nINFO: Elapsed time: 6.340s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 6.386728301,
+  "cpu_seconds": 6.329419
+}

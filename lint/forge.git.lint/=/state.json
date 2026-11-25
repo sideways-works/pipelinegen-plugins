@@ -1,0 +1,14 @@
+{
+  "label": "//forge/git:lint",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-lint",
+  "updated": "2026-11-25T07:11:31.689768916Z",
+  "failures": [
+    {
+      "test": "forge.git.lint",
+      "tail": "Computing main repo mapping: \nLoading: \nLoading: 0 packages loaded\nWARNING: Target pattern parsing failed.\nERROR: Skipping 'forge.git.lint': no such target '//:forge.git.lint': target 'forge.git.lint' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nERROR: no such target '//:forge.git.lint': target 'forge.git.lint' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nINFO: Elapsed time: 0.043s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 0.054924783,
+  "cpu_seconds": 0.2161470000000003
+}

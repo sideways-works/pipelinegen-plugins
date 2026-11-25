@@ -1,0 +1,14 @@
+{
+  "label": "//tools:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-tools",
+  "updated": "2026-11-25T07:08:55.455543053Z",
+  "failures": [
+    {
+      "test": "tools.test",
+      "tail": "Computing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nLoading: \nLoading: 0 packages loaded\nLoading: 0 packages loaded\n    currently loading: \nWARNING: Target pattern parsing failed.\nERROR: Skipping 'tools.test': no such target '//:tools.test': target 'tools.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nERROR: no such target '//:tools.test': target 'tools.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nINFO: Elapsed time: 26.680s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 28.936057083,
+  "cpu_seconds": 9.017758
+}

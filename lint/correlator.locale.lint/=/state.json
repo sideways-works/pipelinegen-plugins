@@ -1,0 +1,14 @@
+{
+  "label": "//correlator/locale:lint",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-lint",
+  "updated": "2026-11-25T07:11:31.689616523Z",
+  "failures": [
+    {
+      "test": "correlator.locale.lint",
+      "tail": "Computing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nLoading: \nLoading: 0 packages loaded\nWARNING: Target pattern parsing failed.\nERROR: Skipping 'correlator.locale.lint': no such target '//:correlator.locale.lint': target 'correlator.locale.lint' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nERROR: no such target '//:correlator.locale.lint': target 'correlator.locale.lint' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nINFO: Elapsed time: 6.358s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 6.393339205,
+  "cpu_seconds": 6.155191
+}

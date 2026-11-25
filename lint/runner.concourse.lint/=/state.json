@@ -1,0 +1,14 @@
+{
+  "label": "//runner/concourse:lint",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-lint",
+  "updated": "2026-11-25T07:11:03.117543436Z",
+  "failures": [
+    {
+      "test": "runner.concourse.lint",
+      "tail": "Computing main repo mapping: \nLoading: \nLoading: 0 packages loaded\nWARNING: Target pattern parsing failed.\nERROR: Skipping 'runner.concourse.lint': no such target '//:runner.concourse.lint': target 'runner.concourse.lint' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nERROR: no such target '//:runner.concourse.lint': target 'runner.concourse.lint' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nINFO: Elapsed time: 0.036s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 0.042895112,
+  "cpu_seconds": 0.11811999999999934
+}

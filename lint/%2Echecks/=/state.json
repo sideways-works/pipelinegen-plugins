@@ -1,0 +1,14 @@
+{
+  "label": "//:checks",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-lint",
+  "updated": "2026-11-25T07:11:17.828500684Z",
+  "failures": [
+    {
+      "test": ".checks",
+      "tail": "Computing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nLoading: \nLoading: 0 packages loaded\nWARNING: Target pattern parsing failed.\nERROR: Skipping '.checks': no such target '//:.checks': target '.checks' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel (did you mean checks?)\nERROR: no such target '//:.checks': target '.checks' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel (did you mean checks?)\nINFO: Elapsed time: 6.298s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 6.343763225,
+  "cpu_seconds": 7.550898
+}

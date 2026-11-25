@@ -1,0 +1,14 @@
+{
+  "label": "//correlator/oapi-codegen:lint",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-lint",
+  "updated": "2026-11-25T07:11:17.82856923Z",
+  "failures": [
+    {
+      "test": "correlator.oapi-codegen.lint",
+      "tail": "Computing main repo mapping: \nLoading: \nLoading: 0 packages loaded\nWARNING: Target pattern parsing failed.\nERROR: Skipping 'correlator.oapi-codegen.lint': no such target '//:correlator.oapi-codegen.lint': target 'correlator.oapi-codegen.lint' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nERROR: no such target '//:correlator.oapi-codegen.lint': target 'correlator.oapi-codegen.lint' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nINFO: Elapsed time: 0.117s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 0.125865525,
+  "cpu_seconds": 0.6787110000000007
+}

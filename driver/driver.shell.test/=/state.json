@@ -1,0 +1,14 @@
+{
+  "label": "//driver/shell:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-driver",
+  "updated": "2026-11-25T07:09:12.018858175Z",
+  "failures": [
+    {
+      "test": "driver.shell.test",
+      "tail": "Computing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nLoading: \nLoading: 0 packages loaded\nLoading: 0 packages loaded\n    currently loading: \nWARNING: Target pattern parsing failed.\nERROR: Skipping 'driver.shell.test': no such target '//:driver.shell.test': target 'driver.shell.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nERROR: no such target '//:driver.shell.test': target 'driver.shell.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nINFO: Elapsed time: 25.945s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 28.50916931,
+  "cpu_seconds": 9.049388
+}

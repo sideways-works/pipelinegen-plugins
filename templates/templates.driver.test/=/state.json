@@ -1,0 +1,14 @@
+{
+  "label": "//templates/driver:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-templates",
+  "updated": "2026-11-25T07:09:22.150740408Z",
+  "failures": [
+    {
+      "test": "templates.driver.test",
+      "tail": "Loading: 0 packages loaded\n    currently loading: \nLoading: 0 packages loaded\n    currently loading: \nLoading: 0 packages loaded\n    currently loading: \nLoading: 0 packages loaded\n    currently loading: \nWARNING: Target pattern parsing failed.\nERROR: Skipping 'templates.driver.test': no such target '//:templates.driver.test': target 'templates.driver.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nERROR: no such target '//:templates.driver.test': target 'templates.driver.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nINFO: Elapsed time: 20.903s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 22.581960516,
+  "cpu_seconds": 9.818339
+}

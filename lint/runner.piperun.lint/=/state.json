@@ -1,0 +1,14 @@
+{
+  "label": "//runner/piperun:lint",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-lint",
+  "updated": "2026-11-25T07:10:54.038526224Z",
+  "failures": [
+    {
+      "test": "runner.piperun.lint",
+      "tail": "Computing main repo mapping: \nLoading: \nLoading: 0 packages loaded\nWARNING: Target pattern parsing failed.\nERROR: Skipping 'runner.piperun.lint': no such target '//:runner.piperun.lint': target 'runner.piperun.lint' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nERROR: no such target '//:runner.piperun.lint': target 'runner.piperun.lint' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nINFO: Elapsed time: 0.072s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 0.089294588,
+  "cpu_seconds": 0.3147360000000008
+}

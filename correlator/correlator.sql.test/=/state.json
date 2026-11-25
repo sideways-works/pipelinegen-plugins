@@ -1,0 +1,14 @@
+{
+  "label": "//correlator/sql:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-correlator",
+  "updated": "2026-11-25T07:12:56.366715628Z",
+  "failures": [
+    {
+      "test": "correlator.sql.test",
+      "tail": "Computing main repo mapping: \nLoading: \nLoading: 0 packages loaded\nWARNING: Target pattern parsing failed.\nERROR: Skipping 'correlator.sql.test': no such target '//:correlator.sql.test': target 'correlator.sql.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nERROR: no such target '//:correlator.sql.test': target 'correlator.sql.test' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nINFO: Elapsed time: 0.121s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 0.132014457,
+  "cpu_seconds": 0.6895550000000004
+}

@@ -1,0 +1,14 @@
+{
+  "label": "//sbom/ts:lint",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-lint",
+  "updated": "2026-11-25T07:11:17.82864222Z",
+  "failures": [
+    {
+      "test": "sbom.ts.lint",
+      "tail": "Computing main repo mapping: \nLoading: \nLoading: 0 packages loaded\nWARNING: Target pattern parsing failed.\nERROR: Skipping 'sbom.ts.lint': no such target '//:sbom.ts.lint': target 'sbom.ts.lint' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nERROR: no such target '//:sbom.ts.lint': target 'sbom.ts.lint' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel\nINFO: Elapsed time: 0.162s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 0.171299344,
+  "cpu_seconds": 0.40747099999999925
+}
