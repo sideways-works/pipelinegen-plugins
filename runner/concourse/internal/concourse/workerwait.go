@@ -3,6 +3,7 @@ package concourse
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -12,24 +13,55 @@ import (
 // defaultWorkerWaitMinutes is how long a step may wait for a worker when the config leaves it out.
 const defaultWorkerWaitMinutes = 480
 
-// fromConfig reads the runner's config block: where steps run, and how long each may wait for a worker.
-func fromConfig(spec plugin.Spec, block map[string]any) (placer, int, error) {
+// own is what the runner's config block says: where steps run, how long each may wait for a worker, and
+// which suites' tasks keep no job cache.
+type own struct {
+	place    placer
+	wait     int
+	uncached map[string]bool
+}
+
+// fromConfig reads the runner's config block.
+func fromConfig(spec plugin.Spec, block map[string]any) (own, error) {
 	conf, err := readConfig(block)
 	if err != nil {
-		return placer{}, 0, err
+		return own{}, err
 	}
 
 	wait, err := workerWait(conf)
 	if err != nil {
-		return placer{}, 0, err
+		return own{}, err
 	}
 
 	place := newPlacer(spec, conf)
 	if err := place.check(spec); err != nil {
-		return placer{}, 0, err
+		return own{}, err
 	}
 
-	return place, wait, nil
+	uncached, err := uncachedSuites(spec, conf)
+	if err != nil {
+		return own{}, err
+	}
+
+	return own{place: place, wait: wait, uncached: uncached}, nil
+}
+
+// uncachedSuites are caches.without, each a suite of the spec, so a typo never leaves a suite's cache in.
+func uncachedSuites(spec plugin.Spec, conf runnerConfig) (map[string]bool, error) {
+	out := map[string]bool{}
+	if conf.Caches == nil {
+		return out, nil
+	}
+
+	for _, name := range conf.Caches.Without {
+		if !slices.ContainsFunc(spec.Suites, func(s plugin.SpecSuite) bool { return s.Name == name }) {
+			return nil, fmt.Errorf("%w: the runner's config: caches.without names %q, which is no suite", ErrPlacement, name)
+		}
+
+		out[name] = true
+	}
+
+	return out, nil
 }
 
 // workerWait is the config's worker_wait_minutes, else the default; 0 adds nothing.

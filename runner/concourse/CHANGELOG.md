@@ -6,6 +6,10 @@ Every release of concourse-runner, newest first. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `caches: {without: [<suite>, ...]}` in the runner's config: the prepare and batch tasks of the suites it names get no job cache, so a worker with overlay volumes no longer copies their build caches in full at each task's end
+
 ## [0.9.0] - 2026-11-25
 
 ### Added

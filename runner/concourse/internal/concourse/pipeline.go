@@ -72,6 +72,8 @@ type gen struct {
 	pkgs        Packages
 	// included are the include's registry-image sources, by name.
 	included map[string]M
+	// uncached are the suites whose tasks keep no job cache (caches.without).
+	uncached map[string]bool
 	// workerWait is added to every step's limit, for the wait for a worker.
 	workerWait int
 }
@@ -96,12 +98,15 @@ func GenerateAll(spec plugin.Spec, pkgs Packages, root string, config map[string
 		return nil, err
 	}
 
-	place, wait, err := fromConfig(spec, config)
+	conf, err := fromConfig(spec, config)
 	if err != nil {
 		return nil, err
 	}
 
-	g := &gen{spec: spec, ci: ci, place: place, runs: map[string]plugin.SpecRun{}, suites: map[string]plugin.SpecSuite{}, pkgs: pkgs, workerWait: wait}
+	g := &gen{
+		spec: spec, ci: ci, place: conf.place, runs: map[string]plugin.SpecRun{}, suites: map[string]plugin.SpecSuite{}, pkgs: pkgs,
+		workerWait: conf.wait, uncached: conf.uncached,
+	}
 
 	for _, r := range spec.Runs {
 		g.runs[r.Name] = r
@@ -1497,7 +1502,7 @@ func (g *gen) prepareSteps(run, suite string) []any {
 		"platform": "linux",
 		"inputs":   names("source", "trigger", "tools"),
 		"outputs":  names("prepared", "work"),
-		"caches":   caches("cache"),
+		"caches":   g.suiteCaches(suite),
 		"params":   params,
 		"run":      M{"path": "tools/pipelinegen", "args": []string{"slice", "prepare", "--root", "source", "--tools", "tools"}},
 	}
@@ -1532,7 +1537,7 @@ func (g *gen) drivenBatch(run, suite string) M {
 		"platform": "linux",
 		"inputs":   inputs,
 		"outputs":  names("result", "coverage", "work"),
-		"caches":   caches("cache"),
+		"caches":   g.suiteCaches(suite),
 		"params":   params,
 		"run":      M{"path": "tools/pipelinegen", "args": args},
 	}
@@ -1817,6 +1822,16 @@ func names(items ...string) []M {
 	}
 
 	return out
+}
+
+// suiteCaches are a suite's prepare and batch tasks' job caches: its `cache` directory, unless
+// caches.without names the suite.
+func (g *gen) suiteCaches(suite string) []M {
+	if g.uncached[suite] {
+		return nil
+	}
+
+	return caches("cache")
 }
 
 func caches(paths ...string) []M {

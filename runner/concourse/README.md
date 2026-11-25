@@ -132,6 +132,17 @@ other run, and everything else on `small`.
 The same block takes `worker_wait_minutes`, how long a step may wait for
 a worker on top of its own limit; see [Time limits](#time-limits).
 
+It also takes `caches: {without: [<suite>, ...]}`: the prepare and batch
+tasks of the suites it names get no job cache. Concourse makes a task's
+cache volume the job's next cache when the task ends, and on a worker
+whose volumes are overlay that is a full copy of the cache, gigabytes for
+a Go or Bazel build cache, while other tasks wait on the disk. A suite
+named here starts each task with an empty `cache` directory and copies
+nothing at its end; point its build caches at a remote cache instead
+(Bazel's `--remote_cache`, a Go module proxy), or it builds cold. A task
+file's own `caches:` are the task file's: a suite that runs task files
+drops them there. A name that is no suite of the spec is refused.
+
 The runner refuses, before it writes anything, a key it doesn't know, a
 rule with an unknown `for`, without `tags` or with an empty tag, one that
 names a run or a suite its `for` can't have or the spec lacks, and one that

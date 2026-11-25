@@ -42,6 +42,14 @@ type runnerConfig struct {
 	Placement *placement `json:"placement"`
 	// WorkerWaitMinutes is how long a step may wait for a worker on top of its own limit.
 	WorkerWaitMinutes *int `json:"worker_wait_minutes"`
+	// Caches says which suites' tasks keep no job cache.
+	Caches *cachesConfig `json:"caches"`
+}
+
+// cachesConfig names the suites whose prepare and batch tasks get no job cache: their `cache` directory
+// starts empty in every task, and nothing is copied for the job's next task when one ends.
+type cachesConfig struct {
+	Without []string `json:"without"`
 }
 
 // The first matching rule places a step, else the default. An empty tag
