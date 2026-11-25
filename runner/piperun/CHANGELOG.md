@@ -8,4 +8,4 @@ Every release of piperun-runner, newest first. The format follows
 
 ### Added
 
-- The runner: one pipeline per run in `piperun.yaml`, whose planning jobs emit each suite's prepare, the pool of its selected slices and its end from the templates the file declares; branch, continuous, timer and manual runs; suites with drivers' steps (requires pipelinegen v0.10.0 for a config without a `concourse` section)
+- The runner: one pipeline per run in `piperun.yaml`, whose planning jobs emit each suite's prepare, the pool of its selected slices and its end from the templates the file declares; branch, continuous, timer and manual runs; suites with drivers' steps (requires pipelinegen v0.11.0 for a config without a `concourse` section)

@@ -46,7 +46,7 @@ commit isn't run again), and a manual run is `manual`.
 
 pipelinegen hands the runner its plugin entry's `config`; a config whose
 runner is piperun-runner needs no `concourse` section (the runner reports
-`own-settings`, from pipelinegen v0.10.0).
+`own-settings`, from pipelinegen v0.11.0).
 
 ```yaml
 plugins:
@@ -63,7 +63,7 @@ plugins:
       needs: {default: "w.memory.total >= 8 * GiB", e2e: "w.memory.total >= 16 * GiB"}
       caches: {go: {gomod: /go/pkg/mod, gobuild: /root/.cache/go-build}}
       secrets: {from: sealed}
-      pipelinegen: {version: v0.10.0, sums: <sha256 of SHA256SUMS>}
+      pipelinegen: {version: v0.11.0, sums: <sha256 of SHA256SUMS>}
 ```
 
 | Key | What it is |

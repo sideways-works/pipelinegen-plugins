@@ -1,5 +1,5 @@
-github.com/sideways-works/pipelinegen v0.8.1 h1:9AJrenRBzbeuO9qKHczO29rTeFbg5eL4OOpT5O+Bkww=
-github.com/sideways-works/pipelinegen v0.8.1/go.mod h1:jPOxescLA7uQ7+F+IeXN/JjDALYvOgMOgIUOSffwIeo=
+github.com/sideways-works/pipelinegen v0.11.0 h1:VjvogGbRyUGWVUvhKxrgvP/0hH5blHUjRtEMIGpGM2Q=
+github.com/sideways-works/pipelinegen v0.11.0/go.mod h1:jPOxescLA7uQ7+F+IeXN/JjDALYvOgMOgIUOSffwIeo=
 github.com/sideways-works/plugkit v0.6.0 h1:d3yPwZL09pggz9KwTIxwMXhQfN9V+orVpADV0yip6zY=
 github.com/sideways-works/plugkit v0.6.0/go.mod h1:kD/L/PAe75jr0nFYNa341MPXEJlQoYF2zk3ncyCWRGw=
 go.yaml.in/yaml/v3 v3.0.5 h1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw=
