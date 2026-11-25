@@ -463,7 +463,15 @@ func bootstrapGitEnv(t *testing.T) []string {
 		t.Fatal("the bootstrap gives git no credential helper")
 	}
 
-	return []string{"GIT_CONFIG_COUNT=1", "GIT_CONFIG_KEY_0=credential.https://github.com.helper", "GIT_CONFIG_VALUE_0=" + helper[1]}
+	// a host the helper doesn't answer fails at once rather than asking a terminal
+	if !strings.Contains(bootstrapScript, "credential.https://github.com.helper GIT_TERMINAL_PROMPT=0") {
+		t.Fatal("the bootstrap lets git ask the terminal")
+	}
+
+	return []string{
+		"GIT_CONFIG_COUNT=1", "GIT_CONFIG_KEY_0=credential.https://github.com.helper", "GIT_CONFIG_VALUE_0=" + helper[1],
+		"GIT_TERMINAL_PROMPT=0",
+	}
 }
 
 // The answer is compared here and never printed.
