@@ -1,0 +1,7 @@
+{
+  "label": "//driver/bazel:lint",
+  "state": "passed",
+  "updated": "2026-11-25T07:24:20.043547351Z",
+  "seconds": 15.169320098,
+  "cpu_seconds": 32.074951
+}
