@@ -1,0 +1,14 @@
+{
+  "label": "//sbom/ts:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-sbom",
+  "updated": "2026-11-25T07:29:45.066220139Z",
+  "failures": [
+    {
+      "test": "sbom.ts.test",
+      "tail": "\nAnalyzing: target //sbom/ts:test (109 packages loaded, 5766 targets configured)\n\nINFO: Analyzed target //sbom/ts:test (111 packages loaded, 14330 targets configured).\n[11 / 14] [Prepa] GoCompilePkg sbom/ts/test.a\nINFO: Found 1 target...\nTarget //sbom/ts:test up-to-date:\n  bazel-bin/sbom/ts/test_/test\nINFO: Elapsed time: 6.351s, Critical Path: 0.56s\nINFO: 7 processes: 7 action cache hit, 5 internal, 2 processwrapper-sandbox.\nINFO: Build completed successfully, 7 total actions\nINFO: Running command line: bazel-bin/sbom/ts/test_/test '--go=rules_go++go_sdk+go_sdk/bin/go' '--lint=+http_archive+golangci_lint_linux_amd64/golangci-lint' '--node=+http_archive+node_linux_amd64/bin/node' '--gh=+http_archive+gh_linux_amd64/bin/gh' test sbom/ts\n== test sbom/ts\nnpm ci --ignore-scripts --no-audit --no-fund in .: exec: \"npm\": executable file not found in $PATH\nfailed: sbom/ts"
+    }
+  ],
+  "seconds": 6.6127574,
+  "cpu_seconds": 20.39882399999999
+}

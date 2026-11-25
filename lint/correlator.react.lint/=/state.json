@@ -1,0 +1,14 @@
+{
+  "label": "//correlator/react:lint",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-lint",
+  "updated": "2026-11-25T07:24:05.196866582Z",
+  "failures": [
+    {
+      "test": "correlator.react.lint",
+      "tail": "Analyzing: target //correlator/react:lint (110 packages loaded, 2542 targets configured)\n\nINFO: Analyzed target //correlator/react:lint (112 packages loaded, 14394 targets configured).\n[3 / 14] [Prepa] Creating source manifest for //correlator/react:lint\n[12 / 14] GoLink correlator/react/lint_/lint; 0s processwrapper-sandbox\nINFO: Found 1 target...\nTarget //correlator/react:lint up-to-date:\n  bazel-bin/correlator/react/lint_/lint\nINFO: Elapsed time: 7.263s, Critical Path: 1.04s\nINFO: 7 processes: 7 action cache hit, 5 internal, 2 processwrapper-sandbox.\nINFO: Build completed successfully, 7 total actions\nINFO: Running command line: bazel-bin/correlator/react/lint_/lint '--go=rules_go++go_sdk+go_sdk/bin/go' '--lint=+http_archive+golangci_lint_linux_amd64/golangci-lint' '--node=+http_archive+node_linux_amd64/bin/node' '--gh=+http_archive+gh_linux_amd64/bin/gh' lint correlator/react\n== lint correlator/react\nnpm ci --ignore-scripts --no-audit --no-fund in .: exec: \"npm\": executable file not found in $PATH\nfailed: correlator/react"
+    }
+  ],
+  "seconds": 7.406325267,
+  "cpu_seconds": 26.038880999999975
+}
