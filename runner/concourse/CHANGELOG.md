@@ -6,6 +6,10 @@ Every release of concourse-runner, newest first. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- With a store plugin keeping the records (`store.backend: plugin`), its writing key goes as `PIPELINEGEN_STORE_ACCESS_KEY_ID` and `PIPELINEGEN_STORE_SECRET_ACCESS_KEY` to every step of pipelinegen's own that holds the store token, its reading key to the steps that plan a proposed change's tree, and neither to a task of the repository's; the runner reports `store-keys` (requires pipelinegen v0.11.0)
+
 ## [0.8.0] - 2026-11-23
 
 ### Added

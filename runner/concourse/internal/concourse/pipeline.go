@@ -895,7 +895,17 @@ func (g *gen) tokens(purposes ...string) M {
 		}
 	}
 
+	// a store plugin's writing key goes with the token that writes records
+	if st := g.spec.Store; st != nil && slices.Contains(purposes, plugin.PurposeStore) {
+		withStoreKey(env, st.Write)
+	}
+
 	return env
+}
+
+func withStoreKey(env M, k plugin.SpecKey) {
+	env[plugin.EnvStoreAccessKeyID] = "((" + k.AccessKeyID + "))"
+	env[plugin.EnvStoreSecretAccessKey] = "((" + k.SecretAccessKey + "))"
 }
 
 func sshKeyEnv(purpose string) string {
@@ -906,11 +916,15 @@ func sshKeyEnv(purpose string) string {
 var untrustedPurposes = []string{plugin.PurposeRead}
 
 // untrusted is for a step that runs a proposed change's code: the planner's
-// secrets serve the base's tree, and its tokens only read.
+// secrets serve the base's tree, and its tokens and a store plugin's key only read.
 func (g *gen) untrusted(run string) M {
 	env := M{"PIPELINEGEN_RUN": run}
 	maps.Copy(env, g.plannerEnv())
 	maps.Copy(env, g.tokens(untrustedPurposes...))
+
+	if st := g.spec.Store; st != nil && st.Read != nil {
+		withStoreKey(env, *st.Read)
+	}
 
 	return env
 }

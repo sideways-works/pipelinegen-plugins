@@ -748,6 +748,14 @@ branch's, a timer's or a continuous run's planning job, and the `write`
 tasks of a pull request run's planning job and of its sweep. The tasks that
 plan a pull request's code never hold them.
 
+When a store plugin keeps the records (`store.backend: plugin`), the spec
+names the variables of its writing key and of its reading key, and the
+runner gives the writing key, as `PIPELINEGEN_STORE_ACCESS_KEY_ID` and
+`PIPELINEGEN_STORE_SECRET_ACCESS_KEY`, to every step of pipelinegen's own
+that holds the `store` token; the reading key alone, in the same
+variables, to the tasks that plan a pull request's code, of its planning
+job and of its sweep; and neither to a task of the repository's.
+
 The git resources take `concourse.repository` as the config gives it, so
 its password names the read token's var. With one token nothing changes.
 
