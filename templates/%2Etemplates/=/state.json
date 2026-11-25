@@ -1,0 +1,14 @@
+{
+  "label": "//:templates",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-templates",
+  "updated": "2026-11-25T07:09:13.987344223Z",
+  "failures": [
+    {
+      "test": ".templates",
+      "tail": "Computing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nComputing main repo mapping: \nLoading: \nLoading: 0 packages loaded\nLoading: 0 packages loaded\n    currently loading: \nWARNING: Target pattern parsing failed.\nERROR: Skipping '.templates': no such target '//:.templates': target '.templates' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel (did you mean templates?)\nERROR: no such target '//:.templates': target '.templates' not declared in package '' defined by /tmp/build/4bb24efc/source/BUILD.bazel (did you mean templates?)\nINFO: Elapsed time: 11.258s\nINFO: 0 processes.\nERROR: Build did NOT complete successfully\nERROR: Build failed. Not running target"
+    }
+  ],
+  "seconds": 13.172142627,
+  "cpu_seconds": 9.440328999999998
+}
