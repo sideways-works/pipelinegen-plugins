@@ -1,0 +1,14 @@
+{
+  "label": "//driver/shell:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-driver",
+  "updated": "2026-11-25T07:35:41.306217287Z",
+  "failures": [
+    {
+      "test": "driver.shell.test",
+      "tail": "\ttesting/testing.go:2123 +0x232\ntesting.tRunner.func1()\n\ttesting/testing.go:2126 +0x329\npanic({0x9337b0?, 0x9b3970?})\n\truntime/panic.go:859 +0x125\ngithub.com/sideways-works/pipelinegen-plugins/driver/shell/driver.TestBundleResults(0x1ecbf6c92fc8)\n\tgithub.com/sideways-works/pipelinegen-plugins/driver/shell/driver/driver_test.go:267 +0x43e\ntesting.tRunner(0x1ecbf6c92fc8, 0x9672e8)\n\ttesting/testing.go:2193 +0xea\ncreated by testing.(*T).Run in goroutine 1\n\ttesting/testing.go:2258 +0x4d4\nFAIL\tgithub.com/sideways-works/pipelinegen-plugins/driver/shell/driver\t7.054s\nFAIL\ngo test ./... in driver/shell: exit status 1\nfailed: driver/shell"
+    }
+  ],
+  "seconds": 35.036406899,
+  "cpu_seconds": 42.424265000000005
+}
