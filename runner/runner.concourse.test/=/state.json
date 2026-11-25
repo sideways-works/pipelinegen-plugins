@@ -1,0 +1,6 @@
+{
+  "label": "//runner/concourse:test",
+  "state": "running",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-runner",
+  "updated": "2026-11-25T17:05:28.34009803Z"
+}
