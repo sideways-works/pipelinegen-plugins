@@ -252,7 +252,7 @@ func TestShellSetting(t *testing.T) {
 func TestBundleResults(t *testing.T) {
 	script := `printf '%s\n' "$PIPELINEGEN_SLICES" >"$PIPELINEGEN_WORK/seen"
 cp "$PIPELINEGEN_SLICES_FILE" "$PIPELINEGEN_WORK/file"
-echo '{"passed":false,"tests":4,"failures":[{"test":"TestX","tail":"x broke\n"}]}' >"$PIPELINEGEN_RESULTS/dir/json.json"
+printf '%s\n' '{"passed":false,"tests":4,"failures":[{"test":"TestX","tail":"x broke\n"}]}' >"$PIPELINEGEN_RESULTS/dir/json.json"
 echo 0 >"$PIPELINEGEN_RESULTS/status0.status"
 echo 2 >"$PIPELINEGEN_RESULTS/status2.status"
 echo 'not json' >"$PIPELINEGEN_RESULTS/broken.json"
@@ -264,7 +264,7 @@ exit "$EXIT"`
 
 		got, _ := runOf(t, req)
 
-		if j := got["dir/json"]; j.Passed || *j.Tests != 4 || !slices.Equal(failedTests(j), []string{"TestX"}) {
+		if j := got["dir/json"]; j.Passed || j.Tests == nil || *j.Tests != 4 || !slices.Equal(failedTests(j), []string{"TestX"}) {
 			t.Errorf("exit %s: a result file: %+v", exit, j)
 		}
 
