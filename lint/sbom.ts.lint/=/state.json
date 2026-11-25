@@ -1,0 +1,14 @@
+{
+  "label": "//sbom/ts:lint",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/main-lint",
+  "updated": "2026-11-25T12:17:55.843300853Z",
+  "failures": [
+    {
+      "test": "sbom.ts.lint",
+      "tail": "\nAnalyzing: target //sbom/ts:lint (1 packages loaded, 37 targets configured)\n\nINFO: Analyzed target //sbom/ts:lint (2 packages loaded, 41 targets configured).\n[2 / 7] GoCompilePkg sbom/ts/lint.a; 0s processwrapper-sandbox ... (2 actions, 1 running)\nINFO: Found 1 target...\nTarget //sbom/ts:lint up-to-date:\n  bazel-bin/sbom/ts/lint_/lint\nINFO: Elapsed time: 5.937s, Critical Path: 0.19s\nINFO: 7 processes: 5 internal, 2 processwrapper-sandbox.\nINFO: Build completed successfully, 7 total actions\nINFO: Running command line: bazel-bin/sbom/ts/lint_/lint '--go=rules_go++go_sdk+go_sdk/bin/go' '--lint=+http_archive+golangci_lint_linux_amd64/golangci-lint' '--node=+http_archive+node_linux_amd64/bin/node' '--gh=+http_archive+gh_linux_amd64/bin/gh' lint sbom/ts\n== lint sbom/ts\nnpm ci --ignore-scripts --no-audit --no-fund in .: exec: \"npm\": executable file not found in $PATH\nfailed: sbom/ts"
+    }
+  ],
+  "seconds": 6.018763414,
+  "cpu_seconds": 10.596958
+}
