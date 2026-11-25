@@ -19,10 +19,21 @@ import (
 // the contract and the code oapi-codegen generated from it both changed.
 const changed = "testdata/getnote-full"
 
-// moduleCache is where the fixture's modules are: `go mod download` in
-// testdata/repo fills it once, and the tests fetch nothing.
+// moduleCache is where the fixture's modules are, downloaded there first: a
+// cache that holds them already fetches nothing.
 func moduleCache(t *testing.T) string {
 	t.Helper()
+
+	// in a copy, since the download records sums in its go.sum; the fixture is a module of its own,
+	// in no workspace
+	download := exec.CommandContext(t.Context(), "go", "mod", "download", "all")
+	download.Dir = copyTree(t, "")
+
+	download.Env = append(os.Environ(), "GOWORK=off")
+
+	if out, err := download.CombinedOutput(); err != nil {
+		t.Fatalf("go mod download in %s: %v\n%s", repo, err, out)
+	}
 
 	out, err := exec.CommandContext(t.Context(), "go", "env", "GOMODCACHE").Output()
 	if err != nil {
@@ -84,7 +95,7 @@ func digests(t *testing.T, tree string, relations bool) (map[string]string, []st
 	}
 
 	if len(graph.CannotTell) > 0 {
-		t.Fatalf("modules missing from the module cache (run go mod download in %s): %+v", repo, graph.CannotTell)
+		t.Fatalf("modules missing from the module cache: %+v", graph.CannotTell)
 	}
 
 	for _, mod := range graph.Modules {
