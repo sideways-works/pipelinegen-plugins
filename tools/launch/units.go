@@ -17,7 +17,7 @@ import (
 )
 
 // Kinds are the plugin kinds, each a directory at the root holding its plugins.
-var Kinds = []string{"forge", "correlator", "driver", "runner", "sbom"}
+var Kinds = []string{"forge", "correlator", "driver", "runner", "sbom", "store"}
 
 var errVersions = errors.New("versions")
 
