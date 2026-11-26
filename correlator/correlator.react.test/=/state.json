@@ -1,0 +1,15 @@
+{
+  "label": "//correlator/react:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-correlator",
+  "updated": "2026-11-26T19:27:40.291200232Z",
+  "failures": [
+    {
+      "test": "correlator.react.test",
+      "tail": "    code: 'ERR_ASSERTION',\n    actual: 1,\n    expected: 0,\n    operator: 'strictEqual',\n    diff: 'simple'\n  }\nnpm error Lifecycle script `test` failed with error:\nnpm error code 1\nnpm error path /tmp/build/4bb24efc/source/correlator/react\nnpm error workspace @sideways-works/react-correlator@0.1.3\nnpm error location /tmp/build/4bb24efc/source/correlator/react\nnpm error command failed\nnpm error command sh -c node --test --test-reporter=dot 'test/**/*.test.ts'\nnpm test in correlator/react: exit status 1\nfailed: correlator/react"
+    }
+  ],
+  "seconds": 69.83397868,
+  "cpu_seconds": 105.321638,
+  "peak_mb": 2357
+}
