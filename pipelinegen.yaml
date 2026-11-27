@@ -12,6 +12,17 @@ github:
   repository: sideways-works/pipelinegen-plugins
   token: github_token
 
+# every batch and step waits for its memory and cores, asking the worker's
+# broker
+memory:
+  wait: true
+  broker: 10.80.0.1:7480
+cpu:
+  wait: true
+  # until a suite's slices have recorded cores: Bazel and go test keep one
+  # to two busy
+  cores: 2
+
 concourse:
   url: https://concourse.home.simulevski.at
   team: sideways-works
@@ -23,7 +34,7 @@ concourse:
     image: {repository: golang, tag: 1.27.1}
     digest: sha256:162be5298a40ed317005c8339c6de4d10d3eef336d66dc8e9259b03ab9d3a6d2
     bootstrap:
-      release: {version: v0.11.0, sha256: 1dbc37a8f71c21544bc4e086f5b3946d0c924af91a8c15c2a049236a98164221}
+      release: {version: v0.12.0-rc.11, sha256: 15e5ca339381a6eba25f3a58551b6b11febfad9e824365e66c39cdc5a25f34e3}
       bazelisk: {version: v1.30.0, sha256: a248ae2b2b62b5baebb748f6fba7203bff1a27e5d01b55399a8406744cb539e8}
   include: ci/root.yml
 
