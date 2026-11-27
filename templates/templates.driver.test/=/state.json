@@ -1,0 +1,15 @@
+{
+  "label": "//templates/driver:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-templates",
+  "updated": "2026-11-27T02:45:23.966485555Z",
+  "failures": [
+    {
+      "test": "templates.driver.test",
+      "tail": "\nAnalyzing: target //templates/driver:test (100 packages loaded, 1153 targets configured)\n\nAnalyzing: target //templates/driver:test (100 packages loaded, 1153 targets configured)\n\nAnalyzing: target //templates/driver:test (100 packages loaded, 1153 targets configured)\n\nAnalyzing: target //templates/driver:test (101 packages loaded, 1157 targets configured)\n\nAnalyzing: target //templates/driver:test (106 packages loaded, 1166 targets configured)\n\nAnalyzing: target //templates/driver:test (106 packages loaded, 1182 targets configured)\n\nAnalyzing: target //templates/driver:test (106 packages loaded, 1182 targets configured)"
+    }
+  ],
+  "seconds": 2495.243363203,
+  "cpu_seconds": 467.394685,
+  "peak_mb": 603
+}
