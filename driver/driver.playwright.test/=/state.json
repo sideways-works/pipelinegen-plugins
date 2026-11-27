@@ -1,0 +1,15 @@
+{
+  "label": "//driver/playwright:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-driver",
+  "updated": "2026-11-27T02:45:29.405326291Z",
+  "failures": [
+    {
+      "test": "driver.playwright.test",
+      "tail": "\nAnalyzing: target //driver/playwright:test (103 packages loaded, 1180 targets configured)\n\nAnalyzing: target //driver/playwright:test (105 packages loaded, 1200 targets configured)\n\nAnalyzing: target //driver/playwright:test (105 packages loaded, 1200 targets configured)\n\nAnalyzing: target //driver/playwright:test (105 packages loaded, 1201 targets configured)\n\nAnalyzing: target //driver/playwright:test (105 packages loaded, 1201 targets configured)\n\nAnalyzing: target //driver/playwright:test (106 packages loaded, 1203 targets configured)\n\nAnalyzing: target //driver/playwright:test (106 packages loaded, 1203 targets configured)"
+    }
+  ],
+  "seconds": 2524.281978245,
+  "cpu_seconds": 466.119892,
+  "peak_mb": 531
+}
