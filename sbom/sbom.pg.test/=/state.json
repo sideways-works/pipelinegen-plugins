@@ -1,0 +1,15 @@
+{
+  "label": "//sbom/pg:test",
+  "state": "errored",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-sbom",
+  "updated": "2026-11-27T02:45:14.397924493Z",
+  "failures": [
+    {
+      "test": "(no result)",
+      "tail": "command gave no result for it (command: sbom.pg.test: context canceled)"
+    }
+  ],
+  "seconds": 0.599329629,
+  "cpu_seconds": 0.056797000000017306,
+  "peak_mb": 504
+}
