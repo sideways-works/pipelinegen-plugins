@@ -1,0 +1,15 @@
+{
+  "label": "//tools:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-tools",
+  "updated": "2026-11-27T02:45:25.695155074Z",
+  "failures": [
+    {
+      "test": "tools.test",
+      "tail": "\nAnalyzing: target //tools:test (97 packages loaded, 1152 targets configured)\n\nAnalyzing: target //tools:test (98 packages loaded, 1152 targets configured)\n\nAnalyzing: target //tools:test (103 packages loaded, 1167 targets configured)\n\nAnalyzing: target //tools:test (103 packages loaded, 1181 targets configured)\n\nAnalyzing: target //tools:test (104 packages loaded, 1183 targets configured)\n\nAnalyzing: target //tools:test (105 packages loaded, 1185 targets configured)\n\nAnalyzing: target //tools:test (105 packages loaded, 1185 targets configured)"
+    }
+  ],
+  "seconds": 2493.30631338,
+  "cpu_seconds": 462.95149299999997,
+  "peak_mb": 563
+}
