@@ -1,0 +1,15 @@
+{
+  "label": "//correlator/locale:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-correlator",
+  "updated": "2026-11-27T02:45:27.011544697Z",
+  "failures": [
+    {
+      "test": "correlator.locale.test",
+      "tail": "INFO: Found 1 target...\nTarget //correlator/locale:test up-to-date:\n  bazel-bin/correlator/locale/test_/test\nINFO: Elapsed time: 56.950s, Critical Path: 9.67s\nINFO: 7 processes: 7 action cache hit, 5 internal, 2 processwrapper-sandbox.\nINFO: Build completed successfully, 7 total actions\nINFO: Running command line: bazel-bin/correlator/locale/test_/test '--go=rules_go++go_sdk+go_sdk/bin/go' '--lint=+http_archive+golangci_lint_linux_amd64/golangci-lint' '--node=+http_archive+node_linux_amd64/bin/node' '--gh=+http_archive+gh_linux_amd64/bin/gh' test correlator/locale\n== test correlator/locale\ngo: downloading github.com/sideways-works/pipelinegen-plugins/sbom/locale v0.4.0\ngo: downloading github.com/sideways-works/pipelinegen v0.7.0\ngo: downloading github.com/sideways-works/plugkit v0.6.0\nok  \tgithub.com/sideways-works/pipelinegen-plugins/correlator/locale/cmd/locale-correlator\t1.557s\nok  \tgithub.com/sideways-works/pipelinegen-plugins/correlator/locale/collect\t0.209s\nok  \tgithub.com/sideways-works/pipelinegen-plugins/correlator/locale/observe\t0.165s\n?   \tgithub.com/sideways-works/pipelinegen-plugins/correlator/locale/recorder\t[no test files]"
+    }
+  ],
+  "seconds": 2517.423596899,
+  "cpu_seconds": 496.425939,
+  "peak_mb": 882
+}
