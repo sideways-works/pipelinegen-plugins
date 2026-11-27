@@ -1,0 +1,15 @@
+{
+  "label": "//sbom/pg:lint",
+  "state": "errored",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-lint",
+  "updated": "2026-11-27T02:45:34.441369844Z",
+  "failures": [
+    {
+      "test": "(no result)",
+      "tail": "command gave no result for it (command: sbom.pg.lint: context canceled)"
+    }
+  ],
+  "seconds": 0.390186806,
+  "cpu_seconds": 0.04870099999999411,
+  "peak_mb": 432
+}
