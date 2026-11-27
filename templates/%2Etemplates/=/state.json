@@ -1,0 +1,15 @@
+{
+  "label": "//:templates",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-templates",
+  "updated": "2026-11-27T02:45:24.104362362Z",
+  "failures": [
+    {
+      "test": ".templates",
+      "tail": "\nAnalyzing: target //:templates (39 packages loaded, 8 targets configured)\n\nAnalyzing: target //:templates (43 packages loaded, 8 targets configured)\n\nAnalyzing: target //:templates (60 packages loaded, 8 targets configured)\n\nAnalyzing: target //:templates (60 packages loaded, 8 targets configured)\n\nAnalyzing: target //:templates (61 packages loaded, 8 targets configured)\n\nAnalyzing: target //:templates (62 packages loaded, 8 targets configured)\n\nAnalyzing: target //:templates (63 packages loaded, 8 targets configured)"
+    }
+  ],
+  "seconds": 2515.481516177,
+  "cpu_seconds": 432.332026,
+  "peak_mb": 469
+}
