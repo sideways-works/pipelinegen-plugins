@@ -1,0 +1,15 @@
+{
+  "label": "//correlator/go:lint",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-lint",
+  "updated": "2026-11-27T02:45:35.723256045Z",
+  "failures": [
+    {
+      "test": "correlator.go.lint",
+      "tail": "\nAnalyzing: target //correlator/go:lint (63 packages loaded, 8 targets configured)\n\nAnalyzing: target //correlator/go:lint (63 packages loaded, 8 targets configured)\n\nAnalyzing: target //correlator/go:lint (63 packages loaded, 8 targets configured)\n\nAnalyzing: target //correlator/go:lint (63 packages loaded, 8 targets configured)\n\nAnalyzing: target //correlator/go:lint (63 packages loaded, 8 targets configured)\n\nAnalyzing: target //correlator/go:lint (63 packages loaded, 8 targets configured)\n\nAnalyzing: target //correlator/go:lint (63 packages loaded, 8 targets configured)"
+    }
+  ],
+  "seconds": 2475.214188459,
+  "cpu_seconds": 415.47272499999997,
+  "peak_mb": 441
+}

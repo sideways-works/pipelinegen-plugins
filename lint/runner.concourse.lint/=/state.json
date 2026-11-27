@@ -1,0 +1,15 @@
+{
+  "label": "//runner/concourse:lint",
+  "state": "errored",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-lint",
+  "updated": "2026-11-27T02:45:35.724436824Z",
+  "failures": [
+    {
+      "test": "(no result)",
+      "tail": "command gave no result for it (command: runner.concourse.lint: context canceled)"
+    }
+  ],
+  "seconds": 0.514220645,
+  "cpu_seconds": 0.027387000000032913,
+  "peak_mb": 387
+}
