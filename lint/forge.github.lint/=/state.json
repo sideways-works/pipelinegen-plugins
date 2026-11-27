@@ -1,0 +1,15 @@
+{
+  "label": "//forge/github:lint",
+  "state": "errored",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-lint",
+  "updated": "2026-11-27T02:45:38.459297175Z",
+  "failures": [
+    {
+      "test": "(no result)",
+      "tail": "command gave no result for it (command: forge.github.lint: context canceled)"
+    }
+  ],
+  "seconds": 0.256030797,
+  "cpu_seconds": 0.017990999999994983,
+  "peak_mb": 454
+}
