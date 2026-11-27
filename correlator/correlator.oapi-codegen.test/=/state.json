@@ -1,0 +1,15 @@
+{
+  "label": "//correlator/oapi-codegen:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-correlator",
+  "updated": "2026-11-27T02:45:24.005553164Z",
+  "failures": [
+    {
+      "test": "correlator.oapi-codegen.test",
+      "tail": "[12 / 14] Creating runfiles tree bazel-out/k8-fastbuild/bin/correlator/oapi-codegen/test_/test.runfiles; 6s local\n[13 / 14] [Prepa] runfiles for //correlator/oapi-codegen:test\nINFO: Found 1 target...\nTarget //correlator/oapi-codegen:test up-to-date:\n  bazel-bin/correlator/oapi-codegen/test_/test\nINFO: Elapsed time: 57.708s, Critical Path: 12.13s\nINFO: 7 processes: 7 action cache hit, 5 internal, 2 processwrapper-sandbox.\nINFO: Build completed successfully, 7 total actions\nINFO: Running command line: bazel-bin/correlator/oapi-codegen/test_/test '--go=rules_go++go_sdk+go_sdk/bin/go' '--lint=+http_archive+golangci_lint_linux_amd64/golangci-lint' '--node=+http_archive+node_linux_amd64/bin/node' '--gh=+http_archive+gh_linux_amd64/bin/gh' test correlator/oapi-codegen\n== test correlator/oapi-codegen\ngo: downloading github.com/sideways-works/pipelinegen-plugins/sbom/openapi v0.4.0\ngo: downloading github.com/sideways-works/pipelinegen-plugins/sbom/go v0.4.0\ngo: downloading golang.org/x/mod v0.41.0\ngo: downloading go.yaml.in/yaml/v3 v3.0.6\n?   \tgithub.com/sideways-works/pipelinegen-plugins/correlator/oapi-codegen/cmd/oapi-codegen-correlator\t[no test files]"
+    }
+  ],
+  "seconds": 2513.285809966,
+  "cpu_seconds": 376.577035,
+  "peak_mb": 941
+}
