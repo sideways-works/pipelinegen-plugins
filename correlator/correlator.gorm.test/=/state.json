@@ -1,0 +1,15 @@
+{
+  "label": "//correlator/gorm:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-correlator",
+  "updated": "2026-11-27T02:45:24.53770172Z",
+  "failures": [
+    {
+      "test": "correlator.gorm.test",
+      "tail": "go: downloading github.com/pganalyze/pg_query_go/v6 v6.2.5\ngo: downloading github.com/sideways-works/pipelinegen-plugins/sbom/pg v0.4.0\ngo: downloading github.com/sideways-works/pipelinegen v0.7.0\ngo: downloading github.com/sideways-works/pipelinegen-plugins/sbom/go v0.4.0\ngo: downloading golang.org/x/mod v0.42.0\ngo: downloading golang.org/x/tools v0.52.0\ngo: downloading gorm.io/gorm v1.31.2\ngo: downloading github.com/jinzhu/inflection v1.0.0\ngo: downloading github.com/jinzhu/now v1.1.5\ngo: downloading golang.org/x/text v0.20.0\ngo: downloading github.com/sideways-works/plugkit v0.6.0\ngo: downloading github.com/tetratelabs/wazero v1.12.0\ngo: downloading github.com/wasilibs/wazero-helpers v0.0.0-20250123031827-cd30c44769bb\ngo: downloading golang.org/x/sync v0.24.0\ngo: downloading golang.org/x/sys v0.49.0"
+    }
+  ],
+  "seconds": 2504.313289011,
+  "cpu_seconds": 532.2643429999999,
+  "peak_mb": 822
+}
