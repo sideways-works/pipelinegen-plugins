@@ -1,0 +1,15 @@
+{
+  "label": "//driver/shell:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-driver",
+  "updated": "2026-11-27T02:45:25.653719779Z",
+  "failures": [
+    {
+      "test": "driver.shell.test",
+      "tail": "\nAnalyzing: target //driver/shell:test (99 packages loaded, 1171 targets configured)\n\nAnalyzing: target //driver/shell:test (99 packages loaded, 1171 targets configured)\n\nAnalyzing: target //driver/shell:test (99 packages loaded, 1171 targets configured)\n\nAnalyzing: target //driver/shell:test (100 packages loaded, 1173 targets configured)\n\nAnalyzing: target //driver/shell:test (100 packages loaded, 1173 targets configured)\n\nAnalyzing: target //driver/shell:test (106 packages loaded, 1184 targets configured)\n\nAnalyzing: target //driver/shell:test (106 packages loaded, 1201 targets configured)"
+    }
+  ],
+  "seconds": 2524.079252327,
+  "cpu_seconds": 470.073008,
+  "peak_mb": 541
+}
