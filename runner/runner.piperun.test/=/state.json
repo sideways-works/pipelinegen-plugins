@@ -1,0 +1,19 @@
+{
+  "label": "//runner/piperun:test",
+  "state": "errored",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-runner",
+  "updated": "2026-11-27T02:25:30.91938499Z",
+  "failures": [
+    {
+      "test": "(out of memory)",
+      "tail": "crashed: the OOM killer killed 1 processes of the batch while the slice ran; the batch had room for 11751 MB"
+    },
+    {
+      "test": "runner.piperun.test",
+      "tail": "Analyzing: target //runner/piperun:test (22 packages loaded, 8 targets configured)\n\nAnalyzing: target //runner/piperun:test (60 packages loaded, 8 targets configured)\n\nAnalyzing: target //runner/piperun:test (61 packages loaded, 8 targets configured)\n\nAnalyzing: target //runner/piperun:test (61 packages loaded, 8 targets configured)\n\nAnalyzing: target //runner/piperun:test (61 packages loaded, 8 targets configured)\n\nAnalyzing: target //runner/piperun:test (61 packages loaded, 8 targets configured)\n\n\nServer terminated abruptly (error code: 14, error message: 'Socket closed', log file: '/tmp/build/4bb24efc/cache/drivers/command/bazel/base/server/jvm.out')"
+    }
+  ],
+  "seconds": 954.582024,
+  "cpu_seconds": 207.80104,
+  "peak_mb": 11751
+}
