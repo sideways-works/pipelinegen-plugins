@@ -1,0 +1,19 @@
+{
+  "label": "//runner/concourse:test",
+  "state": "errored",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-runner",
+  "updated": "2026-11-27T02:30:54.153238334Z",
+  "failures": [
+    {
+      "test": "(out of memory)",
+      "tail": "crashed: the OOM killer killed 1 processes of the batch while the slice ran; the batch had room for 11759 MB"
+    },
+    {
+      "test": "runner.concourse.test",
+      "tail": "Analyzing: target //runner/concourse:test (70 packages loaded, 40 targets configured)\n\nAnalyzing: target //runner/concourse:test (70 packages loaded, 40 targets configured)\n\nAnalyzing: target //runner/concourse:test (70 packages loaded, 68 targets configured)\n\nAnalyzing: target //runner/concourse:test (73 packages loaded, 118 targets configured)\n\nAnalyzing: target //runner/concourse:test (78 packages loaded, 191 targets configured)\n\nAnalyzing: target //runner/concourse:test (81 packages loaded, 1031 targets configured)\n\n\nServer terminated abruptly (error code: 14, error message: 'Socket closed', log file: '/tmp/build/4bb24efc/cache/drivers/command/bazel/base/server/jvm.out')"
+    }
+  ],
+  "seconds": 1569.432594038,
+  "cpu_seconds": 307.012387,
+  "peak_mb": 11759
+}
