@@ -1,0 +1,15 @@
+{
+  "label": "//forge/git:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-forge",
+  "updated": "2026-11-27T02:45:30.801318926Z",
+  "failures": [
+    {
+      "test": "forge.git.test",
+      "tail": "\nAnalyzing: target //forge/git:test (18 packages loaded, 8 targets configured)\n\nAnalyzing: target //forge/git:test (19 packages loaded, 8 targets configured)\n\nAnalyzing: target //forge/git:test (28 packages loaded, 8 targets configured)\n\nAnalyzing: target //forge/git:test (60 packages loaded, 8 targets configured)\n\nAnalyzing: target //forge/git:test (61 packages loaded, 8 targets configured)\n\nAnalyzing: target //forge/git:test (61 packages loaded, 8 targets configured)\n\nAnalyzing: target //forge/git:test (63 packages loaded, 8 targets configured)"
+    }
+  ],
+  "seconds": 2512.777822329,
+  "cpu_seconds": 415.082746,
+  "peak_mb": 439
+}
