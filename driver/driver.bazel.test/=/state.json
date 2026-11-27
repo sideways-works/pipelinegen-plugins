@@ -1,0 +1,15 @@
+{
+  "label": "//driver/bazel:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-driver",
+  "updated": "2026-11-27T02:45:26.632324883Z",
+  "failures": [
+    {
+      "test": "driver.bazel.test",
+      "tail": "\nAnalyzing: target //driver/bazel:test (18 packages loaded, 8 targets configured)\n\nAnalyzing: target //driver/bazel:test (18 packages loaded, 8 targets configured)\n\nAnalyzing: target //driver/bazel:test (20 packages loaded, 8 targets configured)\n\nAnalyzing: target //driver/bazel:test (21 packages loaded, 8 targets configured)\n\nAnalyzing: target //driver/bazel:test (61 packages loaded, 8 targets configured)\n\nAnalyzing: target //driver/bazel:test (61 packages loaded, 8 targets configured)\n\nAnalyzing: target //driver/bazel:test (63 packages loaded, 8 targets configured)"
+    }
+  ],
+  "seconds": 2523.899359694,
+  "cpu_seconds": 415.982958,
+  "peak_mb": 433
+}
