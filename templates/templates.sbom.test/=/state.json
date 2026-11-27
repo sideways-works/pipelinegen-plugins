@@ -1,0 +1,15 @@
+{
+  "label": "//templates/sbom:test",
+  "state": "errored",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-templates",
+  "updated": "2026-11-27T02:45:29.605075405Z",
+  "failures": [
+    {
+      "test": "(no result)",
+      "tail": "command gave no result for it (command: templates.sbom.test: context canceled)"
+    }
+  ],
+  "seconds": 0.349220423,
+  "cpu_seconds": 0.022369000000026062,
+  "peak_mb": 379
+}

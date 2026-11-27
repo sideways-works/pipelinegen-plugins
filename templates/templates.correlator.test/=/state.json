@@ -1,0 +1,15 @@
+{
+  "label": "//templates/correlator:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-templates",
+  "updated": "2026-11-27T02:45:29.603526729Z",
+  "failures": [
+    {
+      "test": "templates.correlator.test",
+      "tail": "\nAnalyzing: target //templates/correlator:test (98 packages loaded, 1150 targets configured)\n\nAnalyzing: target //templates/correlator:test (98 packages loaded, 1150 targets configured)\n\nAnalyzing: target //templates/correlator:test (98 packages loaded, 1150 targets configured)\n\nAnalyzing: target //templates/correlator:test (99 packages loaded, 1150 targets configured)\n\nAnalyzing: target //templates/correlator:test (104 packages loaded, 1178 targets configured)\n\nAnalyzing: target //templates/correlator:test (104 packages loaded, 1179 targets configured)\n\nAnalyzing: target //templates/correlator:test (105 packages loaded, 1181 targets configured)"
+    }
+  ],
+  "seconds": 2500.118621351,
+  "cpu_seconds": 449.21878699999996,
+  "peak_mb": 557
+}
