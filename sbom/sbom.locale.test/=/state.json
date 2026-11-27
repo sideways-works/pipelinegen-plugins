@@ -1,0 +1,15 @@
+{
+  "label": "//sbom/locale:test",
+  "state": "failed",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-sbom",
+  "updated": "2026-11-27T02:45:16.896119334Z",
+  "failures": [
+    {
+      "test": "sbom.locale.test",
+      "tail": "\nAnalyzing: target //sbom/locale:test (98 packages loaded, 1161 targets configured)\n\nAnalyzing: target //sbom/locale:test (99 packages loaded, 1163 targets configured)\n\nAnalyzing: target //sbom/locale:test (100 packages loaded, 1163 targets configured)\n\nAnalyzing: target //sbom/locale:test (105 packages loaded, 1176 targets configured)\n\nAnalyzing: target //sbom/locale:test (105 packages loaded, 1190 targets configured)\n\nAnalyzing: target //sbom/locale:test (105 packages loaded, 1192 targets configured)\n\nAnalyzing: target //sbom/locale:test (106 packages loaded, 1194 targets configured)"
+    }
+  ],
+  "seconds": 2491.406595298,
+  "cpu_seconds": 420.61618200000004,
+  "peak_mb": 687
+}
