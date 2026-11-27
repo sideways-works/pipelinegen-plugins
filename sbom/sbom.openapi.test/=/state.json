@@ -1,0 +1,19 @@
+{
+  "label": "//sbom/openapi:test",
+  "state": "errored",
+  "url": "https://concourse.home.simulevski.at/teams/sideways-works/pipelines/pipelinegen-plugins/jobs/nightly-sbom",
+  "updated": "2026-11-27T02:44:40.794630203Z",
+  "failures": [
+    {
+      "test": "(out of memory)",
+      "tail": "crashed: the OOM killer killed 1 processes of the batch while the slice ran; the batch had room for 11873 MB"
+    },
+    {
+      "test": "sbom.openapi.test",
+      "tail": "Analyzing: target //sbom/openapi:test (99 packages loaded, 1172 targets configured)\n\nAnalyzing: target //sbom/openapi:test (99 packages loaded, 1172 targets configured)\n\nAnalyzing: target //sbom/openapi:test (99 packages loaded, 1172 targets configured)\n\nAnalyzing: target //sbom/openapi:test (100 packages loaded, 1172 targets configured)\n\nAnalyzing: target //sbom/openapi:test (100 packages loaded, 1172 targets configured)\n\nAnalyzing: target //sbom/openapi:test (100 packages loaded, 1174 targets configured)\n\n\nServer terminated abruptly (error code: 14, error message: 'Socket closed', log file: '/tmp/build/4bb24efc/cache/drivers/command/bazel/base/server/jvm.out')"
+    }
+  ],
+  "seconds": 2217.508751801,
+  "cpu_seconds": 421.087846,
+  "peak_mb": 11873
+}
