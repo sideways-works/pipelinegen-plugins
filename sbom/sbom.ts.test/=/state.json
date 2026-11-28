@@ -1,0 +1,10 @@
+{
+  "label": "//sbom/ts:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:23:58.70992424Z",
+  "seconds": 27.155529738,
+  "cpu_seconds": 31.905950000000004,
+  "cpu_wall": 27.217959367,
+  "cpu_stall": 2.1026819999999997,
+  "peak_mb": 1217
+}
