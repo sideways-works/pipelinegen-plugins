@@ -1,0 +1,10 @@
+{
+  "label": "//driver/shell:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:06:41.217292102Z",
+  "seconds": 74.767152061,
+  "cpu_seconds": 156.504567,
+  "cpu_wall": 75.029570192,
+  "cpu_stall": 10.390108,
+  "peak_mb": 1160
+}
