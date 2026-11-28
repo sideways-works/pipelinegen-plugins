@@ -1,0 +1,10 @@
+{
+  "label": "//driver/playwright:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:05:36.608364732Z",
+  "seconds": 110.935291915,
+  "cpu_seconds": 191.674432,
+  "cpu_wall": 110.943464293,
+  "cpu_stall": 24.641805,
+  "peak_mb": 1250
+}

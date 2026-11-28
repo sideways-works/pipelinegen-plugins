@@ -1,0 +1,10 @@
+{
+  "label": "//driver/playwright:lint",
+  "state": "passed",
+  "updated": "2026-11-28T02:27:42.452306612Z",
+  "seconds": 5.643268262,
+  "cpu_seconds": 16.448807999999985,
+  "cpu_wall": 5.71238943,
+  "cpu_stall": 1.0022580000000048,
+  "peak_mb": 1807
+}

@@ -1,0 +1,10 @@
+{
+  "label": "//correlator/go:lint",
+  "state": "passed",
+  "updated": "2026-11-28T02:27:42.443399499Z",
+  "seconds": 166.693671525,
+  "cpu_seconds": 153.570824,
+  "cpu_wall": 166.764118423,
+  "cpu_stall": 35.749753,
+  "peak_mb": 1222
+}

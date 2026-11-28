@@ -1,0 +1,10 @@
+{
+  "label": "//runner/piperun:lint",
+  "state": "passed",
+  "updated": "2026-11-28T02:28:30.619084925Z",
+  "seconds": 5.946315244,
+  "cpu_seconds": 14.480770000000007,
+  "cpu_wall": 5.978579119,
+  "cpu_stall": 1.5189629999999994,
+  "peak_mb": 2282
+}

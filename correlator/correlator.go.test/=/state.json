@@ -1,0 +1,10 @@
+{
+  "label": "//correlator/go:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:28:30.608220053Z",
+  "seconds": 122.028825735,
+  "cpu_seconds": 269.617275,
+  "cpu_wall": 122.070077183,
+  "cpu_stall": 18.377349000000002,
+  "peak_mb": 1311
+}

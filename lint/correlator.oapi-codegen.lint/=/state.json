@@ -1,0 +1,10 @@
+{
+  "label": "//correlator/oapi-codegen:lint",
+  "state": "passed",
+  "updated": "2026-11-28T02:27:42.465584674Z",
+  "seconds": 12.417170227,
+  "cpu_seconds": 37.108923000000004,
+  "cpu_wall": 12.46621366,
+  "cpu_stall": 2.7824390000000037,
+  "peak_mb": 2202
+}

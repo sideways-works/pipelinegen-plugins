@@ -1,0 +1,10 @@
+{
+  "label": "//templates/runner:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:28:30.617882474Z",
+  "seconds": 9.253061614,
+  "cpu_seconds": 26.740755000000007,
+  "cpu_wall": 9.28830631,
+  "cpu_stall": 2.477753999999999,
+  "peak_mb": 994
+}

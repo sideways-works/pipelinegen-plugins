@@ -1,0 +1,10 @@
+{
+  "label": "//driver/go:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:05:46.6180141Z",
+  "seconds": 114.870784182,
+  "cpu_seconds": 216.232595,
+  "cpu_wall": 114.898655148,
+  "cpu_stall": 31.145424,
+  "peak_mb": 1252
+}

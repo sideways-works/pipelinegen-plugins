@@ -1,0 +1,10 @@
+{
+  "label": "//forge/github:lint",
+  "state": "passed",
+  "updated": "2026-11-28T02:27:42.46593325Z",
+  "seconds": 4.9639344229999995,
+  "cpu_seconds": 14.737830000000002,
+  "cpu_wall": 4.9739228319999995,
+  "cpu_stall": 0.8574950000000001,
+  "peak_mb": 2712
+}

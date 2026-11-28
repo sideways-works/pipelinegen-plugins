@@ -1,0 +1,10 @@
+{
+  "label": "//tools:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:05:36.609227016Z",
+  "seconds": 50.98842681,
+  "cpu_seconds": 98.41173599999999,
+  "cpu_wall": 51.001430355,
+  "cpu_stall": 6.834716,
+  "peak_mb": 1149
+}

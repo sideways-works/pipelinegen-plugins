@@ -1,0 +1,10 @@
+{
+  "label": "//sbom/go:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:24:00.827191733Z",
+  "seconds": 73.670641302,
+  "cpu_seconds": 119.22783100000001,
+  "cpu_wall": 73.718356672,
+  "cpu_stall": 9.293586,
+  "peak_mb": 1319
+}

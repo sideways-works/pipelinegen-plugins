@@ -1,0 +1,10 @@
+{
+  "label": "//driver/go:lint",
+  "state": "passed",
+  "updated": "2026-11-28T02:27:42.465769947Z",
+  "seconds": 5.306612921,
+  "cpu_seconds": 16.373212999999993,
+  "cpu_wall": 5.359693072,
+  "cpu_stall": 1.007477999999999,
+  "peak_mb": 2279
+}

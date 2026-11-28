@@ -1,0 +1,10 @@
+{
+  "label": "//correlator/oapi-codegen:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:29:02.08273288Z",
+  "seconds": 78.28967333,
+  "cpu_seconds": 118.37152,
+  "cpu_wall": 78.314134904,
+  "cpu_stall": 8.020323,
+  "peak_mb": 1182
+}

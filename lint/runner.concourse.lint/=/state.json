@@ -1,0 +1,10 @@
+{
+  "label": "//runner/concourse:lint",
+  "state": "passed",
+  "updated": "2026-11-28T02:27:42.452632864Z",
+  "seconds": 7.574788154,
+  "cpu_seconds": 21.39479,
+  "cpu_wall": 7.626960224,
+  "cpu_stall": 1.5215839999999972,
+  "peak_mb": 1941
+}

@@ -1,0 +1,10 @@
+{
+  "label": "//runner/concourse:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:05:36.608248175Z",
+  "seconds": 90.119494641,
+  "cpu_seconds": 148.25028500000002,
+  "cpu_wall": 90.12995408,
+  "cpu_stall": 25.074,
+  "peak_mb": 1291
+}

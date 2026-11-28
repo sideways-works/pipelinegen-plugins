@@ -1,0 +1,10 @@
+{
+  "label": "//driver/shell:lint",
+  "state": "passed",
+  "updated": "2026-11-28T02:28:30.61896686Z",
+  "seconds": 5.429333301,
+  "cpu_seconds": 16.49749700000001,
+  "cpu_wall": 5.474060436,
+  "cpu_stall": 1.2292489999999994,
+  "peak_mb": 1795
+}

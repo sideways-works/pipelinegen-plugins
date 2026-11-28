@@ -1,0 +1,10 @@
+{
+  "label": "//:templates",
+  "state": "passed",
+  "updated": "2026-11-28T02:28:30.61520292Z",
+  "seconds": 85.367697042,
+  "cpu_seconds": 160.06746900000002,
+  "cpu_wall": 85.486461601,
+  "cpu_stall": 13.469436,
+  "peak_mb": 1123
+}

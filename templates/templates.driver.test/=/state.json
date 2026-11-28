@@ -1,0 +1,10 @@
+{
+  "label": "//templates/driver:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:26:56.510174863Z",
+  "seconds": 160.033708436,
+  "cpu_seconds": 172.562604,
+  "cpu_wall": 160.163556277,
+  "cpu_stall": 39.133549,
+  "peak_mb": 1285
+}

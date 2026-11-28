@@ -1,0 +1,10 @@
+{
+  "label": "//templates/correlator:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:29:02.069129394Z",
+  "seconds": 90.732671409,
+  "cpu_seconds": 159.320329,
+  "cpu_wall": 91.060668731,
+  "cpu_stall": 15.059463000000001,
+  "peak_mb": 1271
+}

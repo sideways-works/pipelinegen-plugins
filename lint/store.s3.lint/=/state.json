@@ -1,0 +1,10 @@
+{
+  "label": "//store/s3:lint",
+  "state": "passed",
+  "updated": "2026-11-28T02:27:42.4557662Z",
+  "seconds": 6.115144238,
+  "cpu_seconds": 16.617109,
+  "cpu_wall": 6.196026405,
+  "cpu_stall": 0.8875640000000047,
+  "peak_mb": 2565
+}
