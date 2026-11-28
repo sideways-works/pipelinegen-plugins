@@ -1,0 +1,10 @@
+{
+  "label": "//forge/git:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:24:49.268100451Z",
+  "seconds": 116.090955887,
+  "cpu_seconds": 159.657882,
+  "cpu_wall": 116.145509226,
+  "cpu_stall": 14.146689,
+  "peak_mb": 1269
+}
