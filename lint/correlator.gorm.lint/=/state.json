@@ -1,0 +1,10 @@
+{
+  "label": "//correlator/gorm:lint",
+  "state": "passed",
+  "updated": "2026-11-28T02:28:30.618554946Z",
+  "seconds": 81.779766503,
+  "cpu_seconds": 188.36496599999998,
+  "cpu_wall": 81.789611749,
+  "cpu_stall": 19.088843999999998,
+  "peak_mb": 1391
+}

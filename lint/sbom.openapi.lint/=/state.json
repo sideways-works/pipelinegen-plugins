@@ -1,0 +1,10 @@
+{
+  "label": "//sbom/openapi:lint",
+  "state": "passed",
+  "updated": "2026-11-28T02:28:30.619230135Z",
+  "seconds": 6.813993873,
+  "cpu_seconds": 15.904164000000009,
+  "cpu_wall": 6.855606492,
+  "cpu_stall": 1.1405250000000002,
+  "peak_mb": 2329
+}
