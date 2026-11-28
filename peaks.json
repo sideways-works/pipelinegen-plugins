@@ -1,0 +1,70 @@
+{
+  "slices": {
+    "sbom.go.test": [
+      {
+        "mb": 619,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1319,
+        "commit": "1bed6ba519c0",
+        "cores": 1.6173424962589487
+      }
+    ],
+    "sbom.locale.test": [
+      {
+        "mb": 687,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1408,
+        "commit": "1bed6ba519c0",
+        "cores": 1.75073291848893
+      }
+    ],
+    "sbom.npm.test": [
+      {
+        "mb": 538,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1119,
+        "commit": "1bed6ba519c0",
+        "cores": 1.6307736743479577
+      }
+    ],
+    "sbom.openapi.test": [
+      {
+        "mb": 11873,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1278,
+        "commit": "1bed6ba519c0",
+        "cores": 2.2358814474061623
+      }
+    ],
+    "sbom.pg.test": [
+      {
+        "mb": 504,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 919,
+        "commit": "1bed6ba519c0",
+        "cores": 1.8365620663150286
+      }
+    ],
+    "sbom.ts.test": [
+      {
+        "mb": 653,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1217,
+        "commit": "1bed6ba519c0",
+        "cores": 1.172238872495485
+      }
+    ]
+  }
+}
