@@ -1,0 +1,10 @@
+{
+  "label": "//driver/bazel:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:07:28.382831478Z",
+  "seconds": 138.265586499,
+  "cpu_seconds": 282.014119,
+  "cpu_wall": 138.278693393,
+  "cpu_stall": 13.418474,
+  "peak_mb": 4292
+}
