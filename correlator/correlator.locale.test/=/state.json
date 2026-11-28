@@ -1,0 +1,10 @@
+{
+  "label": "//correlator/locale:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:26:59.45185798Z",
+  "seconds": 136.912530336,
+  "cpu_seconds": 131.68268500000002,
+  "cpu_wall": 137.055480523,
+  "cpu_stall": 33.762717,
+  "peak_mb": 1521
+}
