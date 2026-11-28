@@ -1,0 +1,10 @@
+{
+  "label": "//templates/driver:lint",
+  "state": "passed",
+  "updated": "2026-11-28T02:28:30.626715709Z",
+  "seconds": 9.685057785,
+  "cpu_seconds": 35.94059400000003,
+  "cpu_wall": 9.705489112,
+  "cpu_stall": 2.643085000000003,
+  "peak_mb": 2517
+}

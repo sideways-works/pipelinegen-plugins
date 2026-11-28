@@ -1,0 +1,10 @@
+{
+  "label": "//correlator/locale:lint",
+  "state": "passed",
+  "updated": "2026-11-28T02:28:30.625270238Z",
+  "seconds": 67.260857147,
+  "cpu_seconds": 132.879917,
+  "cpu_wall": 67.348824145,
+  "cpu_stall": 13.168958,
+  "peak_mb": 1385
+}
