@@ -1,0 +1,10 @@
+{
+  "label": "//runner/piperun:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:05:36.609485115Z",
+  "seconds": 72.107822934,
+  "cpu_seconds": 123.254705,
+  "cpu_wall": 72.113356075,
+  "cpu_stall": 21.22402,
+  "peak_mb": 1374
+}
