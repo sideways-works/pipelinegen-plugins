@@ -1,0 +1,73 @@
+{
+  "slices": {
+    "correlator.go.test": [
+      {
+        "mb": 821,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1311,
+        "commit": "1bed6ba519c0",
+        "cores": 2.208708974565538
+      }
+    ],
+    "correlator.gorm.test": [
+      {
+        "mb": 822,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1418,
+        "commit": "1bed6ba519c0",
+        "cores": 2.5576551814380886
+      }
+    ],
+    "correlator.locale.test": [
+      {
+        "mb": 882,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1521,
+        "commit": "1bed6ba519c0"
+      }
+    ],
+    "correlator.oapi-codegen.test": [
+      {
+        "mb": 941,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1182,
+        "commit": "1bed6ba519c0",
+        "cores": 1.5114962343018108
+      }
+    ],
+    "correlator.react.test": [
+      {
+        "mb": 2357,
+        "commit": "5f5c52133e21"
+      },
+      {
+        "mb": 89,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 2176,
+        "commit": "1bed6ba519c0",
+        "cores": 1.4508946807528655
+      }
+    ],
+    "correlator.sql.test": [
+      {
+        "mb": 31,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1144,
+        "commit": "1bed6ba519c0",
+        "cores": 2.356729172524908
+      }
+    ]
+  }
+}
