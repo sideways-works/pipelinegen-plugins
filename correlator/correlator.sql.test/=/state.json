@@ -1,0 +1,10 @@
+{
+  "label": "//correlator/sql:test",
+  "state": "passed",
+  "updated": "2026-11-28T01:34:03.192054393Z",
+  "seconds": 63.071196745,
+  "cpu_seconds": 148.708577,
+  "cpu_wall": 63.099561347,
+  "cpu_stall": 7.472192,
+  "peak_mb": 1144
+}
