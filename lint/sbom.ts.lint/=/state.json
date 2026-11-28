@@ -1,0 +1,10 @@
+{
+  "label": "//sbom/ts:lint",
+  "state": "passed",
+  "updated": "2026-11-28T02:27:42.466141153Z",
+  "seconds": 6.472745802,
+  "cpu_seconds": 10.786462999999998,
+  "cpu_wall": 6.51867294,
+  "cpu_stall": 0.604344999999995,
+  "peak_mb": 2720
+}

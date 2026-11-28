@@ -1,0 +1,10 @@
+{
+  "label": "//:checks",
+  "state": "passed",
+  "updated": "2026-11-28T02:27:42.462641915Z",
+  "seconds": 219.679943637,
+  "cpu_seconds": 161.963174,
+  "cpu_wall": 219.827797814,
+  "cpu_stall": 39.342002,
+  "peak_mb": 1355
+}

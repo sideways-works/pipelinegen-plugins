@@ -1,0 +1,10 @@
+{
+  "label": "//templates/forge:lint",
+  "state": "passed",
+  "updated": "2026-11-28T02:27:42.46622608Z",
+  "seconds": 6.52897314,
+  "cpu_seconds": 16.38837699999999,
+  "cpu_wall": 6.547182067,
+  "cpu_stall": 0.9041789999999992,
+  "peak_mb": 2991
+}
