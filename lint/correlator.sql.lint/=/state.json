@@ -1,0 +1,10 @@
+{
+  "label": "//correlator/sql:lint",
+  "state": "passed",
+  "updated": "2026-11-28T01:34:56.80404039Z",
+  "seconds": 89.807949278,
+  "cpu_seconds": 159.414088,
+  "cpu_wall": 89.879736448,
+  "cpu_stall": 10.270718,
+  "peak_mb": 1603
+}
