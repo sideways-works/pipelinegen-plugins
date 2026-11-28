@@ -1,0 +1,311 @@
+{
+  "slices": {
+    ".checks": [
+      {
+        "mb": 576,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1236,
+        "commit": "6038f0c525b2",
+        "cores": 1.0419467256826158
+      },
+      {
+        "mb": 1416,
+        "commit": "1bed6ba519c0",
+        "cores": 1.3866741209227098
+      }
+    ],
+    "correlator.go.lint": [
+      {
+        "mb": 441,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1222,
+        "commit": "1bed6ba519c0"
+      }
+    ],
+    "correlator.gorm.lint": [
+      {
+        "mb": 604,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1391,
+        "commit": "1bed6ba519c0"
+      }
+    ],
+    "correlator.locale.lint": [
+      {
+        "mb": 533,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1385,
+        "commit": "1bed6ba519c0",
+        "cores": 1.9730102000580372
+      }
+    ],
+    "correlator.oapi-codegen.lint": [
+      {
+        "mb": 453,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 2202,
+        "commit": "1bed6ba519c0"
+      }
+    ],
+    "correlator.react.lint": [
+      {
+        "mb": 386,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1452,
+        "commit": "1bed6ba519c0"
+      }
+    ],
+    "correlator.sql.lint": [
+      {
+        "mb": 524,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1603,
+        "commit": "1bed6ba519c0",
+        "cores": 1.7736376885376066
+      }
+    ],
+    "driver.bazel.lint": [
+      {
+        "mb": 431,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1446,
+        "commit": "1bed6ba519c0"
+      }
+    ],
+    "driver.go.lint": [
+      {
+        "mb": 453,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 2279,
+        "commit": "1bed6ba519c0",
+        "cores": 3.0548788484804477
+      }
+    ],
+    "driver.playwright.lint": [
+      {
+        "mb": 386,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1807,
+        "commit": "1bed6ba519c0",
+        "cores": 2.879496960346414
+      }
+    ],
+    "driver.shell.lint": [
+      {
+        "mb": 524,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1795,
+        "commit": "1bed6ba519c0"
+      }
+    ],
+    "forge.git.lint": [
+      {
+        "mb": 431,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1777,
+        "commit": "1bed6ba519c0"
+      }
+    ],
+    "forge.github.lint": [
+      {
+        "mb": 454,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 2712,
+        "commit": "1bed6ba519c0",
+        "cores": 2.963019431098404
+      }
+    ],
+    "runner.concourse.lint": [
+      {
+        "mb": 387,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1941,
+        "commit": "1bed6ba519c0",
+        "cores": 2.8051529536861
+      }
+    ],
+    "runner.piperun.lint": [
+      {
+        "mb": 514,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 2282,
+        "commit": "1bed6ba519c0"
+      }
+    ],
+    "sbom.go.lint": [
+      {
+        "mb": 432,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1848,
+        "commit": "1bed6ba519c0"
+      }
+    ],
+    "sbom.locale.lint": [
+      {
+        "mb": 455,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 2830,
+        "commit": "1bed6ba519c0",
+        "cores": 2.8867838079025443
+      }
+    ],
+    "sbom.npm.lint": [
+      {
+        "mb": 387,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 2140,
+        "commit": "1bed6ba519c0",
+        "cores": 2.2587291378452297
+      }
+    ],
+    "sbom.openapi.lint": [
+      {
+        "mb": 514,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 2329,
+        "commit": "1bed6ba519c0",
+        "cores": 2.319877025987274
+      }
+    ],
+    "sbom.pg.lint": [
+      {
+        "mb": 432,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 2573,
+        "commit": "1bed6ba519c0"
+      }
+    ],
+    "sbom.ts.lint": [
+      {
+        "mb": 455,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 2720,
+        "commit": "1bed6ba519c0",
+        "cores": 1.654702283621549
+      }
+    ],
+    "store.s3.lint": [
+      {
+        "mb": 387,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 2565,
+        "commit": "1bed6ba519c0",
+        "cores": 2.6818977056957847
+      }
+    ],
+    "templates.correlator.lint": [
+      {
+        "mb": 514,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 2539,
+        "commit": "1bed6ba519c0",
+        "cores": 2.318004332563267
+      }
+    ],
+    "templates.driver.lint": [
+      {
+        "mb": 433,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 2517,
+        "commit": "1bed6ba519c0"
+      }
+    ],
+    "templates.forge.lint": [
+      {
+        "mb": 455,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 2991,
+        "commit": "1bed6ba519c0",
+        "cores": 2.5031191789522587
+      }
+    ],
+    "templates.runner.lint": [
+      {
+        "mb": 387,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 2753,
+        "commit": "1bed6ba519c0",
+        "cores": 2.5059240946495187
+      }
+    ],
+    "templates.sbom.lint": [
+      {
+        "mb": 514,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 2628,
+        "commit": "1bed6ba519c0",
+        "cores": 2.7910934951291617
+      }
+    ],
+    "tools.lint": [
+      {
+        "mb": 433,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1263,
+        "commit": "6038f0c525b2",
+        "cores": 1.3899316515171214
+      },
+      {
+        "mb": 2612,
+        "commit": "1bed6ba519c0",
+        "cores": 2.600208636577892
+      }
+    ]
+  }
+}
