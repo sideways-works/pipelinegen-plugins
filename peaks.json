@@ -1,0 +1,46 @@
+{
+  "slices": {
+    "driver.bazel.test": [
+      {
+        "mb": 433,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 4292,
+        "commit": "1bed6ba519c0",
+        "cores": 2.039461843904552
+      }
+    ],
+    "driver.go.test": [
+      {
+        "mb": 441,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1252,
+        "commit": "1bed6ba519c0"
+      }
+    ],
+    "driver.playwright.test": [
+      {
+        "mb": 531,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1250,
+        "commit": "1bed6ba519c0"
+      }
+    ],
+    "driver.shell.test": [
+      {
+        "mb": 541,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1160,
+        "commit": "1bed6ba519c0",
+        "cores": 2.0859051517889045
+      }
+    ]
+  }
+}
