@@ -1,0 +1,10 @@
+{
+  "label": "//correlator/react:lint",
+  "state": "passed",
+  "updated": "2026-11-28T02:27:42.449688356Z",
+  "seconds": 16.245236327,
+  "cpu_seconds": 30.061682999999988,
+  "cpu_wall": 16.272083408,
+  "cpu_stall": 6.176344999999998,
+  "peak_mb": 1452
+}

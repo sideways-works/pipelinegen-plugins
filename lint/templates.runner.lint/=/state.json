@@ -1,0 +1,10 @@
+{
+  "label": "//templates/runner:lint",
+  "state": "passed",
+  "updated": "2026-11-28T02:27:42.456001863Z",
+  "seconds": 6.7711149840000004,
+  "cpu_seconds": 17.056016,
+  "cpu_wall": 6.806277986,
+  "cpu_stall": 1.2080880000000036,
+  "peak_mb": 2753
+}
