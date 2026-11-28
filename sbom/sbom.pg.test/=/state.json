@@ -1,0 +1,10 @@
+{
+  "label": "//sbom/pg:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:24:00.827566748Z",
+  "seconds": 37.049057388,
+  "cpu_seconds": 68.15048599999999,
+  "cpu_wall": 37.107641092,
+  "cpu_stall": 6.250994,
+  "peak_mb": 919
+}
