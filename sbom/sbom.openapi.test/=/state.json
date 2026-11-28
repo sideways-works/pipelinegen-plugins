@@ -1,0 +1,10 @@
+{
+  "label": "//sbom/openapi:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:11:26.620881558Z",
+  "seconds": 46.678972719,
+  "cpu_seconds": 104.40003,
+  "cpu_wall": 46.693007861,
+  "cpu_stall": 4.752847,
+  "peak_mb": 1278
+}
