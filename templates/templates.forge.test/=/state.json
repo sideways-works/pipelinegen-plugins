@@ -1,0 +1,10 @@
+{
+  "label": "//templates/forge:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:28:18.613920254Z",
+  "seconds": 76.16713137,
+  "cpu_seconds": 162.659184,
+  "cpu_wall": 76.194483839,
+  "cpu_stall": 15.64458,
+  "peak_mb": 1355
+}
