@@ -51,6 +51,23 @@ var ErrNotUTC = errors.New("the server must log in UTC (log_timezone = 'UTC')")
 
 var ErrBadTime = errors.New("a timestamp PostgreSQL doesn't write (YYYY-MM-DD HH:MM:SS.mmm UTC)")
 
+// Stamp is the time a jsonlog line was logged at.
+func Stamp(line []byte) (time.Time, error) {
+	var rec struct {
+		Timestamp string `json:"timestamp"`
+	}
+
+	if err := json.Unmarshal(line, &rec); err != nil {
+		return time.Time{}, fmt.Errorf("%w: %s", ErrNotJSONLog, JSONKind(err))
+	}
+
+	if rec.Timestamp == "" {
+		return time.Time{}, fmt.Errorf("%w: no timestamp", ErrNotJSONLog)
+	}
+
+	return parseTime(rec.Timestamp)
+}
+
 // parseTime reads a record's timestamp. Its errors never quote it: a line
 // that isn't what it should be may hold anything, a value a test used
 // among it.

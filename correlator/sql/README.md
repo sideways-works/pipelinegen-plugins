@@ -87,7 +87,7 @@ sql-correlator reads no files of the tree, so it has no candidates and no
 | `setup_databases` | none | databases whose statements belong to setup wherever they appear; tests that copy their databases from a template often migrate the template inside the first test |
 | `databases` | every database | only these databases count; this is how the maintenance database, where tests create and drop theirs, is left out |
 | `search_path` | `public` | the schemas an unqualified name is looked up in |
-| `quiet` | `150ms` | how long the log must stop growing before a slice's part is noted |
+| `quiet` | `150ms` | how long the log must stop growing before a slice's part is noted, unless it already holds a line logged after the slice's end; a log other slices keep writing does at once, and one that keeps growing is noted after 20 times `quiet` |
 
 Without `log`, `collect` succeeds with nothing to do and leaves a marker,
 `unconfigured`, which `observe` reads as "can't tell". A forgotten setting

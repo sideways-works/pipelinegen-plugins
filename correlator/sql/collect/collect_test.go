@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -719,5 +720,133 @@ func TestACopyWhereNoLinkCanBeMade(t *testing.T) {
 
 	if !strings.Contains(said.String(), "server.json can't be linked into the coverage output") {
 		t.Errorf("the copy isn't said: %q", said.String())
+	}
+}
+
+func TestEndStopsWaitingOnceTheLogHoldsItsEnd(t *testing.T) {
+	log := filepath.Join(t.TempDir(), "server.json")
+	appendLog(t, log, []string{logLine("00.500", "statement: SELECT 'before'")})
+
+	// a log that never goes quiet in time: only the line after the end
+	// lets the end go at once
+	cfg := Config{Log: log, Quiet: Duration(time.Minute)}
+	dir := t.TempDir()
+
+	if err := Start(cfg, dir, at("01.000")); err != nil {
+		t.Fatal(err)
+	}
+
+	appendLog(t, log, []string{
+		logLine("01.500", "statement: SELECT 'during'"),
+		logLine("02.500", "statement: SELECT 'another slice'"),
+	})
+
+	began := time.Now()
+
+	if err := End(cfg, dir, "s", at("02.000")); err != nil {
+		t.Fatal(err)
+	}
+
+	if took := time.Since(began); took > 30*time.Second {
+		t.Errorf("End took %s with the log past its end", took)
+	}
+
+	if got := own(t, cfg, dir); !reflect.DeepEqual(got, []string{"SELECT 'during'"}) {
+		t.Errorf("got %q", got)
+	}
+}
+
+func TestACutLastLineLeavesItToTheQuietTime(t *testing.T) {
+	log := filepath.Join(t.TempDir(), "server.json")
+	after := logLine("02.500", "statement: SELECT 'another slice'")
+	appendLog(t, log, []string{logLine("01.500", "statement: SELECT 'during'"), after[:len(after)/2]})
+
+	past, err := holdsEnd(log, at("02.000")())
+	if err != nil || past {
+		t.Errorf("a cut line holds the end: %v %v", past, err)
+	}
+
+	appendLog(t, log, []string{after[len(after)/2:]})
+
+	if past, err := holdsEnd(log, at("02.000")()); err != nil || !past {
+		t.Errorf("the whole line doesn't hold the end: %v %v", past, err)
+	}
+
+	if past, err := holdsEnd(log, at("03.000")()); err != nil || past {
+		t.Errorf("an earlier line holds a later end: %v %v", past, err)
+	}
+}
+
+func TestASliceEndingBesideAnotherSharesItsLink(t *testing.T) {
+	// the other slice links the file between this one's look and its link
+	linkFile = func(old, link string) error {
+		if err := os.Link(old, link); err != nil {
+			return fmt.Errorf("the other slice's link: %w", err)
+		}
+
+		return &os.LinkError{Op: "link", Old: old, New: link, Err: syscall.EEXIST}
+	}
+
+	var said strings.Builder
+
+	Log = &said
+
+	t.Cleanup(func() { linkFile, Log = os.Link, os.Stderr })
+
+	logDir, cov := t.TempDir(), t.TempDir()
+	log := filepath.Join(logDir, "postgresql.json")
+	appendLog(t, log, []string{logLine("00.500", "statement: SELECT 'before'")})
+
+	cfg := Config{Log: logDir, Quiet: Duration(time.Millisecond)}
+	dir := slicePart(cov, "api/a_test.go", 1)
+
+	if err := Start(cfg, dir, at("01.000")); err != nil {
+		t.Fatal(err)
+	}
+
+	appendLog(t, log, []string{logLine("01.500", "statement: SELECT 'during'")})
+
+	if err := End(cfg, dir, "api/a_test.go", at("01.900")); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := os.Stat(filepath.Join(dir, LogDir)); !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("the part copied the log: %v", err)
+	}
+
+	if said.Len() > 0 {
+		t.Errorf("said %q", said.String())
+	}
+
+	if got := own(t, cfg, dir); !reflect.DeepEqual(got, []string{"SELECT 'during'"}) {
+		t.Errorf("got %q", got)
+	}
+}
+
+func TestASlowEndSaysWhereItsTimeWent(t *testing.T) {
+	var said strings.Builder
+
+	Log, slowNote = &said, 0
+
+	t.Cleanup(func() { Log, slowNote = os.Stderr, 2*time.Second })
+
+	log := filepath.Join(t.TempDir(), "server.json")
+	appendLog(t, log, []string{logLine("00.500", "statement: SELECT 'before'")})
+
+	cfg := Config{Log: log, Quiet: Duration(time.Millisecond)}
+	dir := t.TempDir()
+
+	if err := Start(cfg, dir, at("01.000")); err != nil {
+		t.Fatal(err)
+	}
+
+	appendLog(t, log, []string{logLine("01.500", "statement: SELECT 'during'")})
+
+	if err := End(cfg, dir, "s", at("01.900")); err != nil {
+		t.Fatal(err)
+	}
+
+	if !strings.Contains(said.String(), "waiting for the log to hold the window's end") {
+		t.Errorf("said %q", said.String())
 	}
 }

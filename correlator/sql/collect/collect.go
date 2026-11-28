@@ -4,6 +4,7 @@
 package collect
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -337,9 +338,13 @@ func note(cfg Config, dir, links string, from mark, now Clock) error {
 	// rounded up to the log's millisecond
 	end := now().Truncate(time.Millisecond).Add(time.Millisecond)
 
-	if err := waitQuiet(cfg.Log, quiet); err != nil {
+	began := time.Now()
+
+	if err := waitQuiet(cfg.Log, quiet, end); err != nil {
 		return err
 	}
+
+	waited := time.Since(began)
 
 	w := window{From: from.Time, End: end, ReadAt: wallClock()}
 
@@ -367,6 +372,12 @@ func note(cfg Config, dir, links string, from mark, now Clock) error {
 		}
 
 		w.Spans = append(w.Spans, sp)
+	}
+
+	// a slow end says where its time went, where the batch's log shows it
+	if took := time.Since(began); took > slowNote {
+		sayf("sql-correlator: noting %s took %s: %s waiting for the log to hold the window's end, %s stating, hashing and linking %d of its %d files\n",
+			dir, took.Round(time.Millisecond), waited.Round(time.Millisecond), (took - waited).Round(time.Millisecond), len(w.Spans), len(files))
 	}
 
 	// the next window starts after this one ends, never in its last
@@ -465,6 +476,12 @@ func linkInto(file string, info fs.FileInfo, links string) (string, error) {
 	}
 
 	if err := linkFile(file, link); err != nil {
+		// another slice of the batch, ending at the same moment, linked
+		// the same file first
+		if have, serr := os.Stat(link); errors.Is(err, fs.ErrExist) && serr == nil && os.SameFile(have, info) {
+			return link, nil
+		}
+
 		return "", fmt.Errorf("linking the log: %w", err)
 	}
 
@@ -558,11 +575,14 @@ func sameHead(name string, from mark) (bool, error) {
 	return n == from.HeadLen && got == from.Head, nil
 }
 
-// waitQuiet waits until the log has not grown for the quiet time, or
-// gives up after twenty times as long: a server that keeps logging
-// (a background job polling) never goes quiet, and the time window still
-// keeps its statements out of the slice.
-func waitQuiet(log string, quiet time.Duration) error {
+// waitQuiet waits until the log holds a line stamped at or after end, or
+// has not grown for the quiet time, or 20 quiet times have passed. A server
+// writes a statement's line into its log pipe before its client hears the
+// statement is done, and its collector writes the pipe in order: a line
+// stamped after the slice ended is written after every line of the slice,
+// so a log other slices keep writing holds the window's end within
+// milliseconds, while a log nobody writes goes quiet.
+func waitQuiet(log string, quiet time.Duration, end time.Time) error {
 	deadline := time.Now().Add(20 * quiet)
 
 	last, err := logSize(log)
@@ -572,7 +592,15 @@ func waitQuiet(log string, quiet time.Duration) error {
 
 	stable := time.Now()
 
-	for time.Now().Before(deadline) {
+	for {
+		if past, err := holdsEnd(log, end); err != nil || past {
+			return err
+		}
+
+		if !time.Now().Before(deadline) {
+			return nil
+		}
+
 		time.Sleep(quiet / 5)
 
 		size, err := logSize(log)
@@ -590,9 +618,61 @@ func waitQuiet(log string, quiet time.Duration) error {
 			return nil
 		}
 	}
-
-	return nil
 }
+
+// holdsEnd says whether the newest of the log's files ends with a whole
+// line stamped at or after end. A line it can't read, cut or too long for
+// the tail it reads, says no: the quiet time decides then.
+func holdsEnd(log string, end time.Time) (bool, error) {
+	files, err := logFiles(log)
+	if err != nil || len(files) == 0 {
+		return false, err
+	}
+
+	f, err := os.Open(files[len(files)-1])
+	if err != nil {
+		return false, fmt.Errorf("reading the log: %w", err)
+	}
+
+	defer f.Close() //nolint:errcheck // read only
+
+	info, err := f.Stat()
+	if err != nil {
+		return false, fmt.Errorf("reading the log: %w", err)
+	}
+
+	from := max(info.Size()-tailLen, 0)
+	tail := make([]byte, info.Size()-from)
+
+	if _, err := f.ReadAt(tail, from); err != nil && !errors.Is(err, io.EOF) {
+		return false, fmt.Errorf("reading the log: %w", err)
+	}
+
+	// the last whole line, and only one that begins inside the tail
+	whole, ok := bytes.CutSuffix(tail, []byte("\n"))
+	if !ok {
+		whole = tail[:max(bytes.LastIndexByte(tail, '\n'), 0)]
+	}
+
+	nl := bytes.LastIndexByte(whole, '\n')
+	if nl < 0 && from > 0 {
+		return false, nil
+	}
+
+	at, err := pglog.Stamp(whole[nl+1:])
+	if err != nil {
+		return false, nil
+	}
+
+	return !at.Before(end), nil
+}
+
+// tailLen is how much of the log's end holdsEnd reads for its last line.
+const tailLen = 64 << 10
+
+// slowNote is how long noting a window may take before it says where the
+// time went; tests shorten it.
+var slowNote = 2 * time.Second
 
 func logSize(log string) (int64, error) {
 	files, err := logFiles(log)
