@@ -1,0 +1,10 @@
+{
+  "label": "//sbom/npm:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:12:13.719065699Z",
+  "seconds": 58.693794098,
+  "cpu_seconds": 95.78743399999999,
+  "cpu_wall": 58.737417403,
+  "cpu_stall": 4.515321999999999,
+  "peak_mb": 1119
+}
