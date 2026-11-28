@@ -1,0 +1,409 @@
+{
+  "slices": {
+    "batches main correlator": [
+      {
+        "mb": 84,
+        "commit": "1bed6ba519c0",
+        "seconds": 3.668926376
+      }
+    ],
+    "batches main lint": [
+      {
+        "mb": 79,
+        "commit": "6038f0c525b2",
+        "seconds": 4.4094400480000004
+      },
+      {
+        "mb": 84,
+        "commit": "1bed6ba519c0",
+        "seconds": 4.435648444
+      }
+    ],
+    "batches main tools": [
+      {
+        "mb": 73,
+        "commit": "6038f0c525b2",
+        "seconds": 4.006639698
+      }
+    ],
+    "batches nightly forge": [
+      {
+        "mb": 72,
+        "commit": "1bed6ba519c0",
+        "seconds": 3.487316239
+      }
+    ],
+    "batches nightly runner": [
+      {
+        "mb": 71,
+        "commit": "1bed6ba519c0",
+        "seconds": 1.961410693
+      }
+    ],
+    "batches nightly sbom": [
+      {
+        "mb": 70,
+        "commit": "1bed6ba519c0",
+        "seconds": 3.526161799
+      }
+    ],
+    "batches nightly store": [
+      {
+        "mb": 72,
+        "commit": "1bed6ba519c0",
+        "seconds": 3.579675088
+      }
+    ],
+    "batches nightly tools": [
+      {
+        "mb": 72,
+        "commit": "1bed6ba519c0",
+        "seconds": 3.4710853569999998
+      }
+    ],
+    "plan main": [
+      {
+        "mb": 1321,
+        "commit": "6038f0c525b2",
+        "cores": 0.9244840331085502,
+        "seconds": 65.093230218
+      },
+      {
+        "mb": 988,
+        "commit": "1bed6ba519c0",
+        "cores": 0.8834808721569811,
+        "seconds": 56.651569465
+      }
+    ],
+    "plan nightly": [
+      {
+        "mb": 430,
+        "commit": "1bed6ba519c0",
+        "cores": 0.5620239196089656,
+        "seconds": 28.379678237
+      }
+    ],
+    "report batch-end main correlator": [
+      {
+        "mb": 78,
+        "commit": "1bed6ba519c0",
+        "cores": 0.09137725030185649,
+        "seconds": 6.971002059
+      }
+    ],
+    "report batch-end main lint": [
+      {
+        "mb": 89,
+        "commit": "6038f0c525b2",
+        "cores": 0.06308169955487965,
+        "seconds": 11.376342189
+      },
+      {
+        "mb": 70,
+        "commit": "1bed6ba519c0",
+        "cores": 0.15358004269064526,
+        "seconds": 5.376649111
+      }
+    ],
+    "report batch-end main tools": [
+      {
+        "mb": 114,
+        "commit": "6038f0c525b2",
+        "cores": 0.06371344233744665,
+        "seconds": 11.80595448
+      }
+    ],
+    "report batch-end nightly correlator": [
+      {
+        "mb": 106,
+        "commit": "1bed6ba519c0",
+        "cores": 0.0844799388848065,
+        "seconds": 5.861947896
+      }
+    ],
+    "report batch-end nightly driver": [
+      {
+        "mb": 109,
+        "commit": "1bed6ba519c0",
+        "seconds": 4.732262616
+      }
+    ],
+    "report batch-end nightly forge": [
+      {
+        "mb": 117,
+        "commit": "1bed6ba519c0",
+        "cores": 0.09097180851714057,
+        "seconds": 6.341316166
+      }
+    ],
+    "report batch-end nightly lint": [
+      {
+        "mb": 114,
+        "commit": "1bed6ba519c0",
+        "cores": 0.053111891123372446,
+        "seconds": 11.233604893
+      }
+    ],
+    "report batch-end nightly runner": [
+      {
+        "mb": 63,
+        "commit": "1bed6ba519c0",
+        "cores": 0.04539309486632223,
+        "seconds": 11.180775435
+      }
+    ],
+    "report batch-end nightly sbom": [
+      {
+        "mb": 63,
+        "commit": "1bed6ba519c0",
+        "cores": 0.14535613008017523,
+        "seconds": 5.639108578
+      }
+    ],
+    "report batch-end nightly store": [
+      {
+        "mb": 104,
+        "commit": "1bed6ba519c0",
+        "cores": 0.06503884634443322,
+        "seconds": 12.136946523
+      }
+    ],
+    "report batch-end nightly templates": [
+      {
+        "mb": 107,
+        "commit": "1bed6ba519c0",
+        "cores": 0.0840649589846136,
+        "seconds": 7.7286780109999995
+      }
+    ],
+    "report batch-end nightly tools": [
+      {
+        "mb": 88,
+        "commit": "1bed6ba519c0",
+        "cores": 0.04292737773993252,
+        "seconds": 11.305093056
+      }
+    ],
+    "report suite main correlator": [
+      {
+        "mb": 63,
+        "commit": "6038f0c525b2",
+        "cores": 0.10285638361243953,
+        "seconds": 6.706875896
+      },
+      {
+        "mb": 63,
+        "commit": "1bed6ba519c0",
+        "cores": 0.06870468965382795,
+        "seconds": 8.554670765000001
+      }
+    ],
+    "report suite main driver": [
+      {
+        "mb": 67,
+        "commit": "1bed6ba519c0",
+        "cores": 0.08007459626032516,
+        "seconds": 7.78597744
+      }
+    ],
+    "report suite main forge": [
+      {
+        "mb": 63,
+        "commit": "6038f0c525b2",
+        "cores": 0.09750783878848272,
+        "seconds": 5.896602849
+      }
+    ],
+    "report suite main lint": [
+      {
+        "mb": 61,
+        "commit": "6038f0c525b2",
+        "cores": 0.05528288958039241,
+        "seconds": 20.535341199
+      },
+      {
+        "mb": 61,
+        "commit": "1bed6ba519c0",
+        "cores": 0.11734415171209957,
+        "seconds": 12.397516014
+      }
+    ],
+    "report suite main runner": [
+      {
+        "mb": 62,
+        "commit": "6038f0c525b2",
+        "cores": 0.05762260375813555,
+        "seconds": 12.132304936
+      }
+    ],
+    "report suite main sbom": [
+      {
+        "mb": 62,
+        "commit": "6038f0c525b2",
+        "cores": 0.05530608026870058,
+        "seconds": 11.97101651
+      }
+    ],
+    "report suite main store": [
+      {
+        "mb": 63,
+        "commit": "6038f0c525b2",
+        "cores": 0.10528323943775841,
+        "seconds": 5.915272016
+      },
+      {
+        "mb": 65,
+        "commit": "1bed6ba519c0",
+        "cores": 0.06490889364418179,
+        "seconds": 15.006495186
+      }
+    ],
+    "report suite main templates": [
+      {
+        "mb": 62,
+        "commit": "6038f0c525b2",
+        "cores": 0.05867295323456165,
+        "seconds": 11.966621097
+      }
+    ],
+    "report suite main tools": [
+      {
+        "mb": 67,
+        "commit": "6038f0c525b2",
+        "cores": 0.11663720417783052,
+        "seconds": 8.159849224
+      }
+    ],
+    "report suite nightly correlator": [
+      {
+        "mb": 61,
+        "commit": "1bed6ba519c0",
+        "cores": 0.1505721296546137,
+        "seconds": 15.437212752
+      }
+    ],
+    "report suite nightly driver": [
+      {
+        "mb": 61,
+        "commit": "1bed6ba519c0",
+        "cores": 0.10009803680193413,
+        "seconds": 8.34596788
+      }
+    ],
+    "report suite nightly forge": [
+      {
+        "mb": 104,
+        "commit": "1bed6ba519c0",
+        "cores": 0.11173407371805207,
+        "seconds": 8.240923913
+      }
+    ],
+    "report suite nightly lint": [
+      {
+        "mb": 63,
+        "commit": "1bed6ba519c0",
+        "cores": 0.058658369354813895,
+        "seconds": 16.625044486
+      }
+    ],
+    "report suite nightly runner": [
+      {
+        "mb": 80,
+        "commit": "1bed6ba519c0",
+        "cores": 0.049924415647336726,
+        "seconds": 13.225833321
+      }
+    ],
+    "report suite nightly sbom": [
+      {
+        "mb": 102,
+        "commit": "1bed6ba519c0",
+        "cores": 0.05522255443803074,
+        "seconds": 18.308787239
+      }
+    ],
+    "report suite nightly store": [
+      {
+        "mb": 79,
+        "commit": "1bed6ba519c0",
+        "cores": 0.05681930163274073,
+        "seconds": 18.470184776
+      }
+    ],
+    "report suite nightly templates": [
+      {
+        "mb": 93,
+        "commit": "1bed6ba519c0",
+        "cores": 0.05606389170978403,
+        "seconds": 16.376761798
+      }
+    ],
+    "report suite nightly tools": [
+      {
+        "mb": 76,
+        "commit": "1bed6ba519c0",
+        "cores": 0.06025107788460642,
+        "seconds": 14.227529699
+      }
+    ],
+    "tree main correlator": [
+      {
+        "mb": 75,
+        "commit": "1bed6ba519c0",
+        "seconds": 2.238679069
+      }
+    ],
+    "tree main lint": [
+      {
+        "mb": 77,
+        "commit": "6038f0c525b2",
+        "seconds": 2.223115946
+      },
+      {
+        "mb": 74,
+        "commit": "1bed6ba519c0",
+        "seconds": 2.189951908
+      }
+    ],
+    "tree main tools": [
+      {
+        "mb": 73,
+        "commit": "6038f0c525b2",
+        "cores": 0.03899490657511413,
+        "seconds": 17.101028277
+      }
+    ],
+    "tree nightly driver": [
+      {
+        "mb": 75,
+        "commit": "1bed6ba519c0",
+        "cores": 0.05069476282744086,
+        "seconds": 7.995855536
+      }
+    ],
+    "tree nightly lint": [
+      {
+        "mb": 72,
+        "commit": "1bed6ba519c0",
+        "cores": 0.045806988596789694,
+        "seconds": 8.019125711
+      }
+    ],
+    "tree nightly sbom": [
+      {
+        "mb": 70,
+        "commit": "1bed6ba519c0",
+        "cores": 0.05123799274869913,
+        "seconds": 7.8757769060000005
+      }
+    ],
+    "tree nightly tools": [
+      {
+        "mb": 73,
+        "commit": "1bed6ba519c0",
+        "cores": 0.046949344519535155,
+        "seconds": 8.085884987
+      }
+    ]
+  }
+}
