@@ -1,0 +1,10 @@
+{
+  "label": "//correlator/gorm:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:30:07.476053938Z",
+  "seconds": 70.871080375,
+  "cpu_seconds": 181.378786,
+  "cpu_wall": 70.916043459,
+  "cpu_stall": 9.813161,
+  "peak_mb": 1418
+}
