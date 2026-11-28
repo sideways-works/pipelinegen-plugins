@@ -1,0 +1,26 @@
+{
+  "slices": {
+    "forge.git.test": [
+      {
+        "mb": 439,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1269,
+        "commit": "1bed6ba519c0",
+        "cores": 1.3746367213331692
+      }
+    ],
+    "forge.github.test": [
+      {
+        "mb": 610,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1333,
+        "commit": "1bed6ba519c0",
+        "cores": 0.8110228983767864
+      }
+    ]
+  }
+}
