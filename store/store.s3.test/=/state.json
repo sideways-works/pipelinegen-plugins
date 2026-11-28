@@ -1,0 +1,10 @@
+{
+  "label": "//store/s3:test",
+  "state": "passed",
+  "updated": "2026-11-28T02:29:02.0714684Z",
+  "seconds": 95.773680257,
+  "cpu_seconds": 123.399147,
+  "cpu_wall": 95.925344684,
+  "cpu_stall": 12.702895999999999,
+  "peak_mb": 1417
+}
