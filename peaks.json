@@ -1,0 +1,67 @@
+{
+  "slices": {
+    ".templates": [
+      {
+        "mb": 469,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1123,
+        "commit": "1bed6ba519c0",
+        "cores": 1.8724306282215755
+      }
+    ],
+    "templates.correlator.test": [
+      {
+        "mb": 557,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1271,
+        "commit": "1bed6ba519c0",
+        "cores": 1.7496064021959261
+      }
+    ],
+    "templates.driver.test": [
+      {
+        "mb": 603,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1285,
+        "commit": "1bed6ba519c0"
+      }
+    ],
+    "templates.forge.test": [
+      {
+        "mb": 499,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 1355,
+        "commit": "1bed6ba519c0"
+      }
+    ],
+    "templates.runner.test": [
+      {
+        "mb": 459,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 994,
+        "commit": "1bed6ba519c0"
+      }
+    ],
+    "templates.sbom.test": [
+      {
+        "mb": 379,
+        "commit": "a98943518cae"
+      },
+      {
+        "mb": 822,
+        "commit": "1bed6ba519c0",
+        "cores": 4.443795311032496
+      }
+    ]
+  }
+}
